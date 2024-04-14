@@ -10,6 +10,7 @@ from boosty.base import MediaPool
 from boosty.defs import DEFAULT_LIMIT, DEFAULT_LIMIT_BY, BOOSTY_API_BASE_URL, DEFAULT_HEADERS
 from core.defs import VIDEO_QUALITY, DOWNLOAD_HEADERS
 from core.logger import logger
+from core.stat import stat_tracker, Stat
 
 
 async def get_media_list(
@@ -108,7 +109,7 @@ async def get_all_video_media(creator_name: str, media_pool: MediaPool):
                 if post["post"]["hasAccess"]:
                     for media in post["media"]:
                         for url in media["playerUrls"]:
-                            if url["type"] in VIDEO_QUALITY.keys():
+                            if url["type"] in VIDEO_QUALITY.keys() and url["url"] != "":
                                 media_pool.add_video(
                                     _id=media["id"],
                                     url=url["url"],
@@ -121,18 +122,37 @@ async def get_all_video_media(creator_name: str, media_pool: MediaPool):
 
 
 async def download_file(url: str, path: Path):
-    with open(path, "wb") as file:
-        async with ClientSession() as session:
-            logger.info(f"downloading file {url}")
-            headers = copy(DEFAULT_HEADERS)
-            headers.update(DOWNLOAD_HEADERS)
-            response = await session.get(
-                url,
-                headers=headers
-            )
-            if response.status == 200:
-                logger.info(f"saving file {path}")
-                cont = await response.read()
+    if url == "":
+        logger.warning(f"Empty URL for {path} file, skip")
+        return
+    async with ClientSession() as session:
+        logger.info(f"downloading file {url}")
+        headers = copy(DEFAULT_HEADERS)
+        headers.update(DOWNLOAD_HEADERS)
+        response = await session.get(
+            url,
+            headers=headers
+        )
+        if response.status == 200:
+            logger.info(f"saving file {path}")
+            cont = await response.read()
+            with open(path, "wb") as file:
                 file.write(cont)
-            else:
-                logger.warning(f"non-200 status code ({response.status} for file {url}")
+        else:
+            logger.warning(f"non-200 status code ({response.status} for file {url}")
+
+
+async def get_profile_stat(creator_name: str, tracker: Stat):
+    url = BOOSTY_API_BASE_URL + f"/v1/blog/{creator_name}/media_album/counters/"
+    async with ClientSession() as session:
+        headers = copy(DEFAULT_HEADERS)
+        response = await session.get(
+            url,
+            headers=headers
+        )
+        if response.status == 200:
+            data = await response.json()
+            tracker.total_photos = data["data"]["mediaCounters"]["image"]
+            tracker.total_videos = data["data"]["mediaCounters"]["okVideo"]
+        else:
+            logger.warning("FAILED GET PROFILE STAT")

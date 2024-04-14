@@ -13,7 +13,8 @@ def create_dir_if_not_exists(path: Path):
 
 async def download_file_if_not_exists(url: str, path: Path):
     if os.path.isfile(path):
-        logger.info(f"pass downloading file {path}: already exists")
-        return
-    logger.info(f"downloading file {path}")
+        logger.debug(f"pass saving file {path}: already exists")
+        return False
+    logger.info(f"will save file: {path}")
     await download_file(url, path)
+    return True
