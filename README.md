@@ -33,3 +33,6 @@ pip install -r requirements.txt
 ```shell
 python main.py
 ```
+
+### Disclaimer of liability
+**The author is not responsible for the misuse of this repository. All content on boosty.to belongs to its authors and all responsibility for misuse of intellectual property lies with the user using this code, but not with its author. Before saving and/or using any site content, please read its rules and make sure you have the right to do so.**
