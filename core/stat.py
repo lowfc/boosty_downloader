@@ -1,3 +1,5 @@
+from terminaltables import AsciiTable
+
 
 class Stat:
 
@@ -23,17 +25,28 @@ class Stat:
         self.__passed_video += 1
 
     def __str__(self):
-        return f"""
-        \rTOTAL PHOTOS: {self.total_photos}
-        \rDOWNLOADED PHOTOS: {self.__downloaded_photo}
-        \rPHOTOS COLLECTED IN LOCAL FILES: {self.__passed_photo + self.__downloaded_photo}
-        \rPHOTOS UNAVAILABLE: {self.total_photos - (self.__passed_photo + self.__downloaded_photo)}
-        
-        \rTOTAL VIDEOS: {self.total_videos}
-        \rDOWNLOADED VIDEOS: {self.__downloaded_video}
-        \rVIDEOS COLLECTED IN LOCAL FILES: {self.__passed_video + self.__downloaded_video}
-        \rVIDEOS UNAVAILABLE: {self.total_videos - (self.__passed_video + self.__downloaded_video)}
-        """
+        photo_stat = [
+            ['Photo Stat', 'Value'],
+            ['TOTAL', self.total_photos],
+            ['DOWNLOADED', self.__downloaded_photo],
+            ['COLLECTED IN LOCAL FILES', self.__passed_photo + self.__downloaded_photo],
+            ['UNAVAILABLE', self.total_photos - (self.__passed_photo + self.__downloaded_photo)],
+        ]
+        photo_table = AsciiTable(photo_stat)
+
+        video_stat = [
+            ['Video Stat', 'Value'],
+            ['TOTAL', self.total_videos],
+            ['DOWNLOADED', self.__downloaded_video],
+            ['COLLECTED IN LOCAL FILES', self.__passed_video + self.__downloaded_video],
+            ['UNAVAILABLE', self.total_videos - (self.__passed_video + self.__downloaded_video)],
+        ]
+        video_table = AsciiTable(video_stat)
+
+        return str(photo_table.table) + "\n\n" + str(video_table.table)
+
+    def show_summary(self):
+        print("\n\n" + self.__str__())
 
 
 stat_tracker = Stat()

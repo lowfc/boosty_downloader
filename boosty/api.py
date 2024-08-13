@@ -10,13 +10,14 @@ from boosty.base import MediaPool
 from boosty.defs import DEFAULT_LIMIT, DEFAULT_LIMIT_BY, BOOSTY_API_BASE_URL, DEFAULT_HEADERS
 from core.defs import VIDEO_QUALITY, DOWNLOAD_HEADERS
 from core.logger import logger
-from core.stat import stat_tracker, Stat
+from core.stat import Stat, stat_tracker
 
 
 async def get_media_list(
     session: ClientSession,
     media_type: Literal["image", "video"],
     creator_name: str,
+    use_cookie: bool,
     limit: int = DEFAULT_LIMIT,
     limit_by: str = DEFAULT_LIMIT_BY,
     offset: str = None
@@ -30,9 +31,8 @@ async def get_media_list(
         params["offset"] = offset
     try:
         send_headers = copy(DEFAULT_HEADERS)
-        if conf.cookie:
+        if use_cookie and conf.ready_to_auth():
             send_headers["Cookie"] = conf.cookie
-        if conf.authorization:
             send_headers["Authorization"] = conf.authorization
         url = BOOSTY_API_BASE_URL + f"/v1/blog/{creator_name}/media_album/"
         logger.info("GET " + url)
@@ -48,7 +48,7 @@ async def get_media_list(
     return result
 
 
-async def get_all_image_media(creator_name: str, media_pool: MediaPool):
+async def get_all_image_media(creator_name: str, media_pool: MediaPool, use_cookie: bool):
     is_end = False
     offset = None
     errors = 0
@@ -62,6 +62,7 @@ async def get_all_image_media(creator_name: str, media_pool: MediaPool):
                 session=session,
                 creator_name=creator_name,
                 media_type="image",
+                use_cookie=use_cookie,
                 offset=offset
             )
             if not resp:
@@ -84,7 +85,7 @@ async def get_all_image_media(creator_name: str, media_pool: MediaPool):
             await asyncio.sleep(0.6)
 
 
-async def get_all_video_media(creator_name: str, media_pool: MediaPool):
+async def get_all_video_media(creator_name: str, media_pool: MediaPool, use_cookie: bool):
     is_end = False
     offset = None
     errors = 0
@@ -98,6 +99,7 @@ async def get_all_video_media(creator_name: str, media_pool: MediaPool):
                 session=session,
                 creator_name=creator_name,
                 media_type="video",
+                use_cookie=use_cookie,
                 offset=offset
             )
             if not resp:
@@ -142,7 +144,7 @@ async def download_file(url: str, path: Path):
             logger.warning(f"non-200 status code ({response.status} for file {url}")
 
 
-async def get_profile_stat(creator_name: str, tracker: Stat):
+async def get_profile_stat(creator_name: str):
     url = BOOSTY_API_BASE_URL + f"/v1/blog/{creator_name}/media_album/counters/"
     async with ClientSession() as session:
         headers = copy(DEFAULT_HEADERS)
@@ -152,7 +154,7 @@ async def get_profile_stat(creator_name: str, tracker: Stat):
         )
         if response.status == 200:
             data = await response.json()
-            tracker.total_photos = data["data"]["mediaCounters"]["image"]
-            tracker.total_videos = data["data"]["mediaCounters"]["okVideo"]
+            stat_tracker.total_photos = data["data"]["mediaCounters"]["image"]
+            stat_tracker.total_videos = data["data"]["mediaCounters"]["okVideo"]
         else:
             logger.warning("FAILED GET PROFILE STAT")
