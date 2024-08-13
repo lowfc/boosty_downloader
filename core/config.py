@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -24,8 +23,8 @@ class Config:
             auth_conf = data["auth"]
             file_conf = data["file"]
         except Exception as e:
-            logger.fatal(f"Config not found or malformed, stopping... detail: {e}")
-            sys.exit(1)
+            logger.fatal(f"Config not found or malformed: {e}")
+            raise e
         self.cookie = auth_conf.get("cookie")
         self.authorization = auth_conf.get("authorization")
         self.sync_dir = Path(file_conf.get("sync_dir"))

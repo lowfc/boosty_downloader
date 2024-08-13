@@ -1,16 +1,23 @@
-import asyncio
-import os.path
 import sys
-from pathlib import Path
-from typing import Literal
 
-from boosty.api import get_all_video_media, get_all_image_media, get_profile_stat
-from boosty.base import MediaPool
-from core.config import conf
-from core.logger import logger
-from core.stat import stat_tracker, Stat
-from core.utils import create_dir_if_not_exists, download_file_if_not_exists, parse_creator_name, parse_bool, \
-    print_summary
+try:
+    import asyncio
+    import os.path
+    from pathlib import Path
+    from typing import Literal
+
+    from boosty.api import get_all_video_media, get_all_image_media, get_profile_stat
+    from boosty.base import MediaPool
+    from core.config import conf
+    from core.exceptions import SyncCancelledExc, ConfigMalformedExc
+    from core.logger import logger
+    from core.stat import stat_tracker, Stat
+    from core.utils import create_dir_if_not_exists, download_file_if_not_exists, parse_creator_name, parse_bool, \
+        print_summary
+except Exception as e:
+    print(f"[{e.__class__.__name__}] App stopped ({e})")
+    input("Press enter to exit...")
+    sys.exit(1)
 
 
 async def fetch_and_save(creator_name: str, use_cookie: bool):
@@ -57,13 +64,13 @@ async def main():
     print_summary(creator_name=parsed_creator_name, use_cookie=use_cookie_in, sync_dir=str(conf.sync_dir))
     if not parse_bool(input("Proceed? (y/n) > ")):
         logger.info("cancelled by user.")
-        sys.exit(0)
+        raise SyncCancelledExc
 
     logger.info(f"{parsed_creator_name} > {conf.sync_dir} (auth={use_cookie_in}).")
 
     if not os.path.isdir(conf.sync_dir):
         logger.critical(f"path {conf.sync_dir} is not exists. create it and try again.")
-        sys.exit(1)
+        raise ConfigMalformedExc
 
     logger.info(f"starting sync media...")
     await fetch_and_save(parsed_creator_name, use_cookie_in)
@@ -72,4 +79,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        print(f"[{e.__class__.__name__}] App stopped")
+    finally:
+        input("Press enter to exit...")
