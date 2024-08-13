@@ -9,10 +9,12 @@ from boosty.base import MediaPool
 from core.config import conf
 from core.logger import logger
 from core.stat import stat_tracker, Stat
-from core.utils import create_dir_if_not_exists, download_file_if_not_exists
+from core.utils import create_dir_if_not_exists, download_file_if_not_exists, parse_creator_name, parse_bool, \
+    print_summary
 
 
-async def fetch_and_save(base_path: Path):
+async def fetch_and_save(creator_name: str, use_cookie: bool):
+    base_path: Path = conf.sync_dir / creator_name
     create_dir_if_not_exists(base_path)
     photo_path = base_path / "photos"
     video_path = base_path / "videos"
@@ -20,8 +22,8 @@ async def fetch_and_save(base_path: Path):
     create_dir_if_not_exists(video_path)
     media_pool = MediaPool()
     await asyncio.gather(
-        get_all_image_media(creator_name=conf.creator_name, media_pool=media_pool),
-        get_all_video_media(creator_name=conf.creator_name, media_pool=media_pool),
+        get_all_image_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie),
+        get_all_video_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie),
     )
     images = media_pool.get_images()
     videos = media_pool.get_videos()
@@ -46,24 +48,28 @@ async def fetch_and_save(base_path: Path):
 
 
 async def main():
-    await fetch_and_save(conf.sync_dir / conf.creator_name)
-    await get_profile_stat(conf.creator_name, stat_tracker)
+    raw_creator_name = input("Enter creator boosty link or user name > ")
+    parsed_creator_name = parse_creator_name(raw_creator_name)
+    use_cookie_in = parse_bool(input("Use cookie for download? (y/n) > "))
+    if not conf.ready_to_auth():
+        logger.warning("authorization headers unfilled in config, sync without cookie forced.")
+        use_cookie_in = False
+    print_summary(creator_name=parsed_creator_name, use_cookie=use_cookie_in, sync_dir=str(conf.sync_dir))
+    if not parse_bool(input("Proceed? (y/n) > ")):
+        logger.info("cancelled by user.")
+        sys.exit(0)
+
+    logger.info(f"{parsed_creator_name} > {conf.sync_dir} (auth={use_cookie_in}).")
+
+    if not os.path.isdir(conf.sync_dir):
+        logger.critical(f"path {conf.sync_dir} is not exists. create it and try again.")
+        sys.exit(1)
+
+    logger.info(f"starting sync media...")
+    await fetch_and_save(parsed_creator_name, use_cookie_in)
+    await get_profile_stat(parsed_creator_name)
+    stat_tracker.show_summary()
 
 
 if __name__ == "__main__":
-    logger.info(f"starting sync media...")
-    logger.info(f"creator: {conf.creator_name}")
-    logger.info(f"check path: {conf.sync_dir}")
-    uah = conf.authorization != "" and conf.cookie != ""
-    logger.info(f"use authorization headers: {uah}")
-    if not os.path.isdir(conf.sync_dir):
-        logger.critical(f"path {conf.sync_dir} is not exists. Create it and try again.")
-        sys.exit(1)
-
-    loop = asyncio.get_event_loop()
-    if loop.is_closed():
-        asyncio.set_event_loop(asyncio.new_event_loop())
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-
-    print(f"\n\n ====== SUMMARY ====== \n{stat_tracker}")
+    asyncio.run(main())

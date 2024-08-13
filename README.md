@@ -1,38 +1,69 @@
 # Boosty media downloader (windows)
 
-This script download all **AVAILABLE FOR YOU** media from boosty.to page
+- Приложение скачает весь **_доступный вам_** медиаконтент со страницы автора на boosty.to;
+
+- Приложение предназначено для скачивания **_вашего контента_** с **_вашей страницы boosty_**, 
+автор не несет ответственность за нецелевое использование приложения;
+
+- **Это не хак-тул**! Приложение скачает только тот контент, к которому вы имеете доступ на сайте boosty.to.
 
 
-## Create venv:
+## Как это работает
+
+Приложение создаст папку с названием, совпадающим с user_name автора на boosty и скачает 
+в нее все доступные фото и видео (в раздельные директории). Приложение скачает контент в самом высоком из доступных разрешений. При повторном запуске,
+уже скачанный контент будет игнорироваться, а новый добавляться в соответствующие директории.
+
+Не переименовывайте и не удаляйте файлы из директорий photos и videos, иначе при следующей синхронизации они будут скачаны снова.
+
+
+## Установка и запуск
+
+### Конфигурация
+- Откройте config.yml 
+- Введите корневую директорию для синхронизации в file -> sync_dir
+- Если хотите скачать закрытый контент, заполните auth -> cookie и auth -> authorization
+
+
+Cookie и Authorization можно найти с помощью инструментов разработчика в вашем браузере.
+
+#### Пример для chrome:
+- Перейдите на вашу страницу на boosty.to
+- Нажимте клавишу `F12`
+- Обновите страницу с помощью `Shift + F5`
+- Перейдите в раздел Network 
+- Прокрутите страницу вниз
+- В списке запросов, выберите пункт post/
+- В блоке Request Headers найдите Authorization и Cookie, а затем скопируйте их в соответствующие поля в config.yml 
+
+**Держите содержимое этих параметров в секрете!**
+
+Если через какое-то время приложение перестало скачивать контент, попробуйте обновить значения полей в конфиге, по схеме выше.
+
+### 2. Запуск распакованного проекта
+
+Запускайте с python версии 3.10 или выше.
+
+- #### Создайте venv:
 ```shell
 python3 -m venv .\venv
 ```
 
-## Activate venv:
+- #### Активируйте venv:
 ```shell
 .\venv\Scripts\activate
 ```
 
-## Install requirements:
+- #### Установите зависимости:
 ```shell
 pip install -r requirements.txt
 ```
 
-## Set-up:
-1. Open .\core\config.py
-2. Type creater name to creator_name
-3. Type download destination dir to sync_dir
+- #### Заполните конфиг:
+Заполните конфиг по инструкции из блока [Конфигурация](#Конфигурация)
 
-> You can download free content without authorization, but if you want download private 
-> content that you have access to fill the cookie and authorization fields. You can get it in
-> browser net tools, inspecting any api request. <br>
-> **!!! Do not pass the values of these fields to anyone**
-
-## Here we go
-
+- #### Запустите:
 ```shell
 python main.py
 ```
 
-### Disclaimer of liability
-**The author is not responsible for the misuse of this repository. All content on boosty.to belongs to its authors and all responsibility for misuse of intellectual property lies with the user using this code, but not with its author. Before saving and/or using any site content, please read its rules and make sure you have the right to do so.**
