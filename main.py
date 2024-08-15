@@ -28,10 +28,16 @@ async def fetch_and_save(creator_name: str, use_cookie: bool):
     create_dir_if_not_exists(photo_path)
     create_dir_if_not_exists(video_path)
     media_pool = MediaPool()
-    await asyncio.gather(
-        get_all_image_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie),
-        get_all_video_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie),
-    )
+    tasks = []
+    if conf.need_load_photo:
+        tasks.append(
+            get_all_image_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie)
+        )
+    if conf.need_load_video:
+        tasks.append(
+            get_all_video_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie)
+        )
+    await asyncio.gather(*tasks)
     images = media_pool.get_images()
     videos = media_pool.get_videos()
     coros = []
@@ -45,13 +51,33 @@ async def fetch_and_save(creator_name: str, use_cookie: bool):
         else:
             passed()
 
+    grp_photos = []
+    i = 0
     for img in images:
         path = photo_path / (img["id"] + ".jpg")
-        coros.append(get_file_and_raise_stat(img["url"], path, stat_tracker, "p"))
+        grp_photos.append(get_file_and_raise_stat(img["url"], path, stat_tracker, "p"))
+        i += 1
+        if i >= conf.max_download_parallel:
+            coros.append(grp_photos)
+            grp_photos = []
+            i = 0
+    if len(grp_photos):
+        coros.append(grp_photos)
+    grp_videos = []
+    i = 0
     for video in videos:
         path = video_path / (video["id"] + ".mp4")
-        coros.append(get_file_and_raise_stat(video["url"], path, stat_tracker, "v"))
-    await asyncio.gather(*coros)
+        grp_videos.append(get_file_and_raise_stat(video["url"], path, stat_tracker, "v"))
+        i += 1
+        if i == conf.max_download_parallel:
+            coros.append(grp_videos)
+            grp_videos = []
+            i = 0
+    if len(grp_videos):
+        coros.append(grp_videos)
+    for grp in coros:
+        await asyncio.gather(*grp)
+        await asyncio.sleep(0)
 
 
 async def main():
@@ -61,9 +87,15 @@ async def main():
     if not conf.ready_to_auth():
         logger.warning("authorization headers unfilled in config, sync without cookie forced.")
         use_cookie_in = False
-    print_summary(creator_name=parsed_creator_name, use_cookie=use_cookie_in, sync_dir=str(conf.sync_dir))
+    print_summary(
+        creator_name=parsed_creator_name,
+        use_cookie=use_cookie_in,
+        sync_dir=str(conf.sync_dir),
+        download_timeout=conf.download_timeout,
+        need_load_video=conf.need_load_video,
+        need_load_photo=conf.need_load_photo
+    )
     if not parse_bool(input("Proceed? (y/n) > ")):
-        logger.info("cancelled by user.")
         raise SyncCancelledExc
 
     logger.info(f"{parsed_creator_name} > {conf.sync_dir} (auth={use_cookie_in}).")
@@ -84,4 +116,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[{e.__class__.__name__}] App stopped")
     finally:
-        input("Press enter to exit...")
+        input("\nPress enter to exit...")

@@ -1,4 +1,4 @@
-
+from enum import Enum
 
 VIDEO_QUALITY = {
     "low": 0,
@@ -8,7 +8,8 @@ VIDEO_QUALITY = {
     "ultra_hd": 4,
 }
 
-DOWNLOAD_HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",  # noqa: E501
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-}
+
+class AsciiCommands(str, Enum):
+    COLORIZE_DEFAULT: str = '\033[0m\n'
+    COLORIZE_WARN: str = '\033[91m'
+    COLORIZE_HIGHLIGHT: str = '\033[92m'
