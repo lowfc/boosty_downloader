@@ -1,16 +1,18 @@
 import asyncio
+import time
 from pathlib import Path
 from typing import Literal
 
+import aiofiles
 from aiohttp import ClientSession
 from copy import copy
 
 from core.config import conf
 from boosty.base import MediaPool
-from boosty.defs import DEFAULT_LIMIT, DEFAULT_LIMIT_BY, BOOSTY_API_BASE_URL, DEFAULT_HEADERS
-from core.defs import VIDEO_QUALITY, DOWNLOAD_HEADERS
+from boosty.defs import DEFAULT_LIMIT, DEFAULT_LIMIT_BY, BOOSTY_API_BASE_URL, DEFAULT_HEADERS, DOWNLOAD_HEADERS
+from core.defs import VIDEO_QUALITY
 from core.logger import logger
-from core.stat import Stat, stat_tracker
+from core.stat import stat_tracker
 
 
 async def get_media_list(
@@ -127,21 +129,49 @@ async def download_file(url: str, path: Path):
     if url == "":
         logger.warning(f"Empty URL for {path} file, skip")
         return
-    async with ClientSession() as session:
-        logger.info(f"downloading file {url}")
-        headers = copy(DEFAULT_HEADERS)
-        headers.update(DOWNLOAD_HEADERS)
-        response = await session.get(
-            url,
-            headers=headers
+    try:
+        async with ClientSession() as session:
+            logger.info(f"preparing download {url}")
+            headers = copy(DEFAULT_HEADERS)
+            headers.update(DOWNLOAD_HEADERS)
+            response = await session.get(
+                url,
+                headers=headers,
+                allow_redirects=True,
+                timeout=conf.download_timeout
+            )
+            if response.status == 200:
+                async with aiofiles.open(path, "wb") as file:
+                    logger.info(f"saving file {path}")
+                    length = response.content_length
+                    logger.info(f"file size: {round(length / 1024 / 1024, 2)} (Mb)")
+                    chunk_size = conf.download_chunk_size
+                    downloaded_bytes = 0
+                    last_log = time.monotonic()
+                    start_time = last_log
+                    logger.info(f"downloading file... chunk size={chunk_size}")
+                    async for content in response.content.iter_chunked(chunk_size):
+                        if time.monotonic() - last_log > 30:
+                            downloaded = downloaded_bytes if downloaded_bytes > 0 else 1
+                            download_percent = int(downloaded / length * 100)
+                            last_log = time.monotonic()
+                            elapsed = last_log - start_time
+                            total_time = round(elapsed * (length / downloaded), 2)
+                            estimated = total_time - elapsed
+                            logger.info(f"still downloading file... {download_percent}% "
+                                        f"(ela: {int(elapsed) // 60} min; eta: {int(estimated) // 60} min.)")
+                        await file.write(content)  # noqa
+                        downloaded_bytes += len(content)  # noqa
+                        await asyncio.sleep(0)
+            else:
+                logger.warning(f"non-200 status code ({response.status} for file {url}")
+    except TimeoutError:
+        logger.error(
+            "[TimedOut] Failed download media due to timeout. "
+            "If file is large, try to set a higher value for the download_timeout parameter in config"
         )
-        if response.status == 200:
-            logger.info(f"saving file {path}")
-            cont = await response.read()
-            with open(path, "wb") as file:
-                file.write(cont)
-        else:
-            logger.warning(f"non-200 status code ({response.status} for file {url}")
+    except Exception as e:
+        logger.error(f"[{e.__class__.__name__}] Failed download media: {e}")
 
 
 async def get_profile_stat(creator_name: str):

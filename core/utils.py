@@ -1,8 +1,10 @@
 import os
 import re
 from pathlib import Path
+from typing import List
 
 from boosty.api import download_file
+from core.defs import AsciiCommands
 from core.logger import logger
 
 
@@ -46,14 +48,17 @@ def parse_bool(raw_input: str) -> bool:
 
 def print_colorized(prefix: str, data: str, warn: bool = False):
     print(prefix, end=": ")
-    print('\033[91m' if warn else '\033[92m', end="")
-    print(data, end='\033[0m\n')
+    print(AsciiCommands.COLORIZE_WARN.value if warn else AsciiCommands.COLORIZE_HIGHLIGHT.value, end="")
+    print(data, end=AsciiCommands.COLORIZE_DEFAULT.value)
 
 
 def print_summary(
     creator_name: str,
     use_cookie: bool,
-    sync_dir: str
+    sync_dir: str,
+    download_timeout: int,
+    need_load_video: bool,
+    need_load_photo: bool,
 ):
     print_colorized("Sync media for", creator_name)
     if use_cookie:
@@ -61,3 +66,6 @@ def print_summary(
     else:
         print_colorized("Sync media", "WITHOUT cookie", warn=True)
     print_colorized("Sync in", sync_dir)
+    print_colorized("Download timeout", f"{download_timeout // 60} min.")
+    print_colorized("Photo download", "yes" if need_load_photo else "no", warn=not need_load_photo)
+    print_colorized("Video download", "yes" if need_load_video else "no", warn=not need_load_video)

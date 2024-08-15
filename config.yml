@@ -10,3 +10,15 @@ file:
   # Folders for your creator accounts will be created in this folder
   # Synchronization with the boosty will be performed inside the creator account folders
   sync_dir: 'C:\boosty_dumps'
+  # Download chunk size (bytes), don't change this setting unless you are sure
+  download_chunk_size: 153600
+  # Max time for one file downloading (seconds), default - 2 hours.
+  download_timeout: 7200
+  # Max number of media downloaded at the same time
+  max_download_parallel: 5
+
+# Content params
+content:
+  collect:
+    - videos
+    - photos
