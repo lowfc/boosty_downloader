@@ -19,6 +19,17 @@ file:
 
 # Content params
 content:
+  # Available types: post, media
+  storage_type: post
+  # Available list items: videos, photos, audios
   collect:
     - videos
     - photos
+#   - audios
+
+# Logging params
+logging:
+  # If True - save logs to file
+  enable_file_logging: False
+  # Path to log files, default: current directory
+  logs_path: ./
