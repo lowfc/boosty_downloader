@@ -1,12 +1,20 @@
 from typing import List, Dict
 
+from core.config import conf
+
 
 class MediaPool:
 
-    __images: dict = {}
-    __videos: dict = {}
+    __images: dict
+    __videos: dict
+
+    def __init__(self):
+        self.__videos = {}
+        self.__images = {}
 
     def add_image(self, _id: str, url: str, width: int, height: int):
+        if not conf.need_load_photo:
+            return
         total_weight = width * height
         current = self.__images.get(_id)
         if current:
@@ -18,6 +26,8 @@ class MediaPool:
         }
 
     def add_video(self, _id: str, url: str, size_amount: int):
+        if not conf.need_load_video:
+            return
         current = self.__videos.get(_id)
         if current:
             if size_amount < current["size_amount"]:
