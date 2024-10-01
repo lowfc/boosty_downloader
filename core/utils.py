@@ -1,7 +1,8 @@
 import os
 import re
 from pathlib import Path
-from typing import List
+
+import aiofiles
 
 from boosty.api import download_file
 from core.defs import AsciiCommands
@@ -19,8 +20,14 @@ async def download_file_if_not_exists(url: str, path: Path):
         logger.debug(f"pass saving file {path}: already exists")
         return False
     logger.info(f"will save file: {path}")
-    await download_file(url, path)
-    return True
+    result = await download_file(url, path)
+    return result
+
+
+async def create_text_document(path: Path, content: str, name: str = "contents"):
+    to_write = path / (name + ".txt")
+    async with aiofiles.open(to_write, "w", encoding="utf-8") as file:
+        await file.write(content)
 
 
 def parse_creator_name(raw_input: str) -> str:
@@ -31,7 +38,9 @@ def parse_creator_name(raw_input: str) -> str:
 
 
 def parse_bool(raw_input: str) -> bool:
-    match raw_input.lower():
+    clear_input = raw_input.replace(" ", "")
+    clear_input = clear_input.lower()
+    match clear_input:
         case "y":
             return True
         case "yes":
@@ -59,6 +68,8 @@ def print_summary(
     download_timeout: int,
     need_load_video: bool,
     need_load_photo: bool,
+    need_load_audio: bool,
+    storage_type: str,
 ):
     print_colorized("Sync media for", creator_name)
     if use_cookie:
@@ -69,3 +80,5 @@ def print_summary(
     print_colorized("Download timeout", f"{download_timeout // 60} min.")
     print_colorized("Photo download", "yes" if need_load_photo else "no", warn=not need_load_photo)
     print_colorized("Video download", "yes" if need_load_video else "no", warn=not need_load_video)
+    print_colorized("Audio download", "yes" if need_load_audio else "no")
+    print_colorized("Storage type", storage_type)
