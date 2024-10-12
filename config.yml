@@ -20,7 +20,7 @@ file:
 # Content params
 content:
   # Available types: post, media
-  storage_type: post
+  storage_type: media
   # Available list items: videos, photos, audios
   collect:
     - videos
