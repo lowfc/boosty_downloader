@@ -10,6 +10,7 @@ class Post:
     title: str
     paragraph: List[str]
     media_pool: MediaPool
+    tags: dict
 
     _text_content_malformed: bool = False
 
@@ -18,6 +19,7 @@ class Post:
         self.title = title
         self.media_pool = MediaPool()
         self.paragraph = []
+        self.tags = {}
 
     @property
     def id(self) -> str:
@@ -47,3 +49,11 @@ class Post:
         if len(self.paragraph):
             result += "\n".join(self.paragraph)
         return result
+
+    def add_tag(self, _id: int, title: str):
+        self.tags[_id] = title
+
+    def get_tags_text(self):
+        #sort tags by title and then by id
+        sorted_tags = sorted(self.tags.items(), key=lambda item:f'{item[1]}{item[0]}')
+        return "\n".join([f'{_id}\t{title}' for _id, title in sorted_tags])

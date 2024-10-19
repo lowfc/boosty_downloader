@@ -119,6 +119,7 @@ async def fetch_and_save_posts(creator_name: str, use_cookie: bool):
     create_dir_if_not_exists(posts_path)
     post_pool = PostPool()
     await get_all_posts(creator_name=creator_name, post_pool=post_pool, use_cookie=use_cookie)
+    await create_text_document(path=base_path, content=post_pool.get_tags_text(), name="tags")
     coros = []
     desired_post_id = conf.desired_post_id
     if desired_post_id:
@@ -134,7 +135,8 @@ async def fetch_and_save_posts(creator_name: str, use_cookie: bool):
         create_dir_if_not_exists(photo_path)
         create_dir_if_not_exists(video_path)
         create_dir_if_not_exists(audio_path)
-        await create_text_document(path=post_path, content=post.get_contents_text())
+        await create_text_document(path=post_path, content=post.get_contents_text(), name="contents")
+        await create_text_document(path=post_path, content=post.get_tags_text(), name="tags")
 
         images = post.media_pool.get_images()
         grp_photos = []

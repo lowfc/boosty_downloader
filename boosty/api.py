@@ -322,6 +322,9 @@ async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool
                         elif media["type"] == MediaType.TEXT:
                             if media["modificator"] == "":
                                 new_post.add_marshaled_paragraph(media["content"])
+                    for tag in post["tags"]:
+                        new_post.add_tag(tag["id"], tag["title"])
+                        post_pool.add_tag(tag["id"], tag["title"])
                     post_pool.add_post(new_post)
             if extra["isLast"]:
                 is_end = True
