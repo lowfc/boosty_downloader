@@ -1,4 +1,5 @@
 import asyncio
+from msilib.schema import PublishComponent
 import time
 from pathlib import Path
 from typing import Literal
@@ -296,7 +297,12 @@ async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool
             posts = resp["data"]
             for post in posts:
                 if post["hasAccess"]:
-                    new_post = Post(_id=post["id"], title=post["title"])
+                    new_post = Post(
+                        _id=post["id"],
+                        title=post["title"],
+                        created_at=post['createdAt'],
+                        updated_at=post['updatedAt'],
+                        publish_time=post['publishTime'])
                     for media in post["data"]:
                         if media["type"] == MediaType.VIDEO.value:
                             for url in media["playerUrls"]:

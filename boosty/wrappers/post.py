@@ -11,15 +11,21 @@ class Post:
     paragraph: List[str]
     media_pool: MediaPool
     tags: dict
+    created_at: int
+    updated_at: int
+    publish_time: int
 
     _text_content_malformed: bool = False
 
-    def __init__(self, _id: str, title: str):
+    def __init__(self, _id: str, title: str, created_at: int, updated_at: int, publish_time: int):
         self._id = _id
         self.title = title
         self.media_pool = MediaPool()
         self.paragraph = []
         self.tags = {}
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.publish_time = publish_time
 
     @property
     def id(self) -> str:
@@ -57,3 +63,9 @@ class Post:
         #sort tags by title and then by id
         sorted_tags = sorted(self.tags.items(), key=lambda item:f'{item[1]}{item[0]}')
         return "\n".join([f'{_id}\t{title}' for _id, title in sorted_tags])
+
+    def get_attributes_text(self):
+        return "\n".join([
+            f'createdAt\t{self.created_at}',
+            f'updatedAt\t{self.updated_at}',
+            f'publishTime\t{self.publish_time}'])

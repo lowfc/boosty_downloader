@@ -137,6 +137,7 @@ async def fetch_and_save_posts(creator_name: str, use_cookie: bool):
         create_dir_if_not_exists(audio_path)
         await create_text_document(path=post_path, content=post.get_contents_text(), name="contents")
         await create_text_document(path=post_path, content=post.get_tags_text(), name="tags")
+        await create_text_document(path=post_path, content=post.get_attributes_text(), name="attributes")
 
         images = post.media_pool.get_images()
         grp_photos = []
