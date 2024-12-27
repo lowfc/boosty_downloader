@@ -28,26 +28,51 @@
 ### Конфигурация
 - Откройте config.yml 
 - Введите корневую директорию для синхронизации в file -> sync_dir
-- Если хотите скачать закрытый контент, заполните auth -> cookie и auth -> authorization*
+- Если хотите скачать закрытый (но доступный вам) контент, заполните auth -> cookie и auth -> authorization (ниже описана инструкция по получению этих данных)
 - Установите необходимый способ синхронизации в content -> storage_type (media или post)
 - Если какой-то из типов контента вам не нужен, удалите (или закомментируйте с помощью #) соответствующую строчку в списке content -> collect
 - Если лог синхронизации нужно сохранять в файл, заполните блок logging
 
+#### Получение Cookie и Authorization:
 
-*Cookie и Authorization можно найти с помощью инструментов разработчика в вашем браузере:
+Перед тем, как искать Cookie и Authorization не забудьте войти в аккаунт.
 
-#### Пример для chrome:
+##### Вариант 1 (простой)
 - Перейдите на вашу страницу на boosty.to
 - Нажимте клавишу `F12`
-- Обновите страницу с помощью `Shift + F5`
-- Перейдите в раздел Network 
-- Прокрутите страницу вниз
-- В списке запросов, выберите пункт post/
+- Перейдите в раздел Console (Консоль)
+- В поле ввода консоли введите следующий текст и нажмите Enter:
+
+```
+function parseCookie(e,o){const i=`; ${e}`.split(`; ${o}=`);if(2===i.length)return i.pop().split(";").shift()}function parseAuthCookie(e){if(void 0===e)return;let o=e.replaceAll("%7B","{");o=o.replaceAll("%22",'"'),o=o.replaceAll("%3A",":"),o=o.replaceAll("%2C",","),o=o.replaceAll("%7D","}");let i=JSON.parse(o).accessToken;return void 0!==i?"Bearer "+i:void 0}function setUpOutCookie(e){let o=parseCookie(e,"auth"),i=parseAuthCookie(o);return void 0===i?"Authorization data could not be found. Are you sure you're logged in?":`\nCookie:\n\n_clientId=${parseCookie(e,"_clientId")}; _gcl_au=${parseCookie(e,"_gcl_au")}; _ga=${parseCookie(e,"_ga")}; _ym_uid=${parseCookie(e,"_ym_uid")}; _ym_d=${parseCookie(e,"_ym_d")}; _tt_enable_cookie=${parseCookie(e,"_tt_enable_cookie")}; _ttp=${parseCookie(e,"_ttp")}; _ym_isad=${parseCookie(e,"_ym_isad")}; _ym_visorc=${parseCookie(e,"_ym_visorc")}; newUser=${parseCookie(e,"newUser")}; auth=${o}; last_acc=${parseCookie(e,"last_acc")};\n\nAuthorization:\n\n${i}\n  `}const cooks=`; ${document.cookie}`;console.log(setUpOutCookie(cooks));
+```
+
+- В консоли появится текст вида:
+
+```
+Cookie:
+
+<То, что нужно вставить в поле auth -> cookie конфига приложения>
+
+Authorization:
+
+<То, что нужно вставить в поле auth -> authorization конфига приложения>
+```
+
+- Вставьте соотетствующий текст в соответствующие поля конфига.
+  
+##### Вариант 2
+- Перейдите на вашу страницу на boosty.to
+- Нажимте клавишу `F12`
+- Перейдите в раздел Network (Сеть)
+- Обновите страницу с помощью `Shift + F5` (важно нажимать именно `Shift + F5`, что бы сбросить кеш браузера, иначе Cookie и Authorization вы не увидите)
+- Прокрутите страницу вниз, пока сайт не подгрузит больше постов
+- В списке запросов, выберите найдите запрос вида: post/?limit=5&offset=...
 - В блоке Request Headers найдите Authorization и Cookie, а затем скопируйте их в соответствующие поля в config.yml 
 
 **Держите содержимое этих параметров в секрете!**
 
-Если через какое-то время приложение перестало скачивать контент, попробуйте обновить значения полей в конфиге, по схеме выше.
+Если через какое-то время приложение перестало скачивать контент, попробуйте обновить значения полей в конфиге, по инструкции выше.
 
 
 ### 1. Запуск сборки (рекомендуется)
