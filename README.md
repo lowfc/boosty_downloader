@@ -46,6 +46,7 @@
 ```
 function parseCookie(e,o){const i=`; ${e}`.split(`; ${o}=`);if(2===i.length)return i.pop().split(";").shift()}function parseAuthCookie(e){if(void 0===e)return;let o=e.replaceAll("%7B","{");o=o.replaceAll("%22",'"'),o=o.replaceAll("%3A",":"),o=o.replaceAll("%2C",","),o=o.replaceAll("%7D","}");let i=JSON.parse(o).accessToken;return void 0!==i?"Bearer "+i:void 0}function setUpOutCookie(e){let o=parseCookie(e,"auth"),i=parseAuthCookie(o);return void 0===i?"Authorization data could not be found. Are you sure you're logged in?":`\nCookie:\n\n_clientId=${parseCookie(e,"_clientId")}; _gcl_au=${parseCookie(e,"_gcl_au")}; _ga=${parseCookie(e,"_ga")}; _ym_uid=${parseCookie(e,"_ym_uid")}; _ym_d=${parseCookie(e,"_ym_d")}; _tt_enable_cookie=${parseCookie(e,"_tt_enable_cookie")}; _ttp=${parseCookie(e,"_ttp")}; _ym_isad=${parseCookie(e,"_ym_isad")}; _ym_visorc=${parseCookie(e,"_ym_visorc")}; newUser=${parseCookie(e,"newUser")}; auth=${o}; last_acc=${parseCookie(e,"last_acc")};\n\nAuthorization:\n\n${i}\n  `}const cooks=`; ${document.cookie}`;console.log(setUpOutCookie(cooks));
 ```
+**! При вставке кода в консоль, браузер может показать предупреждение о вставке кода. В таком случае, перед вставкой кода, введите в консоль то, что просит браузер, например: "разрешить вставку", нажмите Enter, а уже потом выполняйте предыдущий шаг.**
 
 - В консоли появится текст вида:
 
