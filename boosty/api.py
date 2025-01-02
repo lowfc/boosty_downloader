@@ -296,7 +296,13 @@ async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool
             posts = resp["data"]
             for post in posts:
                 if post["hasAccess"]:
-                    new_post = Post(_id=post["id"], title=post["title"])
+                    new_post = Post(
+                        _id=post["id"],
+                        title=post["title"],
+                        markdown_text=conf.post_text_in_markdown,
+                        publish_time=post["publishTime"]
+                    )
+                    signed_query = post.get("signedQuery", "")
                     for media in post["data"]:
                         if media["type"] == MediaType.VIDEO.value:
                             for url in media["playerUrls"]:
@@ -316,12 +322,23 @@ async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool
                         elif media["type"] == MediaType.AUDIO.value:
                             new_post.media_pool.add_audio(
                                 _id=media["id"],
-                                url=media["url"] + post.get("signedQuery", ""),
+                                url=media["url"] + signed_query,
                                 size_amount=media["size"],
                             )
-                        elif media["type"] == MediaType.TEXT:
+                        elif media["type"] == MediaType.FILE.value:
+                            new_post.media_pool.add_file(
+                                _id=media["id"],
+                                url=media["url"] + signed_query,
+                                size_amount=media["size"],
+                                title=media["title"]
+                            )
+                        elif media["type"] == MediaType.TEXT.value:
                             if media["modificator"] == "":
-                                new_post.add_marshaled_paragraph(media["content"])
+                                new_post.add_marshaled_text(media["content"])
+                            elif media["modificator"] == "BLOCK_END":
+                                new_post.add_block_end()
+                        elif media["type"] == MediaType.LINK.value:
+                            new_post.add_link(media["content"], media["url"])
                     post_pool.add_post(new_post)
             if extra["isLast"]:
                 is_end = True

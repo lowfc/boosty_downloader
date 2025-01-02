@@ -21,11 +21,14 @@ file:
 content:
   # Available types: post, media
   storage_type: media
-  # Available list items: videos, photos, audios
+  # If true - save post text in MD format, else - TXT
+  post_text_in_markdown: true
+  # Available list items: videos, photos, audios, files
   collect:
     - videos
     - photos
-#   - audios
+    - audios
+    - files
 
 # Logging params
 logging:

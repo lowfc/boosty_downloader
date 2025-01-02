@@ -8,11 +8,13 @@ class MediaPool:
     __images: dict
     __videos: dict
     __audios: dict
+    __files: dict
 
     def __init__(self):
         self.__videos = {}
         self.__images = {}
         self.__audios = {}
+        self.__files = {}
 
     def add_image(self, _id: str, url: str, width: int, height: int):
         if not conf.need_load_photo:
@@ -49,6 +51,18 @@ class MediaPool:
         self.__audios[_id] = {
             "url": url,
             "size_amount": size_amount
+        }
+
+    def add_file(self, _id: str, url: str, size_amount: int, title: str):
+        if not conf.need_load_files:
+            return
+        current = self.__files.get(_id)
+        if current:
+            return
+        self.__files[_id] = {
+            "url": url,
+            "size_amount": size_amount,
+            "title": title
         }
 
     def get_images(self) -> List[Dict]:
@@ -92,6 +106,23 @@ class MediaPool:
                 {
                     "id": audio_id,
                     "url": self.__audios[audio_id]["url"]
+                }
+            )
+        return res
+
+    def get_files(self) -> List[Dict]:
+        """
+        Get all files
+        :return: [{"id": 1, "url": "https://s3.com/1", "title": "1.pdf"}, ...]
+        """
+        res = []
+        for file_id in self.__files.keys():
+            file = self.__files[file_id]
+            res.append(
+                {
+                    "id": file_id,
+                    "url": file["url"],
+                    "title": file["title"]
                 }
             )
         return res

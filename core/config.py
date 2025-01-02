@@ -24,6 +24,7 @@ class Config:
     desired_post_id: Optional[str]
 
     save_logs_to_file: bool
+    post_text_in_markdown: bool
     logs_path: Path
 
     def __init__(self):
@@ -43,7 +44,7 @@ class Config:
 
     def __load(self):
         args = self.__arg_parser.parse_args()
-        self.__cfg_path = Path(args.config or r'.\config.yml')
+        self.__cfg_path = Path(args.config or r'./config.yml')
         self.desired_post_id = args.post_id
         try:
             with open(self.__cfg_path, "r") as file:
@@ -63,8 +64,10 @@ class Config:
         self.max_download_parallel = int(file_conf.get("max_download_parallel", 5))
         self.need_load_photo = True
         self.need_load_video = True
-        self.need_load_audio = False
+        self.need_load_audio = True
+        self.need_load_files = True
         self.storage_type = content_conf.get("storage_type")
+        self.post_text_in_markdown = content_conf.get("post_text_in_markdown", True)
         self.save_logs_to_file = logging_conf.get("enable_file_logging", False)
         self.logs_path = Path(logging_conf.get("logs_path", "./"))
         collect: Optional[List[str]] = content_conf.get("collect", "media")
@@ -72,6 +75,7 @@ class Config:
             self.need_load_photo = "photos" in collect
             self.need_load_video = "videos" in collect
             self.need_load_audio = "audios" in collect
+            self.need_load_files = "files" in collect
 
     def ready_to_auth(self) -> bool:
         if self.cookie is None or self.authorization is None:
