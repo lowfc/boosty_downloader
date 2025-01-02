@@ -1,38 +1,43 @@
 
-# Auth params, get it from you browser net tools
-# Keep this params in secret!
+# Параметры авторизации, можно не заполнять. Инструкция по получению есть в README.md
+# Держите эти параметры в секрете!
 auth:
   cookie: ''
   authorization: ''
 
-# Files params
+# Файловые параметры
 file:
-  # Folders for your creator accounts will be created in this folder
-  # Synchronization with the boosty will be performed inside the creator account folders
+  # Внутри этой папки будут созданы папки авторов boosty
+  # Синхронизация контента будет производиться внутри папок авторов
   sync_dir: 'C:\boosty_dumps'
-  # Download chunk size (bytes), don't change this setting unless you are sure
+  # Размер чанка загрузки (байты), не изменяйте этот параметр, если не уверены, что делаете
   download_chunk_size: 153600
-  # Max time for one file downloading (seconds), default - 2 hours.
+  # Таймаут загрузки одного файла (секунды), по умолчанию - 2 часа.
   download_timeout: 7200
-  # Max number of media downloaded at the same time
+  # Максимальное количество одновременно загружаемых файлов
   max_download_parallel: 5
 
-# Content params
+# Параметры контента
 content:
-  # Available types: post, media
+  # Тип синхронизации: post или media
   storage_type: media
-  # If true - save post text in MD format, else - TXT
+  # true - сохранять текст поста в формате MD (markdown), false - сохранять в txt (с потерей разметки)
+  # ссылки будут сохранены в любом случае
   post_text_in_markdown: true
-  # Available list items: videos, photos, audios, files
+  # Какие типы контента нужно сохранять, доступно:
+  # videos - видео
+  # photos - картинки
+  # audios - аудиофайлы (нужна авторизация, заполните блок auth)
+  # files - прикрепленные к постам файлы других типов, работает только при storage_type: post (нужна авторизация, заполните блок auth)
   collect:
     - videos
     - photos
     - audios
     - files
 
-# Logging params
+# Параметры логирования
 logging:
-  # If True - save logs to file
+  # Сохранять лог в файл
   enable_file_logging: False
-  # Path to log files, default: current directory
+  # Путь к папке, куда следует класть логи
   logs_path: ./
