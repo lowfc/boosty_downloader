@@ -24,8 +24,8 @@ async def download_file_if_not_exists(url: str, path: Path):
     return result
 
 
-async def create_text_document(path: Path, content: str, name: str = "contents"):
-    to_write = path / (name + ".txt")
+async def create_text_document(path: Path, content: str, ext: str = "txt", name: str = "contents"):
+    to_write = path / (name + "." + ext)
     async with aiofiles.open(to_write, "w", encoding="utf-8") as file:
         await file.write(content)
 
