@@ -60,7 +60,7 @@ copy .\config.yml.example .\config.yml
 - В поле ввода консоли введите следующий код и нажмите Enter:
 
 ```
-function parseCookie(e,o){const i=`; ${e}`.split(`; ${o}=`);if(2===i.length)return i.pop().split(";").shift()}function parseAuthCookie(e){if(void 0===e)return;let o=e.replaceAll("%7B","{");o=o.replaceAll("%22",'"'),o=o.replaceAll("%3A",":"),o=o.replaceAll("%2C",","),o=o.replaceAll("%7D","}");let i=JSON.parse(o).accessToken;return void 0!==i?"Bearer "+i:void 0}function setUpOutCookie(e){let o=parseCookie(e,"auth"),i=parseAuthCookie(o);return void 0===i?"Authorization data could not be found. Are you sure you're logged in?":`\nCookie:\n\n_clientId=${parseCookie(e,"_clientId")}; _gcl_au=${parseCookie(e,"_gcl_au")}; _ga=${parseCookie(e,"_ga")}; _ym_uid=${parseCookie(e,"_ym_uid")}; _ym_d=${parseCookie(e,"_ym_d")}; _tt_enable_cookie=${parseCookie(e,"_tt_enable_cookie")}; _ttp=${parseCookie(e,"_ttp")}; _ym_isad=${parseCookie(e,"_ym_isad")}; _ym_visorc=${parseCookie(e,"_ym_visorc")}; newUser=${parseCookie(e,"newUser")}; auth=${o}; last_acc=${parseCookie(e,"last_acc")};\n\nAuthorization:\n\n${i}\n  `}const cooks=`; ${document.cookie}`;console.log(setUpOutCookie(cooks));
+const full_cookie=`${document.cookie}`;function getCookie(o,e){const l=e.split(`; ${o}=`);if(2===l.length)return l.pop().split(";").shift()}function parseAuthCookie(o){if(void 0===o)return;let e=o.replaceAll("%7B","{");e=e.replaceAll("%22",'"'),e=e.replaceAll("%3A",":"),e=e.replaceAll("%2C",","),e=e.replaceAll("%7D","}");let l=JSON.parse(e).accessToken;return void 0!==l?"Bearer "+l:void 0}const auth_token=getCookie("auth",full_cookie);void 0===auth_token?console.log("Не получилось найти данные авторизации. Вы точно вошли в аккаунт?"):console.log(`\n\nCookie:\n\n${full_cookie}\n\nAuthorization:\n\n${parseAuthCookie(auth_token)}\n\n`);
 ```
 **При вставке кода в консоль, браузер может показать предупреждение о вставке кода. В таком случае, перед вставкой кода, введите в консоль то, что просит браузер, например: "разрешить вставку", нажмите Enter, а уже потом выполняйте вставку кода и снова нажимайте Enter.**
 
@@ -139,3 +139,18 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Сборка приложения
+
+Приложение собирается с помощью pyinstaller
+
+```shell
+python3 -m venv .\venv
+```
+
+```shell
+pip install pyinstaller
+```
+
+```shell
+pyinstaller --onefile --icon=logo.ico main.py
+```

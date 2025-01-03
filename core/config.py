@@ -47,7 +47,7 @@ class Config:
         self.__cfg_path = Path(args.config or r'./config.yml')
         self.desired_post_id = args.post_id
         try:
-            with open(self.__cfg_path, "r") as file:
+            with open(self.__cfg_path, "r", encoding="utf-8") as file:
                 data = yamload(file, FullLoader)
             auth_conf = data["auth"]
             file_conf = data["file"]

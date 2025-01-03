@@ -69,6 +69,7 @@ def print_summary(
     need_load_video: bool,
     need_load_photo: bool,
     need_load_audio: bool,
+    need_load_files: bool,
     storage_type: str,
 ):
     print_colorized("Sync media for", creator_name)
@@ -81,4 +82,5 @@ def print_summary(
     print_colorized("Photo download", "yes" if need_load_photo else "no", warn=not need_load_photo)
     print_colorized("Video download", "yes" if need_load_video else "no", warn=not need_load_video)
     print_colorized("Audio download", "yes" if need_load_audio else "no")
+    print_colorized("Files download", "yes" if need_load_audio else "no")
     print_colorized("Storage type", storage_type)
