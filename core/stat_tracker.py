@@ -15,6 +15,10 @@ class StatTracker:
     __passed_audio: int = 0
     __error_audio: int = 0
 
+    __downloaded_file: int = 0
+    __passed_file: int = 0
+    __error_file: int = 0
+
     total_photos: int = 0
     total_videos: int = 0
     total_audios: int = 0
@@ -30,6 +34,9 @@ class StatTracker:
     def add_downloaded_audio(self):
         self.__downloaded_audio += 1
 
+    def add_downloaded_file(self):
+        self.__downloaded_file += 1
+
     def add_passed_photo(self):
         self.__passed_photo += 1
 
@@ -38,6 +45,9 @@ class StatTracker:
 
     def add_passed_audio(self):
         self.__passed_audio += 1
+
+    def add_passed_file(self):
+        self.__passed_file += 1
 
     def add_error_photo(self):
         self.__error_photo += 1
@@ -48,6 +58,9 @@ class StatTracker:
     def add_error_audio(self):
         self.__error_audio += 1
 
+    def add_error_file(self):
+        self.__error_audio += 1
+
     def add_download_error(self, file_url: str):
         self.__download_errors.append(file_url)
 
@@ -56,7 +69,7 @@ class StatTracker:
             ['Photo Stat', 'Value'],
             ['TOTAL', self.total_photos],
             ['DOWNLOADED', self.__downloaded_photo],
-            ['COLLECTED IN LOCAL FILES', self.__passed_photo + self.__downloaded_photo],
+            ['FOUND LOCALLY', self.__passed_photo + self.__downloaded_photo],
             ['NOT DOWNLOADED DUE ERROR', self.__error_photo],
             ['NOT AVAILABLE', self.total_photos - (self.__passed_photo + self.__downloaded_photo + self.__error_photo)],
         ]
@@ -66,7 +79,7 @@ class StatTracker:
             ['Video Stat', 'Value'],
             ['TOTAL', self.total_videos],
             ['DOWNLOADED', self.__downloaded_video],
-            ['COLLECTED IN LOCAL FILES', self.__passed_video + self.__downloaded_video],
+            ['FOUND LOCALLY', self.__passed_video + self.__downloaded_video],
             ['NOT DOWNLOADED DUE ERROR', self.__error_video],
             ['NOT AVAILABLE', self.total_videos - (self.__passed_video + self.__downloaded_video + self.__error_video)],
         ]
@@ -76,13 +89,26 @@ class StatTracker:
             ['Audio Stat', 'Value'],
             ['TOTAL', self.total_audios],
             ['DOWNLOADED', self.__downloaded_audio],
-            ['COLLECTED IN LOCAL FILES', self.__passed_audio + self.__downloaded_audio],
+            ['FOUND LOCALLY', self.__passed_audio + self.__downloaded_audio],
             ['NOT DOWNLOADED DUE ERROR', self.__error_audio],
             ['NOT AVAILABLE', self.total_audios - (self.__passed_audio + self.__downloaded_audio + self.__error_audio)],
         ]
         audio_table = AsciiTable(audio_stat)
 
-        result = str(photo_table.table) + "\n\n" + str(video_table.table) + "\n\n" + str(audio_table.table)
+        file_stat = [
+            ['File Stat', 'Value'],
+            ['DOWNLOADED', self.__downloaded_file],
+            ['FOUND LOCALLY', self.__passed_file + self.__downloaded_file],
+            ['NOT DOWNLOADED DUE ERROR', self.__error_file],
+        ]
+        file_table = AsciiTable(file_stat)
+
+        result = (
+                str(photo_table.table) + "\n\n" +
+                str(video_table.table) + "\n\n" +
+                str(audio_table.table) + "\n\n" +
+                str(file_table.table) + "\n\n"
+        )
         if len(self.__download_errors):
             result += "\n\nWARNING: Downloading of some files failed!\n"
             result += "The following are the files that have not been downloaded for any reason:\n"

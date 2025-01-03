@@ -1,5 +1,7 @@
 import sys
 
+from welcome import print_welcome
+
 try:
     import asyncio
     import os.path
@@ -41,6 +43,7 @@ async def main():
         need_load_video=conf.need_load_video,
         need_load_photo=conf.need_load_photo,
         need_load_audio=conf.need_load_audio,
+        need_load_files=conf.need_load_files,
         storage_type=conf.storage_type
     )
     if not parse_bool(input("Proceed? (y/n) > ")):
@@ -63,6 +66,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
+        print_welcome()
         asyncio.run(main())
     except Exception as e:
         print(f"[{e.__class__.__name__}] App stopped")

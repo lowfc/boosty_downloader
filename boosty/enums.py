@@ -6,3 +6,5 @@ class MediaType(str, Enum):
     IMAGE = "image"
     TEXT = "text"
     AUDIO = "audio_file"
+    LINK = "link"
+    FILE = "file"

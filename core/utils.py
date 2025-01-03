@@ -24,8 +24,8 @@ async def download_file_if_not_exists(url: str, path: Path):
     return result
 
 
-async def create_text_document(path: Path, content: str, name: str = "contents"):
-    to_write = path / (name + ".txt")
+async def create_text_document(path: Path, content: str, ext: str = "txt", name: str = "contents"):
+    to_write = path / (name + "." + ext)
     async with aiofiles.open(to_write, "w", encoding="utf-8") as file:
         await file.write(content)
 
@@ -69,6 +69,7 @@ def print_summary(
     need_load_video: bool,
     need_load_photo: bool,
     need_load_audio: bool,
+    need_load_files: bool,
     storage_type: str,
 ):
     print_colorized("Sync media for", creator_name)
@@ -81,4 +82,5 @@ def print_summary(
     print_colorized("Photo download", "yes" if need_load_photo else "no", warn=not need_load_photo)
     print_colorized("Video download", "yes" if need_load_video else "no", warn=not need_load_video)
     print_colorized("Audio download", "yes" if need_load_audio else "no")
+    print_colorized("Files download", "yes" if need_load_audio else "no")
     print_colorized("Storage type", storage_type)
