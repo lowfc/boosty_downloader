@@ -1,19 +1,20 @@
 from pathlib import Path
 from typing import Any
-from core import logger
+from core.logger import logger
 from mutagen.mp4 import MP4, MP4Cover
 import aiohttp
 
+
 def parse_metadata(post: dict[str, Any], media: dict[str, Any]) -> dict[str, Any]:
-    return dict(
-        title=post["title"],
-        cover=media["preview"],
-    )
+    metadata = {}
+    if "title" in post:
+        metadata["title"] = post["title"]
+    if "preview" in media:
+        metadata["cover"] = media["preview"]
+    return metadata
 
-async def empty_meta(_, __):
-    return None
 
-async def write_metadata(file_path: Path, metadata: dict[str, Any] | None):
+async def write_video_metadata(file_path: Path, metadata: dict[str, Any] | None):
     """
     Write metadata to MP4 file
 
@@ -33,7 +34,6 @@ async def write_metadata(file_path: Path, metadata: dict[str, Any] | None):
         if "title" in metadata:
             video["\xa9nam"] = metadata["title"]
 
-
         if "description" in metadata:
             video["desc"] = metadata["description"]
 
@@ -43,10 +43,9 @@ async def write_metadata(file_path: Path, metadata: dict[str, Any] | None):
                 resp = await conn.get(metadata["cover"])
                 video['covr'] = [MP4Cover(await resp.read(), imageformat=MP4Cover.FORMAT_JPEG)]
 
-
         # Save the changes
         video.save()
 
-    except Exception:
-        logger.exception("Error writing metadata")
+    except Exception as e:
+        logger.exception("Error writing metadata", exc_info=e)
 
