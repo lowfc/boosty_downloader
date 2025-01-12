@@ -15,6 +15,7 @@ from boosty.wrappers.media_pool import MediaPool
 from boosty.defs import DEFAULT_LIMIT, DEFAULT_LIMIT_BY, BOOSTY_API_BASE_URL, DEFAULT_HEADERS, DOWNLOAD_HEADERS
 from core.defs import VIDEO_QUALITY
 from core.logger import logger
+from core.meta import parse_metadata
 from core.stat_tracker import stat_tracker
 
 
@@ -158,6 +159,7 @@ async def get_all_video_media(creator_name: str, media_pool: MediaPool, use_cook
                                     _id=media["id"],
                                     url=url["url"],
                                     size_amount=VIDEO_QUALITY[url["type"]],
+                                    meta=parse_metadata(post["post"], media),
                                 )
             if extra["isLast"]:
                 is_end = True
@@ -311,6 +313,7 @@ async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool
                                         _id=media["id"],
                                         url=url["url"],
                                         size_amount=VIDEO_QUALITY[url["type"]],
+                                        meta=parse_metadata(post, media),
                                     )
                         elif media["type"] == MediaType.IMAGE.value:
                             new_post.media_pool.add_image(
