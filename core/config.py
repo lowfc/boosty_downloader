@@ -1,3 +1,4 @@
+from os import getenv
 from pathlib import Path
 from typing import Optional, List, Literal
 from argparse import ArgumentParser
@@ -29,6 +30,7 @@ class Config:
     post_text_in_markdown: bool
     save_metadata: bool
     logs_path: Path
+    testing: bool
 
     def __init__(self):
         self.__arg_parser = ArgumentParser(prog='BoostyDownloader', description='Sync media with boosty.to')
@@ -43,12 +45,16 @@ class Config:
             help="Specify the id of the only post that needs to be synchronized. "
                  "Available only in post synchronization mode."
         )
+        self.testing = bool(getenv("TESTING", False))
         self.__load()
 
     def __load(self):
-        args = self.__arg_parser.parse_args()
-        self.__cfg_path = Path(args.config or r'./config.yml')
-        self.desired_post_id = args.post_id
+        self.__cfg_path = Path('./config.yml')
+        self.desired_post_id = None
+        if not self.testing:
+            args = self.__arg_parser.parse_args()
+            self.__cfg_path = Path(args.config or './config.yml')
+            self.desired_post_id = args.post_id
         try:
             with open(self.__cfg_path, "r", encoding="utf-8") as file:
                 data = yamload(file, FullLoader)
