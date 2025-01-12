@@ -1,34 +1,39 @@
 import asyncio
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from boosty.api import get_all_image_media, get_all_video_media, get_all_posts, get_all_audio_media
 from boosty.wrappers.post_pool import PostPool
 from core.config import conf
 from boosty.wrappers.media_pool import MediaPool
 from core.logger import logger
+from core.meta import write_metadata, empty_meta
 from core.stat_tracker import stat_tracker, StatTracker
 from core.utils import create_dir_if_not_exists, download_file_if_not_exists, create_text_document
 
 
-async def get_file_and_raise_stat(url: str, path_file: Path, tracker: StatTracker, _t: Literal["p", "v", "a", "f"]):
+async def get_file_and_raise_stat(url: str, path_file: Path, tracker: StatTracker, _t: Literal["p", "v", "a", "f"], metadata: dict[str, Any] | None = None):
     match _t:
         case "p":
             passed = tracker.add_passed_photo
             downloaded = tracker.add_downloaded_photo
             error = tracker.add_error_photo
+            meta = empty_meta
         case "v":
             passed = tracker.add_passed_video
             downloaded = tracker.add_downloaded_video
             error = tracker.add_error_video
+            meta = write_metadata
         case "a":
             passed = tracker.add_passed_audio
             downloaded = tracker.add_downloaded_audio
             error = tracker.add_error_audio
+            meta = empty_meta
         case "f":
             passed = tracker.add_passed_file
             downloaded = tracker.add_downloaded_file
             error = tracker.add_error_file
+            meta = empty_meta
         case _:
             logger.warning(f"Unknown _t: {_t}")
             return
@@ -38,6 +43,7 @@ async def get_file_and_raise_stat(url: str, path_file: Path, tracker: StatTracke
             downloaded()
         else:
             passed()
+        await meta(path_file, metadata)
     except Exception as e:
         logger.warning(f"err download {url}", exc_info=e)
         error()
@@ -94,7 +100,7 @@ async def fetch_and_save_media(creator_name: str, use_cookie: bool):
         i = 0
         for video in videos:
             path = video_path / (video["id"] + ".mp4")
-            grp_videos.append(get_file_and_raise_stat(video["url"], path, stat_tracker, "v"))
+            grp_videos.append(get_file_and_raise_stat(video["url"], path, stat_tracker, "v", video["meta"]))
             i += 1
             if i == conf.max_download_parallel:
                 coros.append(grp_videos)
@@ -178,7 +184,7 @@ async def fetch_and_save_posts(creator_name: str, use_cookie: bool):
             i = 0
             for video in videos:
                 path = video_path / (video["id"] + ".mp4")
-                grp_videos.append(get_file_and_raise_stat(video["url"], path, stat_tracker, "v"))
+                grp_videos.append(get_file_and_raise_stat(video["url"], path, stat_tracker, "v", video["meta"]))
                 i += 1
                 if i == conf.max_download_parallel:
                     coros.append(grp_videos)
