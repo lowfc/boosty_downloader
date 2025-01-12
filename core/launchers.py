@@ -7,33 +7,39 @@ from boosty.wrappers.post_pool import PostPool
 from core.config import conf
 from boosty.wrappers.media_pool import MediaPool
 from core.logger import logger
-from core.meta import write_metadata, empty_meta
+from core.meta import write_video_metadata
 from core.stat_tracker import stat_tracker, StatTracker
 from core.utils import create_dir_if_not_exists, download_file_if_not_exists, create_text_document
 
 
-async def get_file_and_raise_stat(url: str, path_file: Path, tracker: StatTracker, _t: Literal["p", "v", "a", "f"], metadata: dict[str, Any] | None = None):
+async def get_file_and_raise_stat(
+    url: str,
+    path_file: Path,
+    tracker: StatTracker,
+    _t: Literal["p", "v", "a", "f"],
+    metadata: dict[str, Any] | None = None
+):
     match _t:
         case "p":
             passed = tracker.add_passed_photo
             downloaded = tracker.add_downloaded_photo
             error = tracker.add_error_photo
-            meta = empty_meta
+            meta_writer = None
         case "v":
             passed = tracker.add_passed_video
             downloaded = tracker.add_downloaded_video
             error = tracker.add_error_video
-            meta = write_metadata
+            meta_writer = write_video_metadata
         case "a":
             passed = tracker.add_passed_audio
             downloaded = tracker.add_downloaded_audio
             error = tracker.add_error_audio
-            meta = empty_meta
+            meta_writer = None
         case "f":
             passed = tracker.add_passed_file
             downloaded = tracker.add_downloaded_file
             error = tracker.add_error_file
-            meta = empty_meta
+            meta_writer = None
         case _:
             logger.warning(f"Unknown _t: {_t}")
             return
@@ -41,9 +47,10 @@ async def get_file_and_raise_stat(url: str, path_file: Path, tracker: StatTracke
     try:
         if await download_file_if_not_exists(url, path_file):
             downloaded()
+            if conf.save_metadata and meta_writer:
+                await meta_writer(path_file, metadata)
         else:
             passed()
-        await meta(path_file, metadata)
     except Exception as e:
         logger.warning(f"err download {url}", exc_info=e)
         error()

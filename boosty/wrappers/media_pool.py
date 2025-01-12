@@ -84,7 +84,7 @@ class MediaPool:
     def get_videos(self) -> List[Dict]:
         """
         Get all videos
-        :return: [{"id": 1, "url": "https://s3.com/1"}, ...]
+        :return: [{"id": 1, "url": "https://s3.com/1", "meta": {}}, ...]
         """
         res = []
         for video_id in self.__videos.keys():

@@ -19,12 +19,15 @@ class Config:
 
     need_load_photo: bool
     need_load_video: bool
+    need_load_audio: bool
+    need_load_files: bool
 
     storage_type: Literal["post", "media"]
     desired_post_id: Optional[str]
 
     save_logs_to_file: bool
     post_text_in_markdown: bool
+    save_metadata: bool
     logs_path: Path
 
     def __init__(self):
@@ -68,6 +71,7 @@ class Config:
         self.need_load_files = True
         self.storage_type = content_conf.get("storage_type")
         self.post_text_in_markdown = content_conf.get("post_text_in_markdown", True)
+        self.save_metadata = content_conf.get("save_metadata", True)
         self.save_logs_to_file = logging_conf.get("enable_file_logging", False)
         self.logs_path = Path(logging_conf.get("logs_path", "./"))
         collect: Optional[List[str]] = content_conf.get("collect", "media")
