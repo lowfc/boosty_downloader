@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional, List, Literal
 from argparse import ArgumentParser
@@ -50,9 +51,13 @@ class Config:
         self.__load()
 
     def __load(self):
-        args = self.__arg_parser.parse_args()
-        self.__cfg_path = Path(args.config or r'./config.yml')
-        self.desired_post_id = args.post_id
+        cfg_path = "./config.yml"
+        if os.getenv("TESTING") != "1":
+            args = self.__arg_parser.parse_args()
+            cfg_path = args.config or cfg_path
+            self.desired_post_id = args.post_id
+
+        self.__cfg_path = Path(cfg_path)
         try:
             with open(self.__cfg_path, "r", encoding="utf-8") as file:
                 data = yamload(file, FullLoader)

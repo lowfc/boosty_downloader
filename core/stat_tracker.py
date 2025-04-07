@@ -59,7 +59,7 @@ class StatTracker:
         self.__error_audio += 1
 
     def add_error_file(self):
-        self.__error_audio += 1
+        self.__error_file += 1
 
     def add_download_error(self, file_url: str):
         self.__download_errors.append(file_url)

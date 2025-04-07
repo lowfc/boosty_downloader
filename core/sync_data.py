@@ -47,7 +47,8 @@ class SyncData:
                 raw = f.read()
                 obj = json.loads(raw)
                 try:
-                    sd.last_sync_utc = datetime.fromisoformat(obj["last_sync_utc"]) if obj["last_sync_utc"] else None
+                    if obj["last_sync_utc"]:
+                        sd.last_sync_utc = datetime.fromisoformat(obj["last_sync_utc"])
                     sd.creator_name = obj["creator_name"]
                     sd.last_photo_offset = obj["last_photo_offset"]
                     sd.last_audio_offset = obj["last_audio_offset"]
