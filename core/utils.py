@@ -1,10 +1,10 @@
 import os
 import re
 from pathlib import Path
+from typing import Optional
 
 import aiofiles
 
-from boosty.api import download_file
 from core.defs import AsciiCommands
 from core.logger import logger
 
@@ -13,15 +13,6 @@ def create_dir_if_not_exists(path: Path):
     if not os.path.isdir(path):
         logger.info(f"create directory: {path}")
         os.mkdir(path)
-
-
-async def download_file_if_not_exists(url: str, path: Path):
-    if os.path.isfile(path):
-        logger.debug(f"pass saving file {path}: already exists")
-        return False
-    logger.info(f"will save file: {path}")
-    result = await download_file(url, path)
-    return result
 
 
 async def create_text_document(path: Path, content: str, ext: str = "txt", name: str = "contents"):
@@ -84,3 +75,13 @@ def print_summary(
     print_colorized("Audio download", "yes" if need_load_audio else "no", warn=not need_load_audio)
     print_colorized("Files download", "yes" if need_load_files else "no", warn=not need_load_files)
     print_colorized("Storage type", storage_type)
+
+
+def parse_offset_time(offset: str) -> Optional[int]:
+    if not offset:
+        return
+    try:
+        parts = offset.split(":")
+        return int(parts[0])
+    except Exception as e:
+        logger.error(f"Failed parse offset {offset}")

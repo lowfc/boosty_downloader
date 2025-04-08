@@ -59,7 +59,7 @@ class StatTracker:
         self.__error_audio += 1
 
     def add_error_file(self):
-        self.__error_audio += 1
+        self.__error_file += 1
 
     def add_download_error(self, file_url: str):
         self.__download_errors.append(file_url)
@@ -69,7 +69,7 @@ class StatTracker:
             ['Photo Stat', 'Value'],
             ['TOTAL', self.total_photos],
             ['DOWNLOADED', self.__downloaded_photo],
-            ['FOUND LOCALLY', self.__passed_photo + self.__downloaded_photo],
+            ['PASSED DUE FOUND LOCALLY', self.__passed_photo + self.__downloaded_photo],
             ['NOT DOWNLOADED DUE ERROR', self.__error_photo],
             ['NOT AVAILABLE', self.total_photos - (self.__passed_photo + self.__downloaded_photo + self.__error_photo)],
         ]
@@ -79,7 +79,7 @@ class StatTracker:
             ['Video Stat', 'Value'],
             ['TOTAL', self.total_videos],
             ['DOWNLOADED', self.__downloaded_video],
-            ['FOUND LOCALLY', self.__passed_video + self.__downloaded_video],
+            ['PASSED DUE FOUND LOCALLY', self.__passed_video + self.__downloaded_video],
             ['NOT DOWNLOADED DUE ERROR', self.__error_video],
             ['NOT AVAILABLE', self.total_videos - (self.__passed_video + self.__downloaded_video + self.__error_video)],
         ]
@@ -89,7 +89,7 @@ class StatTracker:
             ['Audio Stat', 'Value'],
             ['TOTAL', self.total_audios],
             ['DOWNLOADED', self.__downloaded_audio],
-            ['FOUND LOCALLY', self.__passed_audio + self.__downloaded_audio],
+            ['PASSED DUE FOUND LOCALLY', self.__passed_audio + self.__downloaded_audio],
             ['NOT DOWNLOADED DUE ERROR', self.__error_audio],
             ['NOT AVAILABLE', self.total_audios - (self.__passed_audio + self.__downloaded_audio + self.__error_audio)],
         ]
@@ -98,7 +98,7 @@ class StatTracker:
         file_stat = [
             ['File Stat', 'Value'],
             ['DOWNLOADED', self.__downloaded_file],
-            ['FOUND LOCALLY', self.__passed_file + self.__downloaded_file],
+            ['PASSED DUE FOUND LOCALLY', self.__passed_file + self.__downloaded_file],
             ['NOT DOWNLOADED DUE ERROR', self.__error_file],
         ]
         file_table = AsciiTable(file_stat)

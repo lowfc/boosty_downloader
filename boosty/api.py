@@ -1,7 +1,7 @@
 import asyncio
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 import aiofiles
 from aiohttp import ClientSession
@@ -17,6 +17,8 @@ from core.defs import VIDEO_QUALITY
 from core.logger import logger
 from core.meta import parse_metadata
 from core.stat_tracker import stat_tracker
+from core.sync_data import SyncData
+from core.utils import parse_offset_time
 
 
 async def get_media_list(
@@ -54,11 +56,20 @@ async def get_media_list(
     return result
 
 
-async def get_all_image_media(creator_name: str, media_pool: MediaPool, use_cookie: bool):
+async def get_all_image_media(
+    creator_name: str,
+    media_pool: MediaPool,
+    use_cookie: bool,
+    sync_data: Optional[SyncData] = None,
+):
     is_end = False
     offset = None
     errors = 0
     logger.info(f"get all photos for {creator_name}")
+    eot = None
+    fot = None
+    if sync_data and sync_data.last_photo_offset:
+        eot = int(sync_data.last_photo_offset)
     async with ClientSession() as session:
         while not is_end:
             if errors > 10:
@@ -88,13 +99,32 @@ async def get_all_image_media(creator_name: str, media_pool: MediaPool, use_cook
             if extra["isLast"]:
                 is_end = True
             offset = extra["offset"]
-            await asyncio.sleep(0.6)
+            parsed_offset = parse_offset_time(offset)
+            if fot is None and parsed_offset:
+                fot = parsed_offset
+            if eot and parsed_offset:
+                if parsed_offset <= eot:
+                    logger.debug(f"Stop scanning image media due to next api offset"
+                                 f" <= last saved offset: {parsed_offset} <= {eot}")
+                    is_end = True
+            await asyncio.sleep(0.5)
+        if fot and sync_data:
+            sync_data.last_photo_offset = fot
 
 
-async def get_all_audio_media(creator_name: str, media_pool: MediaPool, use_cookie: bool):
+async def get_all_audio_media(
+    creator_name: str,
+    media_pool: MediaPool,
+    use_cookie: bool,
+    sync_data: Optional[SyncData] = None,
+):
     is_end = False
     offset = None
     errors = 0
+    eot = None
+    fot = None
+    if sync_data and sync_data.last_audio_offset:
+        eot = int(sync_data.last_audio_offset)
     logger.info(f"get all audios for {creator_name}")
     async with ClientSession() as session:
         while not is_end:
@@ -125,13 +155,32 @@ async def get_all_audio_media(creator_name: str, media_pool: MediaPool, use_cook
             if extra["isLast"]:
                 is_end = True
             offset = extra["offset"]
+            parsed_offset = parse_offset_time(offset)
+            if fot is None and parsed_offset:
+                fot = parsed_offset
+            if eot and parsed_offset:
+                if parsed_offset <= eot:
+                    logger.debug(f"Stop scanning audio media due to next api offset"
+                                 f" <= last saved offset: {parsed_offset} <= {eot}")
+                    is_end = True
             await asyncio.sleep(0.6)
+        if fot and sync_data:
+            sync_data.last_audio_offset = fot
 
 
-async def get_all_video_media(creator_name: str, media_pool: MediaPool, use_cookie: bool):
+async def get_all_video_media(
+    creator_name: str,
+    media_pool: MediaPool,
+    use_cookie: bool,
+    sync_data: Optional[SyncData] = None,
+):
     is_end = False
     offset = None
     errors = 0
+    eot = None
+    fot = None
+    if sync_data and sync_data.last_video_offset:
+        eot = int(sync_data.last_video_offset)
     logger.info(f"get all videos for {creator_name}")
     async with ClientSession() as session:
         while not is_end:
@@ -164,7 +213,17 @@ async def get_all_video_media(creator_name: str, media_pool: MediaPool, use_cook
             if extra["isLast"]:
                 is_end = True
             offset = extra["offset"]
+            parsed_offset = parse_offset_time(offset)
+            if fot is None and parsed_offset:
+                fot = parsed_offset
+            if eot and parsed_offset:
+                if parsed_offset <= eot:
+                    logger.debug(f"Stop scanning video media due to next api offset"
+                                 f" <= last saved offset: {parsed_offset} <= {eot}")
+                    is_end = True
             await asyncio.sleep(0.6)
+        if fot and sync_data:
+            sync_data.last_video_offset = fot
 
 
 async def download_file(url: str, path: Path) -> bool:
@@ -244,7 +303,7 @@ async def get_post_list(
     use_cookie: bool,
     limit: int = DEFAULT_LIMIT,
     limit_by: str = DEFAULT_LIMIT_BY,
-    offset: str = None
+    offset: str = None,
 ):
     params = {
         "limit": limit,
@@ -275,10 +334,19 @@ async def get_post_list(
     return result
 
 
-async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool):
+async def get_all_posts(
+    creator_name: str,
+    post_pool: PostPool,
+    use_cookie: bool,
+    sync_data: Optional[SyncData] = None,
+):
     is_end = False
     offset = None
     errors = 0
+    eot = None
+    fot = None
+    if sync_data and sync_data.last_posts_offset:
+        eot = int(sync_data.last_posts_offset)
     logger.info(f"get all posts for {creator_name}")
     async with ClientSession() as session:
         while not is_end:
@@ -346,4 +414,14 @@ async def get_all_posts(creator_name: str, post_pool: PostPool, use_cookie: bool
             if extra["isLast"]:
                 is_end = True
             offset = extra["offset"]
+            parsed_offset = parse_offset_time(offset)
+            if fot is None and parsed_offset:
+                fot = parsed_offset
+            if eot and parsed_offset:
+                if parsed_offset <= eot:
+                    logger.debug(f"Stop scanning posts due to next api offset"
+                                 f" <= last saved offset: {parsed_offset} <= {eot}")
+                    is_end = True
             await asyncio.sleep(0.6)
+        if fot and sync_data:
+            sync_data.last_posts_offset = fot

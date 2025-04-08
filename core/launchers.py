@@ -1,15 +1,19 @@
 import asyncio
+import os
+from datetime import datetime
+from datetime import UTC as UTCtz
 from pathlib import Path
 from typing import Any, Literal
 
-from boosty.api import get_all_image_media, get_all_video_media, get_all_posts, get_all_audio_media
+from boosty.api import get_all_image_media, get_all_video_media, get_all_posts, get_all_audio_media, download_file
 from boosty.wrappers.post_pool import PostPool
 from core.config import conf
 from boosty.wrappers.media_pool import MediaPool
 from core.logger import logger
 from core.meta import write_video_metadata
 from core.stat_tracker import stat_tracker, StatTracker
-from core.utils import create_dir_if_not_exists, download_file_if_not_exists, create_text_document
+from core.sync_data import SyncData
+from core.utils import create_dir_if_not_exists, create_text_document
 
 
 async def get_file_and_raise_stat(
@@ -19,6 +23,14 @@ async def get_file_and_raise_stat(
     _t: Literal["p", "v", "a", "f"],
     metadata: dict[str, Any] | None = None
 ):
+    async def download_file_if_not_exists(file_url: str, path: Path):
+        if os.path.isfile(path):
+            logger.debug(f"pass saving file {path}: already exists")
+            return False
+        logger.info(f"will save file: {path}")
+        result = await download_file(file_url, path)
+        return result
+
     match _t:
         case "p":
             passed = tracker.add_passed_photo
@@ -65,19 +77,43 @@ async def fetch_and_save_media(creator_name: str, use_cookie: bool):
     create_dir_if_not_exists(photo_path)
     create_dir_if_not_exists(video_path)
     create_dir_if_not_exists(audio_path)
+    sync_data = None
+    if conf.sync_offset_save:
+        sync_data_file_path = conf.sync_dir / creator_name / conf.default_sd_file_name
+        sync_data = SyncData.load(sync_data_file_path)
+        if not sync_data:
+            logger.warning(f"Not found last offset for {creator_name}, run full sync")
+            sync_data = SyncData(sync_data_file_path)
+            sync_data.creator_name = creator_name
+            sync_data.save()
     media_pool = MediaPool()
     tasks = []
     if conf.need_load_photo:
         tasks.append(
-            get_all_image_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie)
+            get_all_image_media(
+                creator_name=creator_name,
+                media_pool=media_pool,
+                use_cookie=use_cookie,
+                sync_data=sync_data
+            )
         )
     if conf.need_load_video:
         tasks.append(
-            get_all_video_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie)
+            get_all_video_media(
+                creator_name=creator_name,
+                media_pool=media_pool,
+                use_cookie=use_cookie,
+                sync_data=sync_data
+            )
         )
     if conf.need_load_audio:
         tasks.append(
-            get_all_audio_media(creator_name=creator_name, media_pool=media_pool, use_cookie=use_cookie)
+            get_all_audio_media(
+                creator_name=creator_name,
+                media_pool=media_pool,
+                use_cookie=use_cookie,
+                sync_data=sync_data
+            )
         )
     if conf.need_load_files:
         logger.warning("ATTACHED FILES WILL NOT BE DOWNLOADED IN MEDIA STORAGE MODE")
@@ -134,7 +170,9 @@ async def fetch_and_save_media(creator_name: str, use_cookie: bool):
         else:
             logger.warning("Can't download audio without authorization. "
                            "Fill authorization fields in config to store audio files.")
-
+    if sync_data:
+        sync_data.last_sync_utc = datetime.now(UTCtz)
+        sync_data.save()
     for grp in coros:
         await asyncio.gather(*grp)
         await asyncio.sleep(0)
@@ -145,8 +183,17 @@ async def fetch_and_save_posts(creator_name: str, use_cookie: bool):
     create_dir_if_not_exists(base_path)
     posts_path = base_path / "posts"
     create_dir_if_not_exists(posts_path)
+    sync_data = None
+    if conf.sync_offset_save:
+        sync_data_file_path = conf.sync_dir / creator_name / conf.default_sd_file_name
+        sync_data = SyncData.load(sync_data_file_path)
+        if not sync_data:
+            logger.warning(f"Not found last offset for {creator_name}, run full sync")
+            sync_data = SyncData(sync_data_file_path)
+            sync_data.creator_name = creator_name
+            sync_data.save()
     post_pool = PostPool()
-    await get_all_posts(creator_name=creator_name, post_pool=post_pool, use_cookie=use_cookie)
+    await get_all_posts(creator_name=creator_name, post_pool=post_pool, use_cookie=use_cookie, sync_data=sync_data)
     coros = []
     desired_post_id = conf.desired_post_id
     if desired_post_id:
@@ -238,6 +285,9 @@ async def fetch_and_save_posts(creator_name: str, use_cookie: bool):
                 logger.warning("Can't download attached files without authorization. "
                                "Fill authorization fields in config to store attached files.")
 
+    if sync_data:
+        sync_data.last_sync_utc = datetime.now(UTCtz)
+        sync_data.save()
     for grp in coros:
         await asyncio.gather(*grp)
         await asyncio.sleep(0)

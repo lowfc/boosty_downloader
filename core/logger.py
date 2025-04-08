@@ -4,7 +4,7 @@ from datetime import datetime
 from core.config import conf
 
 logger = logging.getLogger("boosty_downloader")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG if conf.debug else logging.INFO)
 
 stream_handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")

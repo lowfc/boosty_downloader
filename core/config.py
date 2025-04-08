@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional, List, Literal
 from argparse import ArgumentParser
@@ -21,6 +22,8 @@ class Config:
     need_load_video: bool
     need_load_audio: bool
     need_load_files: bool
+    sync_offset_save: bool
+    debug: bool
 
     storage_type: Literal["post", "media"]
     desired_post_id: Optional[str]
@@ -29,6 +32,8 @@ class Config:
     post_text_in_markdown: bool
     save_metadata: bool
     logs_path: Path
+
+    default_sd_file_name: str
 
     def __init__(self):
         self.__arg_parser = ArgumentParser(prog='BoostyDownloader', description='Sync media with boosty.to')
@@ -46,9 +51,13 @@ class Config:
         self.__load()
 
     def __load(self):
-        args = self.__arg_parser.parse_args()
-        self.__cfg_path = Path(args.config or r'./config.yml')
-        self.desired_post_id = args.post_id
+        cfg_path = "./config.yml"
+        if os.getenv("TESTING") != "1":
+            args = self.__arg_parser.parse_args()
+            cfg_path = args.config or cfg_path
+            self.desired_post_id = args.post_id
+
+        self.__cfg_path = Path(cfg_path)
         try:
             with open(self.__cfg_path, "r", encoding="utf-8") as file:
                 data = yamload(file, FullLoader)
@@ -65,6 +74,8 @@ class Config:
         self.download_chunk_size = int(file_conf.get("download_chunk_size", 153600))
         self.download_timeout = int(file_conf.get("download_timeout", 3600))
         self.max_download_parallel = int(file_conf.get("max_download_parallel", 5))
+        self.sync_offset_save = file_conf.get("sync_offset_save", False)
+        self.debug = file_conf.get("debug", False)
         self.need_load_photo = True
         self.need_load_video = True
         self.need_load_audio = True
@@ -80,6 +91,7 @@ class Config:
             self.need_load_video = "videos" in collect
             self.need_load_audio = "audios" in collect
             self.need_load_files = "files" in collect
+        self.default_sd_file_name = "meta.json"
 
     def ready_to_auth(self) -> bool:
         if self.cookie is None or self.authorization is None:
