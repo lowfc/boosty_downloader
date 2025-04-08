@@ -35,7 +35,7 @@ class Post:
         self.media_pool.add_image(_id, url, width, height)
 
     def add_video(self, _id: str, url: str, size_amount: int):
-        self.media_pool.add_video(_id, url, size_amount)
+        self.media_pool.add_video(_id, url, size_amount, meta={})
 
     def parse_line_markdown(self, text: str, codes: list) -> str:
         result = ""
@@ -91,7 +91,7 @@ class Post:
         result = ""
         if self.title:
             if self.markdown_text:
-                result += "# "
+                result += "# " + self.title + "\n"
             else:
                 result += self.title + "\n" + ("-" * len(self.title)) + "\n\n"
         if len(self.text_blocks):
