@@ -61,6 +61,9 @@ def print_summary(
     need_load_photo: bool,
     need_load_audio: bool,
     need_load_files: bool,
+    post_masquerade: bool,
+    sync_offset_save: bool,
+    video_size_restriction: str,
     storage_type: str,
 ):
     print_colorized("Sync media for", creator_name)
@@ -74,6 +77,10 @@ def print_summary(
     print_colorized("Video download", "yes" if need_load_video else "no", warn=not need_load_video)
     print_colorized("Audio download", "yes" if need_load_audio else "no", warn=not need_load_audio)
     print_colorized("Files download", "yes" if need_load_files else "no", warn=not need_load_files)
+    print_colorized("Save original posts name", "yes" if post_masquerade else "no")
+    print_colorized("Save sync offset", "yes" if sync_offset_save else "no", warn=sync_offset_save)
+    mvs = ("not " if video_size_restriction == 1000 else "") + "restricted"
+    print_colorized("Max video size", mvs, warn=video_size_restriction != 1000)
     print_colorized("Storage type", storage_type)
 
 
@@ -83,5 +90,5 @@ def parse_offset_time(offset: str) -> Optional[int]:
     try:
         parts = offset.split(":")
         return int(parts[0])
-    except Exception as e:
+    except Exception:
         logger.error(f"Failed parse offset {offset}")

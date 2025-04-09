@@ -69,9 +69,8 @@ class StatTracker:
             ['Photo Stat', 'Value'],
             ['TOTAL', self.total_photos],
             ['DOWNLOADED', self.__downloaded_photo],
-            ['PASSED DUE FOUND LOCALLY', self.__passed_photo + self.__downloaded_photo],
-            ['NOT DOWNLOADED DUE ERROR', self.__error_photo],
-            ['NOT AVAILABLE', self.total_photos - (self.__passed_photo + self.__downloaded_photo + self.__error_photo)],
+            ['PASSED DUE FOUND', self.__passed_photo],
+            ['PASSED DUE ERROR', self.__error_photo],
         ]
         photo_table = AsciiTable(photo_stat)
 
@@ -79,9 +78,8 @@ class StatTracker:
             ['Video Stat', 'Value'],
             ['TOTAL', self.total_videos],
             ['DOWNLOADED', self.__downloaded_video],
-            ['PASSED DUE FOUND LOCALLY', self.__passed_video + self.__downloaded_video],
-            ['NOT DOWNLOADED DUE ERROR', self.__error_video],
-            ['NOT AVAILABLE', self.total_videos - (self.__passed_video + self.__downloaded_video + self.__error_video)],
+            ['PASSED DUE FOUND', self.__passed_video],
+            ['PASSED DUE ERROR', self.__error_video],
         ]
         video_table = AsciiTable(video_stat)
 
@@ -89,17 +87,16 @@ class StatTracker:
             ['Audio Stat', 'Value'],
             ['TOTAL', self.total_audios],
             ['DOWNLOADED', self.__downloaded_audio],
-            ['PASSED DUE FOUND LOCALLY', self.__passed_audio + self.__downloaded_audio],
-            ['NOT DOWNLOADED DUE ERROR', self.__error_audio],
-            ['NOT AVAILABLE', self.total_audios - (self.__passed_audio + self.__downloaded_audio + self.__error_audio)],
+            ['PASSED DUE FOUND', self.__passed_audio],
+            ['PASSED DUE ERROR', self.__error_audio],
         ]
         audio_table = AsciiTable(audio_stat)
 
         file_stat = [
             ['File Stat', 'Value'],
             ['DOWNLOADED', self.__downloaded_file],
-            ['PASSED DUE FOUND LOCALLY', self.__passed_file + self.__downloaded_file],
-            ['NOT DOWNLOADED DUE ERROR', self.__error_file],
+            ['PASSED DUE FOUND', self.__passed_file],
+            ['PASSED DUE ERROR', self.__error_file],
         ]
         file_table = AsciiTable(file_stat)
 

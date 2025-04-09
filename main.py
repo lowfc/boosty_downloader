@@ -44,7 +44,10 @@ async def main():
         need_load_photo=conf.need_load_photo,
         need_load_audio=conf.need_load_audio,
         need_load_files=conf.need_load_files,
-        storage_type=conf.storage_type
+        post_masquerade=conf.enable_post_masquerade,
+        sync_offset_save=conf.sync_offset_save,
+        video_size_restriction=conf.max_video_file_size,
+        storage_type=conf.storage_type,
     )
     if not parse_bool(input("Proceed? (y/n) > ")):
         raise SyncCancelledExc
@@ -69,7 +72,8 @@ if __name__ == "__main__":
         print_welcome()
         asyncio.run(main())
     except Exception as e:
-        print(f"[{e.__class__.__name__}] App stopped")
-        raise e
+        print(f"[{e.__class__.__name__}] App stopped with error: {e}")
+        if conf.debug:
+            raise e
     finally:
         input("\nPress enter to exit...")

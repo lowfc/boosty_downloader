@@ -6,6 +6,7 @@ VIDEO_QUALITY = {
     "high": 2,
     "full_hd": 3,
     "ultra_hd": 4,
+    "no_restrict": 1000,
 }
 
 
