@@ -5,6 +5,7 @@ from typing import Literal, Any, Optional, Awaitable
 
 from boosty.api import download_file
 from boosty.wrappers.media_pool import MediaPool
+from core.defs import ContentType
 from core.logger import logger
 from core.meta import write_video_metadata
 from core.utils import create_dir_if_not_exists
@@ -82,6 +83,18 @@ class Downloader:
             except Exception as e:
                 logger.warning(f"err download {url}", exc_info=e)
                 error()
+
+    async def download_by_content_type(self, content_type: ContentType):
+        match content_type:
+            case ContentType.IMAGE:
+                await self.download_photos()
+                return
+            case ContentType.VIDEO:
+                await self.download_videos()
+                return
+            case ContentType.AUDIO:
+                await self.download_audios()
+                return
 
     async def download_photos(self):
         tasks = []

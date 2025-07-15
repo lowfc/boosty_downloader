@@ -78,7 +78,7 @@ def print_summary(
     print_colorized("Audio download", "yes" if need_load_audio else "no", warn=not need_load_audio)
     print_colorized("Files download", "yes" if need_load_files else "no", warn=not need_load_files)
     print_colorized("Save original posts name", "yes" if post_masquerade else "no")
-    print_colorized("Save sync offset", "yes" if sync_offset_save else "no", warn=sync_offset_save)
+    print_colorized("Save sync offset", "yes" if sync_offset_save else "no", warn=not sync_offset_save)
     mvs = ("not " if video_size_restriction == 1000 else "") + "restricted"
     print_colorized("Max video size", mvs, warn=video_size_restriction != 1000)
     print_colorized("Storage type", storage_type)
