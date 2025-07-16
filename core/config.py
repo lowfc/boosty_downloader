@@ -79,7 +79,6 @@ class Config:
         self.download_timeout = int(file_conf.get("download_timeout", 3600))
         self.max_download_parallel = int(file_conf.get("max_download_parallel", 5))
         self.sync_offset_save = bool(file_conf.get("sync_offset_save", False))
-        self.debug = bool(file_conf.get("debug", False))
         self.enable_post_masquerade = bool(file_conf.get("enable_post_masquerade", False))
         max_video_file_size = file_conf.get("max_video_file_size", "no_restrict")
         if max_video_file_size not in VIDEO_QUALITY:
@@ -94,6 +93,7 @@ class Config:
         self.save_metadata = bool(content_conf.get("save_metadata", True))
         self.save_logs_to_file = bool(logging_conf.get("enable_file_logging", False))
         self.logs_path = Path(logging_conf.get("logs_path", "./"))
+        self.debug = bool(logging_conf.get("debug", False))
         collect: Optional[List[str]] = content_conf.get("collect", "media")
         if collect:
             self.need_load_photo = "photos" in collect
@@ -104,6 +104,8 @@ class Config:
 
     def ready_to_auth(self) -> bool:
         if self.cookie is None or self.authorization is None:
+            return False
+        if len(self.cookie) < 10 or len(self.authorization) < 10:
             return False
         return True
 

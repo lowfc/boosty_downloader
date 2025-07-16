@@ -11,7 +11,7 @@ VIDEO_QUALITY = {
 
 
 class AsciiCommands(str, Enum):
-    COLORIZE_DEFAULT = '\033[0m\n'
+    COLORIZE_DEFAULT = '\033[0m'
     COLORIZE_WARN = '\033[91m'
     COLORIZE_HIGHLIGHT = '\033[92m'
 

@@ -289,3 +289,98 @@ async def get_all_posts(
             post_pool.set_offset(extra["offset"])
             return
         logger.error("Break posts get due errors")
+
+
+async def fetch_post_by_id(
+    session: ClientSession,
+    creator_name: str,
+    post_id: str,
+    use_cookie: bool,
+):
+    try:
+        send_headers = copy(DEFAULT_HEADERS)
+        if use_cookie and conf.ready_to_auth():
+            send_headers["Cookie"] = conf.cookie
+            send_headers["Authorization"] = conf.authorization
+        url = BOOSTY_API_BASE_URL + f"/v1/blog/{creator_name}/post/{post_id}"
+        logger.info("GET " + url)
+        resp = await session.get(
+            url,
+            headers=send_headers
+        )
+        if resp.status != 200:
+            raise Exception(f"{resp.status} on get post by id")
+        result = await resp.json()
+    except Exception as e:
+        logger.error("Failed get posts", exc_info=e)
+        result = None
+    return result
+
+
+async def get_post_by_id(
+    creator_name: str,
+    post_id: str,
+    post_pool: PostPool,
+    use_cookie: bool,
+    offset: Optional[str] = None,
+):
+    logger.info(f"get posts for {creator_name}")
+    async with ClientSession() as session:
+        for i in range(10):
+            resp = await fetch_post_by_id(
+                session=session,
+                creator_name=creator_name,
+                post_id=post_id,
+                use_cookie=use_cookie,
+            )
+            if not resp:
+                continue
+
+            if resp["hasAccess"]:
+                new_post = Post(
+                    _id=resp["id"],
+                    title=resp["title"],
+                    markdown_text=conf.post_text_in_markdown,
+                    publish_time=resp["publishTime"]
+                )
+                signed_query = resp.get("signedQuery", "")
+                for media in resp["data"]:
+                    if media["type"] == MediaType.VIDEO.value:
+                        for url in media["playerUrls"]:
+                            if url["type"] in VIDEO_QUALITY.keys() and url["url"] != "":
+                                new_post.media_pool.add_video(
+                                    _id=media["id"],
+                                    url=url["url"],
+                                    size_amount=VIDEO_QUALITY[url["type"]],
+                                    meta=parse_metadata(resp, media),
+                                )
+                    elif media["type"] == MediaType.IMAGE.value:
+                        new_post.media_pool.add_image(
+                            _id=media["id"],
+                            url=media["url"],
+                            width=media["width"],
+                            height=media["height"]
+                        )
+                    elif media["type"] == MediaType.AUDIO.value:
+                        new_post.media_pool.add_audio(
+                            _id=media["id"],
+                            url=media["url"] + signed_query,
+                            size_amount=media["size"],
+                        )
+                    elif media["type"] == MediaType.FILE.value:
+                        new_post.media_pool.add_file(
+                            _id=media["id"],
+                            url=media["url"] + signed_query,
+                            size_amount=media["size"],
+                            title=media["title"]
+                        )
+                    elif media["type"] == MediaType.TEXT.value:
+                        if media["modificator"] == "":
+                            new_post.add_marshaled_text(media["content"])
+                        elif media["modificator"] == "BLOCK_END":
+                            new_post.add_block_end()
+                    elif media["type"] == MediaType.LINK.value:
+                        new_post.add_link(media["content"], media["url"])
+                post_pool.add_post(new_post, offset)
+            post_pool.close()
+            return
