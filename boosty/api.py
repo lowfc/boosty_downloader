@@ -116,19 +116,28 @@ async def download_file(url: str, path: Path) -> bool:
         raise Exception("Empty url")
     try:
         async with ClientSession() as session:
-            logger.info(f"preparing download {url}")
             headers = copy(DEFAULT_HEADERS)
             headers.update(DOWNLOAD_HEADERS)
-            response = await session.get(
-                url,
-                headers=headers,
-                allow_redirects=True,
-                timeout=conf.download_timeout
-            )
+            length = 0
+            for i in range(3):
+                logger.info(f"preparing download {url}")
+                response = await session.get(
+                    url,
+                    headers=headers,
+                    allow_redirects=True,
+                    timeout=conf.download_timeout
+                )
+                if response.status == 200:
+                    length = response.content_length
+                    if length < 10000:
+                        logger.warning("Seems like here is bad download, lets try again")
+                        await asyncio.sleep(0.5)
+                        continue
+                break
+
             if response.status == 200:
                 async with aiofiles.open(path, "wb") as file:
                     logger.info(f"saving file {path}")
-                    length = response.content_length
                     logger.info(f"file size: {round(length / 1024 / 1024, 2)} (Mb)")
                     chunk_size = conf.download_chunk_size
                     downloaded_bytes = 0

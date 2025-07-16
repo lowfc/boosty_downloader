@@ -46,9 +46,6 @@ async def _fetch_media(
         parsed_offset = parse_offset_time(got_offset)
         if fot is None and parsed_offset:
             fot = parsed_offset
-            if sync_data and await sync_data.get_last_media_offset(media_type) is None:
-                await sync_data.set_last_media_offset(media_type, str(fot))
-                await sync_data.save()
         if eot and parsed_offset:
             if parsed_offset <= eot:
                 logger.debug(f"Stop scanning media due to next api offset"
@@ -73,6 +70,8 @@ async def _fetch_media(
 
     if sync_data:
         await sync_data.set_runtime_media_offset(media_type, None)
+        if await sync_data.get_last_media_offset(media_type) is None and fot:
+            await sync_data.set_last_media_offset(media_type, str(fot))
         await sync_data.save()
 
 
@@ -166,9 +165,6 @@ async def fetch_and_save_posts(
         parsed_offset = post_pool.parsed_offset
         if fot is None and parsed_offset:
             fot = parsed_offset
-            if sync_data and await sync_data.get_last_posts_offset() is None:
-                await sync_data.set_last_posts_offset(str(fot))
-                await sync_data.save()
         if eot and parsed_offset:
             if parsed_offset <= eot:
                 logger.debug(f"Stop scanning posts due to next api offset"
@@ -243,6 +239,8 @@ async def fetch_and_save_posts(
     if sync_data:
         await sync_data.set_runtime_posts_offset(None)
         await sync_data.set_last_sync_utc(datetime.now(UTC))
+        if sync_data.get_last_posts_offset() is None and fot:
+            await sync_data.set_last_posts_offset(str(fot))
         await sync_data.save()
 
 

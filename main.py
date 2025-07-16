@@ -65,7 +65,7 @@ async def main():
 
     print_colorized(f"starting sync", conf.storage_type)
     if conf.desired_post_id:
-        logger.info(f"syncing only one post ({conf.desired_post_id})")
+        print_colorized(f"syncing only one post", conf.desired_post_id)
         await fetch_and_save_lonely_post(
             creator_name=parsed_creator_name,
             post_id=conf.desired_post_id,
@@ -75,7 +75,6 @@ async def main():
             sync_data=sync_data
         )
     elif conf.storage_type == "media":
-        logger.info("syncing all media...")
         image_start_offset = None
         video_start_offset = None
         audio_start_offset = None
@@ -102,7 +101,6 @@ async def main():
             video_start_offset=video_start_offset,
         )
     elif conf.storage_type == "post":
-        logger.info("syncing all posts...")
         start_offset = None
         rt_posts_offset = await sync_data.get_runtime_posts_offset()
         if sync_data and rt_posts_offset:
