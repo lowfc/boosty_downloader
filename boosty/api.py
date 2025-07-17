@@ -118,7 +118,6 @@ async def download_file(url: str, path: Path) -> bool:
         async with ClientSession() as session:
             headers = copy(DEFAULT_HEADERS)
             headers.update(DOWNLOAD_HEADERS)
-            length = 0
             for i in range(3):
                 logger.info(f"preparing download {url}")
                 response = await session.get(
@@ -127,41 +126,45 @@ async def download_file(url: str, path: Path) -> bool:
                     allow_redirects=True,
                     timeout=conf.download_timeout
                 )
+
                 if response.status == 200:
                     length = response.content_length
                     if length < 10000:
                         logger.warning("Seems like here is bad download, lets try again")
                         await asyncio.sleep(0.5)
                         continue
-                break
-
-            if response.status == 200:
-                async with aiofiles.open(path, "wb") as file:
-                    logger.info(f"saving file {path}")
-                    logger.info(f"file size: {round(length / 1024 / 1024, 2)} (Mb)")
-                    chunk_size = conf.download_chunk_size
-                    downloaded_bytes = 0
-                    last_log = time.monotonic()
-                    start_time = last_log
-                    logger.info(f"downloading file... chunk size={chunk_size}")
-                    async for content in response.content.iter_chunked(chunk_size):
-                        if time.monotonic() - last_log > 30.0:
-                            downloaded = downloaded_bytes if downloaded_bytes > 0 else 1
-                            download_percent = int(downloaded / length * 100)
+                    async with aiofiles.open(path, "wb") as file:
+                        try:
+                            logger.info(f"saving file {path}")
+                            logger.info(f"file size: {round(length / 1024 / 1024, 2)} (Mb)")
+                            chunk_size = conf.download_chunk_size
+                            downloaded_bytes = 0
                             last_log = time.monotonic()
-                            elapsed = last_log - start_time
-                            total_time = round(elapsed * (length / downloaded), 2)
-                            estimated = total_time - elapsed
-                            logger.info(f"still downloading file... {download_percent}% "
-                                        f"(ela: {int(elapsed) // 60} min; eta: {int(estimated) // 60} min.)")
-                        await file.write(content)  # noqa
-                        downloaded_bytes += len(content)  # noqa
-                        await asyncio.sleep(0)
-                return True
-            else:
-                lg = f"non-200 status code ({response.status} for file {url}"
-                logger.warning(lg)
-                raise Exception(lg)
+                            start_time = last_log
+                            logger.info(f"downloading file... chunk size={chunk_size}")
+                            async for content in response.content.iter_chunked(chunk_size):
+                                if time.monotonic() - last_log > 30.0:
+                                    downloaded = downloaded_bytes if downloaded_bytes > 0 else 1
+                                    download_percent = int(downloaded / length * 100)
+                                    last_log = time.monotonic()
+                                    elapsed = last_log - start_time
+                                    total_time = round(elapsed * (length / downloaded), 2)
+                                    estimated = total_time - elapsed
+                                    logger.info(f"still downloading file... {download_percent}% "
+                                                f"(ela: {int(elapsed) // 60} min; eta: {int(estimated) // 60} min.)")
+                                await file.write(content)  # noqa
+                                downloaded_bytes += len(content)  # noqa
+                        except Exception as e:
+                            logger.warning(f"failed to write file {path}: {e}, trying again")
+                            continue
+                    return True
+                else:
+                    lg = f"non-200 status code ({response.status} for file {url}, try again"
+                    logger.warning(lg)
+                    await asyncio.sleep(0.5)
+            logger.error(f"actually failed download file {url}")
+            raise Exception(f"actually failed download file {url}")
+
     except TimeoutError:
         lg = "[TimedOut] Failed download media due to timeout. " \
              "If file is large, try to set a higher value for the download_timeout parameter in config"

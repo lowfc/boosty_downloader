@@ -59,7 +59,7 @@ class Downloader:
                 passed = stat_tracker.add_passed_video
                 downloaded = stat_tracker.add_downloaded_video
                 error = stat_tracker.add_error_video
-                meta_writer = write_video_metadata(path_file, metadata)
+                meta_writer = lambda: write_video_metadata(path_file, metadata)
             case "a":
                 passed = stat_tracker.add_passed_audio
                 downloaded = stat_tracker.add_downloaded_audio

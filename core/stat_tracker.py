@@ -110,7 +110,7 @@ class StatTracker:
             result += "\n\nWARNING: Downloading of some files failed!\n"
             result += "The following are the files that have not been downloaded for any reason:\n"
             result += "\n".join(self.__download_errors) + "\n\n"
-            result += "Download it manually or start syncing again."
+            result += "Download it manually."
         return result
 
     def show_summary(self):
