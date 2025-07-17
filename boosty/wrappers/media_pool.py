@@ -32,6 +32,8 @@ class MediaPool:
     def add_video(self, _id: str, url: str, size_amount: int, meta: dict[str, Any]):
         if not conf.need_load_video:
             return
+        if size_amount > conf.max_video_file_size:
+            return
         current = self.__videos.get(_id)
         if current:
             if size_amount < current["size_amount"]:

@@ -5,6 +5,8 @@ from argparse import ArgumentParser
 
 from yaml import load as yamload, FullLoader
 
+from core.defs import VIDEO_QUALITY
+
 
 class Config:
     __cfg_path: Optional[Path]
@@ -23,6 +25,8 @@ class Config:
     need_load_audio: bool
     need_load_files: bool
     sync_offset_save: bool
+    enable_post_masquerade: bool
+    max_video_file_size: int
     debug: bool
 
     storage_type: Literal["post", "media"]
@@ -74,17 +78,22 @@ class Config:
         self.download_chunk_size = int(file_conf.get("download_chunk_size", 153600))
         self.download_timeout = int(file_conf.get("download_timeout", 3600))
         self.max_download_parallel = int(file_conf.get("max_download_parallel", 5))
-        self.sync_offset_save = file_conf.get("sync_offset_save", False)
-        self.debug = file_conf.get("debug", False)
+        self.sync_offset_save = bool(file_conf.get("sync_offset_save", False))
+        self.enable_post_masquerade = bool(file_conf.get("enable_post_masquerade", False))
+        max_video_file_size = file_conf.get("max_video_file_size", "no_restrict")
+        if max_video_file_size not in VIDEO_QUALITY:
+            print(f"max_video_file_size MUST BE IN {tuple(VIDEO_QUALITY.keys())}")
+        self.max_video_file_size = VIDEO_QUALITY[max_video_file_size]
         self.need_load_photo = True
         self.need_load_video = True
         self.need_load_audio = True
         self.need_load_files = True
         self.storage_type = content_conf.get("storage_type")
-        self.post_text_in_markdown = content_conf.get("post_text_in_markdown", True)
-        self.save_metadata = content_conf.get("save_metadata", True)
-        self.save_logs_to_file = logging_conf.get("enable_file_logging", False)
+        self.post_text_in_markdown = bool(content_conf.get("post_text_in_markdown", True))
+        self.save_metadata = bool(content_conf.get("save_metadata", True))
+        self.save_logs_to_file = bool(logging_conf.get("enable_file_logging", False))
         self.logs_path = Path(logging_conf.get("logs_path", "./"))
+        self.debug = bool(logging_conf.get("debug", False))
         collect: Optional[List[str]] = content_conf.get("collect", "media")
         if collect:
             self.need_load_photo = "photos" in collect
@@ -95,6 +104,8 @@ class Config:
 
     def ready_to_auth(self) -> bool:
         if self.cookie is None or self.authorization is None:
+            return False
+        if len(self.cookie) < 10 or len(self.authorization) < 10:
             return False
         return True
 

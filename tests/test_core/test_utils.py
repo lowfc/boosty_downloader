@@ -105,6 +105,9 @@ def test_print_summary(mock_print_colorized):
     need_load_audio = True
     need_load_files = False
     storage_type = "local"
+    post_masquerade = False
+    sync_offset_save = False
+    video_size_restriction = "no_restrict"
 
     print_summary(
         creator_name,
@@ -115,10 +118,13 @@ def test_print_summary(mock_print_colorized):
         need_load_photo,
         need_load_audio,
         need_load_files,
+        post_masquerade,
+        sync_offset_save,
+        video_size_restriction,
         storage_type,
     )
 
-    assert mock_print_colorized.call_count == 9
+    assert mock_print_colorized.call_count == 12
 
 
 # Тесты для parse_offset_time
