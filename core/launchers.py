@@ -70,8 +70,12 @@ async def _fetch_media(
 
     if sync_data:
         await sync_data.set_runtime_media_offset(media_type, None)
-        if await sync_data.get_last_media_offset(media_type) is None and fot:
-            await sync_data.set_last_media_offset(media_type, str(fot))
+        cur_last_media_offset = await sync_data.get_last_media_offset(media_type)
+        if fot:
+            if cur_last_media_offset is None:
+                await sync_data.set_last_media_offset(media_type, str(fot))
+            elif int(cur_last_media_offset) < fot:
+                await sync_data.set_last_media_offset(media_type, str(fot))
         await sync_data.save()
 
 
@@ -239,8 +243,12 @@ async def fetch_and_save_posts(
     if sync_data:
         await sync_data.set_runtime_posts_offset(None)
         await sync_data.set_last_sync_utc(datetime.now(UTC))
-        if await sync_data.get_last_posts_offset() is None and fot:
-            await sync_data.set_last_posts_offset(str(fot))
+        cur_last_post_offset = await sync_data.get_last_posts_offset()
+        if fot:
+            if cur_last_post_offset is None:
+                await sync_data.set_last_posts_offset(str(fot))
+            elif int(cur_last_post_offset) < fot:
+                await sync_data.set_last_posts_offset(str(fot))
         await sync_data.save()
 
 

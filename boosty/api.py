@@ -45,7 +45,7 @@ async def get_media_list(
             send_headers["Cookie"] = conf.cookie
             send_headers["Authorization"] = conf.authorization
         url = BOOSTY_API_BASE_URL + f"/v1/blog/{creator_name}/media_album/"
-        logger.info("GET " + url + f" offset={offset}")
+        logger.info("GET " + url + f" offset={offset} media_type={media_type}")
         resp = await session.get(
             url,
             params=params,
