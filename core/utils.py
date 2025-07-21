@@ -1,10 +1,10 @@
 import os
 import re
 from pathlib import Path
+from typing import Optional
 
 import aiofiles
 
-from boosty.api import download_file
 from core.defs import AsciiCommands
 from core.logger import logger
 
@@ -13,15 +13,6 @@ def create_dir_if_not_exists(path: Path):
     if not os.path.isdir(path):
         logger.info(f"create directory: {path}")
         os.mkdir(path)
-
-
-async def download_file_if_not_exists(url: str, path: Path):
-    if os.path.isfile(path):
-        logger.debug(f"pass saving file {path}: already exists")
-        return False
-    logger.info(f"will save file: {path}")
-    result = await download_file(url, path)
-    return result
 
 
 async def create_text_document(path: Path, content: str, ext: str = "txt", name: str = "contents"):
@@ -55,32 +46,46 @@ def parse_bool(raw_input: str) -> bool:
             return False
 
 
-def print_colorized(prefix: str, data: str, warn: bool = False):
-    print(prefix, end=": ")
+def print_colorized(prefix: str, data: str, warn: bool = False, end="\n"):
+    if prefix:
+        print(prefix, end=": ")
     print(AsciiCommands.COLORIZE_WARN.value if warn else AsciiCommands.COLORIZE_HIGHLIGHT.value, end="")
-    print(data, end=AsciiCommands.COLORIZE_DEFAULT.value)
+    print(data, end=(AsciiCommands.COLORIZE_DEFAULT.value + end))
 
 
 def print_summary(
     creator_name: str,
     use_cookie: bool,
     sync_dir: str,
-    download_timeout: int,
     need_load_video: bool,
     need_load_photo: bool,
     need_load_audio: bool,
     need_load_files: bool,
     storage_type: str,
 ):
-    print_colorized("Sync media for", creator_name)
-    if use_cookie:
-        print_colorized("Auth policy", "with cookie")
-    else:
-        print_colorized("Sync media", "WITHOUT cookie", warn=True)
-    print_colorized("Sync in", sync_dir)
-    print_colorized("Download timeout", f"{download_timeout // 60} min.")
-    print_colorized("Photo download", "yes" if need_load_photo else "no", warn=not need_load_photo)
-    print_colorized("Video download", "yes" if need_load_video else "no", warn=not need_load_video)
-    print_colorized("Audio download", "yes" if need_load_audio else "no")
-    print_colorized("Files download", "yes" if need_load_audio else "no")
-    print_colorized("Storage type", storage_type)
+    print("Ok, working with", end=" ")
+    print_colorized("", creator_name, end=", ")
+    print("home directory:", end=" ")
+    print_colorized("", sync_dir, end=" ")
+    print("sync type:", end=" ")
+    print_colorized("", storage_type)
+    print_colorized("Authorization", "enabled" if use_cookie else "disabled", warn=not use_cookie)
+    print("photo:", end=" ")
+    print_colorized("", "yes" if need_load_photo else "no", warn=not need_load_photo, end=" | ")
+    print("video:", end=" ")
+    print_colorized("", "yes" if need_load_video else "no", warn=not need_load_video, end=" | ")
+    print("audio:", end=" ")
+    print_colorized("", "yes" if need_load_audio else "no", warn=not need_load_audio, end=" | ")
+    print("files:", end=" ")
+    print_colorized("", "yes" if need_load_files else "no", warn=not need_load_files)
+
+
+def parse_offset_time(offset: str) -> Optional[int]:
+    if not offset:
+        return None
+    try:
+        parts = offset.split(":")
+        return int(parts[0])
+    except Exception as e:
+        logger.error(f"Failed parse offset {offset}", exc_info=e)
+        return None

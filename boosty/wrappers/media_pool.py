@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Any, List, Dict
 
 from core.config import conf
 
@@ -29,8 +29,10 @@ class MediaPool:
             "url": url
         }
 
-    def add_video(self, _id: str, url: str, size_amount: int):
+    def add_video(self, _id: str, url: str, size_amount: int, meta: dict[str, Any]):
         if not conf.need_load_video:
+            return
+        if size_amount > conf.max_video_file_size:
             return
         current = self.__videos.get(_id)
         if current:
@@ -38,7 +40,8 @@ class MediaPool:
                 return
         self.__videos[_id] = {
             "url": url,
-            "size_amount": size_amount
+            "size_amount": size_amount,
+            "meta": meta,
         }
 
     def add_audio(self, _id: str, url: str, size_amount: int):
@@ -83,14 +86,15 @@ class MediaPool:
     def get_videos(self) -> List[Dict]:
         """
         Get all videos
-        :return: [{"id": 1, "url": "https://s3.com/1"}, ...]
+        :return: [{"id": 1, "url": "https://s3.com/1", "meta": {}}, ...]
         """
         res = []
         for video_id in self.__videos.keys():
             res.append(
                 {
                     "id": video_id,
-                    "url": self.__videos[video_id]["url"]
+                    "url": self.__videos[video_id]["url"],
+                    "meta": self.__videos[video_id]["meta"],
                 }
             )
         return res
