@@ -129,10 +129,6 @@ async def download_file(url: str, path: Path) -> bool:
 
                 if response.status == 200:
                     length = response.content_length
-                    if length < 10000:
-                        logger.warning("Seems like here is bad download, lets try again")
-                        await asyncio.sleep(0.5)
-                        continue
                     async with aiofiles.open(path, "wb") as file:
                         try:
                             logger.info(f"saving file {path}")
@@ -156,6 +152,7 @@ async def download_file(url: str, path: Path) -> bool:
                                 downloaded_bytes += len(content)  # noqa
                         except Exception as e:
                             logger.warning(f"failed to write file {path}: {e}, trying again")
+                            await asyncio.sleep(0.5)
                             continue
                     return True
                 else:
@@ -169,6 +166,7 @@ async def download_file(url: str, path: Path) -> bool:
         lg = "[TimedOut] Failed download media due to timeout. " \
              "If file is large, try to set a higher value for the download_timeout parameter in config"
         logger.error(lg)
+        stat_tracker.add_download_error(url)
         raise Exception(lg)
     except Exception as e:
         logger.error(f"[{e.__class__.__name__}] Failed download media: {e}")
@@ -215,7 +213,7 @@ async def get_post_list(
             send_headers["Cookie"] = conf.cookie
             send_headers["Authorization"] = conf.authorization
         url = BOOSTY_API_BASE_URL + f"/v1/blog/{creator_name}/post/"
-        logger.info("GET " + url)
+        logger.info("GET " + url + f" offset={offset}")
         resp = await session.get(
             url,
             params=params,

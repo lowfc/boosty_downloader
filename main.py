@@ -102,11 +102,12 @@ async def main():
         )
     elif conf.storage_type == "post":
         start_offset = None
-        rt_posts_offset = await sync_data.get_runtime_posts_offset()
-        if sync_data and rt_posts_offset:
-            print_colorized("Oops", "Seems like your last sync ends unexpected", warn=True)
-            if parse_bool(input("Shall we pick up where we left off? (y/n) > ")):
-                start_offset = rt_posts_offset
+        if sync_data:
+            rt_posts_offset = await sync_data.get_runtime_posts_offset()
+            if rt_posts_offset:
+                print_colorized("Oops", "Seems like your last sync ends unexpected", warn=True)
+                if parse_bool(input("Shall we pick up where we left off? (y/n) > ")):
+                    start_offset = rt_posts_offset
         await fetch_and_save_posts(
             creator_name=parsed_creator_name,
             use_cookie=use_cookie_in,

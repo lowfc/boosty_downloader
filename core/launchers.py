@@ -62,8 +62,8 @@ async def _fetch_media(
 
         await downloader.download_by_content_type(media_type)
 
-        if sync_data:
-            await sync_data.set_runtime_media_offset(media_type, got_offset)
+        if sync_data and offset:
+            await sync_data.set_runtime_media_offset(media_type, offset)
             await sync_data.save()
 
         offset = got_offset
@@ -227,8 +227,8 @@ async def fetch_and_save_posts(
                                    "Fill authorization fields in config to store attached files.")
 
             await asyncio.gather(*tasks)
-            if sync_data:
-                await sync_data.set_runtime_posts_offset(post_pool.offset)
+            if sync_data and offset:
+                await sync_data.set_runtime_posts_offset(offset)
                 await sync_data.save()
 
         offset = post_pool.offset
@@ -239,7 +239,7 @@ async def fetch_and_save_posts(
     if sync_data:
         await sync_data.set_runtime_posts_offset(None)
         await sync_data.set_last_sync_utc(datetime.now(UTC))
-        if sync_data.get_last_posts_offset() is None and fot:
+        if await sync_data.get_last_posts_offset() is None and fot:
             await sync_data.set_last_posts_offset(str(fot))
         await sync_data.save()
 

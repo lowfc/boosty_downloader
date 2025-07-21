@@ -59,7 +59,7 @@ class Downloader:
                 passed = stat_tracker.add_passed_video
                 downloaded = stat_tracker.add_downloaded_video
                 error = stat_tracker.add_error_video
-                meta_writer = lambda: write_video_metadata(path_file, metadata)
+                meta_writer = write_video_metadata(path_file, metadata)
             case "a":
                 passed = stat_tracker.add_passed_audio
                 downloaded = stat_tracker.add_downloaded_audio
@@ -113,7 +113,7 @@ class Downloader:
         videos = self.media_pool.get_videos()
         for video in videos:
             path = video_path / (video["id"] + ".mp4")
-            tasks.append(self._get_file_and_raise_stat(video["url"], path, "v"))
+            tasks.append(self._get_file_and_raise_stat(video["url"], path, "v", video.get("meta")))
         await asyncio.gather(*tasks)
 
     async def download_audios(self):
