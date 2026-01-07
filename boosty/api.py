@@ -85,27 +85,36 @@ async def get_all_media_by_type(
                 if post["post"]["hasAccess"]:
                     for media in post["media"]:
                         if content_type == ContentType.IMAGE:
-                            media_pool.add_image(
-                                _id=media["id"],
-                                url=media["url"],
-                                width=media["width"],
-                                height=media["height"],
-                            )
+                            if not {"id", "url", "width", "height"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                media_pool.add_image(
+                                    _id=media["id"],
+                                    url=media["url"],
+                                    width=media["width"],
+                                    height=media["height"],
+                                )
                         elif content_type == ContentType.AUDIO:
-                            media_pool.add_audio(
-                                _id=media["id"],
-                                url=media["url"] + post["post"].get("signedQuery", ""),
-                                size_amount=media["size"]
-                            )
+                            if not {"id", "url", "size"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                media_pool.add_audio(
+                                    _id=media["id"],
+                                    url=media["url"] + post["post"].get("signedQuery", ""),
+                                    size_amount=media["size"]
+                                )
                         elif content_type == ContentType.VIDEO:
-                            for url in media["playerUrls"]:
-                                if url["type"] in VIDEO_QUALITY.keys() and url["url"] != "":
-                                    media_pool.add_video(
-                                        _id=media["id"],
-                                        url=url["url"],
-                                        size_amount=VIDEO_QUALITY[url["type"]],
-                                        meta=parse_metadata(post["post"], media),
-                                    )
+                            if not {"id", "playerUrls"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                for url in media["playerUrls"]:
+                                    if url.get("type") in VIDEO_QUALITY.keys() and url.get("url") != "":
+                                        media_pool.add_video(
+                                            _id=media["id"],
+                                            url=url["url"],
+                                            size_amount=VIDEO_QUALITY[url["type"]],
+                                            meta=parse_metadata(post["post"], media),
+                                        )
             return extra["isLast"], extra["offset"]
     return True, None
 
@@ -258,41 +267,54 @@ async def get_all_posts(
                     signed_query = post.get("signedQuery", "")
                     for media in post["data"]:
                         if media["type"] == MediaType.VIDEO.value:
-                            for url in media["playerUrls"]:
-                                if url["type"] in VIDEO_QUALITY.keys() and url["url"] != "":
-                                    new_post.media_pool.add_video(
-                                        _id=media["id"],
-                                        url=url["url"],
-                                        size_amount=VIDEO_QUALITY[url["type"]],
-                                        meta=parse_metadata(post, media),
-                                    )
+                            if not {"id", "playerUrls"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                for url in media["playerUrls"]:
+                                    if url["type"] in VIDEO_QUALITY.keys() and url["url"] != "":
+                                        new_post.media_pool.add_video(
+                                            _id=media["id"],
+                                            url=url["url"],
+                                            size_amount=VIDEO_QUALITY[url["type"]],
+                                            meta=parse_metadata(post, media),
+                                        )
                         elif media["type"] == MediaType.IMAGE.value:
-                            new_post.media_pool.add_image(
-                                _id=media["id"],
-                                url=media["url"],
-                                width=media["width"],
-                                height=media["height"]
-                            )
+                            if not {"id", "url", "width", "height"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                new_post.media_pool.add_image(
+                                    _id=media["id"],
+                                    url=media["url"],
+                                    width=media["width"],
+                                    height=media["height"]
+                                )
                         elif media["type"] == MediaType.AUDIO.value:
-                            new_post.media_pool.add_audio(
-                                _id=media["id"],
-                                url=media["url"] + signed_query,
-                                size_amount=media["size"],
-                            )
+                            if not {"id", "url", "size"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                new_post.media_pool.add_audio(
+                                    _id=media["id"],
+                                    url=media["url"] + signed_query,
+                                    size_amount=media["size"],
+                                )
                         elif media["type"] == MediaType.FILE.value:
-                            new_post.media_pool.add_file(
-                                _id=media["id"],
-                                url=media["url"] + signed_query,
-                                size_amount=media["size"],
-                                title=media["title"]
-                            )
+                            if not {"id", "url", "size", "title"} <= media.keys():
+                                logger.warning(f"Some media have invalid format and will be ignored: {media}")
+                            else:
+                                new_post.media_pool.add_file(
+                                    _id=media["id"],
+                                    url=media["url"] + signed_query,
+                                    size_amount=media["size"],
+                                    title=media["title"]
+                                )
                         elif media["type"] == MediaType.TEXT.value:
-                            if media["modificator"] == "":
+                            if media.get("modificator") == "" and "content" in media:
                                 new_post.add_marshaled_text(media["content"])
-                            elif media["modificator"] == "BLOCK_END":
+                            elif media.get("modificator") == "BLOCK_END":
                                 new_post.add_block_end()
                         elif media["type"] == MediaType.LINK.value:
-                            new_post.add_link(media["content"], media["url"])
+                            if "content" in media and "url" in media["content"]:
+                                new_post.add_link(media["content"], media["url"])
                     post_pool.add_post(new_post, offset)
             if extra["isLast"]:
                 post_pool.close()
