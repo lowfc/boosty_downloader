@@ -2,8 +2,8 @@ import asyncio
 
 import flet as ft
 
-from src import components
-from src.core.downloads_manager import DownloadManager
+import components
+from core.downloads_manager import DownloadManager
 
 
 class WelcomePage(ft.View):

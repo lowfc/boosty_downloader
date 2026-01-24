@@ -2,9 +2,9 @@ import asyncio
 
 import flet as ft
 
-from src import components
-from src.core.downloads_manager import DownloadManager
-from src.core.utils import parse_post_link
+import components
+from core.downloads_manager import DownloadManager
+from core.utils import parse_post_link
 
 
 class DownloadPostPage(ft.View):

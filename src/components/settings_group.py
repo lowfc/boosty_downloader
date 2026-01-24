@@ -2,8 +2,8 @@ import asyncio
 
 import flet as ft
 
-import src.__version__ as app_version
-from src import components
+import __version__ as app_version
+import components
 
 
 @ft.control

@@ -3,12 +3,12 @@ import asyncio
 import flet as ft
 
 import __version__ as app_version
-from src.core.downloads_manager import DownloadManager
-from src.pages.download_post import DownloadPostPage
-from src.pages.downloads_center import DownloadsCenterPage
-from src.pages.settings_page import SettingsPage
-from src.pages.welcome_page import WelcomePage
-from src.themes import LIGHT_THEME, DARK_THEME
+from core.downloads_manager import DownloadManager
+from pages.download_post import DownloadPostPage
+from pages.downloads_center import DownloadsCenterPage
+from pages.settings_page import SettingsPage
+from pages.welcome_page import WelcomePage
+from themes import LIGHT_THEME, DARK_THEME
 
 
 async def main(page: ft.Page):
@@ -37,10 +37,9 @@ async def main(page: ft.Page):
     page.on_route_change = route_change
     route_change(page)
 
-    def window_event(e: ft.WindowEvent):
-        if e.type == ft.WindowEventType.CLOSE:
-            asyncio.create_task(page.window.destroy())
-
+    # def window_event(e: ft.WindowEvent):
+    #     if e.type == ft.WindowEventType.CLOSE:
+    #         asyncio.create_task(page.window.destroy())
     # page.window.prevent_close = True
     # page.window.on_event = window_event
 

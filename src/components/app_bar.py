@@ -2,7 +2,7 @@ import asyncio
 
 import flet as ft
 
-from src.core.downloads_manager import DownloadManager
+from core.downloads_manager import DownloadManager
 
 
 @ft.control

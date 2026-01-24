@@ -8,6 +8,8 @@ class Task:
         self._semaphore = semaphore
         self.author = author
         self.post_id = post_id
+        self.title = None
+        self.path = None
         self._percent = 0
         self._done = False
         self._pending = False
@@ -41,6 +43,7 @@ class TaskInfo:
     title: str
     author: str
     post_id: str
+    path: str
 
 
 class DownloadManager:
@@ -84,8 +87,9 @@ class DownloadManager:
                 if current_offset >= offset:
                     result.append(TaskInfo(
                         percent=self._tasks[post_id].percent,
-                        title="",
+                        title=self._tasks[post_id].title,
                         author=self._tasks[post_id].author,
+                        path=self._tasks[post_id].path,
                         post_id=post_id,
                     ))
                     if len(result) == limit:
