@@ -1,0 +1,28 @@
+[project]
+name = "boosty_downloader"
+version = "3.0.0"
+description = "App for download boosty content"
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [
+    { name = "Flet developer", email = "you@example.com" }
+]
+dependencies = [
+  "aiohttp>=3.13.3",
+  "flet>=0.80.2",
+  "pyinstaller>=6.18.0",
+]
+
+[dependency-groups]
+dev = [
+  "flet[all]>=0.80.2",
+]
+
+[tool.flet]
+org = "community.made"
+product = "boosty_downloader"
+company = "community.made"
+copyright = "MiT License"
+
+[tool.flet.app]
+path = "src"
