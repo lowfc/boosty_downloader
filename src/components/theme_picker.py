@@ -75,6 +75,7 @@ class ThemePicker(ft.Dropdown):
         else:  # SYSTEM
             self.page.theme_mode = ft.ThemeMode.SYSTEM
         self.prefix_icon = theme_icons[mode]
+        self.value = mode.value
         self.page.update()
 
     async def apply_theme(self, mode: ThemeMode):

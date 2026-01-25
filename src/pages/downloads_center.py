@@ -1,11 +1,12 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 
 import flet as ft
 
 import components
 from components.paginator import Paginator
 from components.task_item import TaskItem
+from core.defs.tasks import TaskInfo
 from core.downloads_manager import DownloadManager
 
 
@@ -21,20 +22,29 @@ class DownloadsCenterPage(ft.View):
         self.alive = True
         for i in range(self.count_slots):
             self.slots.append(
-                TaskItem("", 0)
+                TaskItem(on_cancel=self.on_task_cancel, on_retry=self.on_task_retry)
             )
 
         self.list_view.controls = self.slots
+        self.stop_all_button = ft.Button(
+            "Cancel all",
+            color=ft.Colors.SURFACE,
+            icon=ft.Icons.STOP,
+            icon_color=ft.Colors.PRIMARY,
+            bgcolor=ft.Colors.ON_SURFACE_VARIANT,
+            on_click=self.on_all_tasks_cancel
+        )
         self.status_line = ft.ListTile(
             leading=ft.Icon(ft.Icons.DOWNLOADING),
-            title="In progress: 0 / 0"
+            title="In progress: 0 / 0",
+            trailing=self.stop_all_button
         )
 
         self.controls = [
             components.AppBar(manager),
             ft.Column(
                 controls=[
-                    ft.Row(controls=[
+                    ft.Row([
                         ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK),
                                       on_click=lambda e: asyncio.create_task(self.go_to_index())),
                         ft.Text("Downloads center", size=24, weight=ft.FontWeight.BOLD),
@@ -69,6 +79,17 @@ class DownloadsCenterPage(ft.View):
         self.alive = False
         self.upd_task.cancel()
 
+    async def on_all_tasks_cancel(self):
+        await self.manager.stop_running_tasks()
+
+    async def on_task_cancel(self, task_info: Optional[TaskInfo]):
+        if task_info:
+            await self.manager.stop_task(task_info.post_id)
+
+    async def on_task_retry(self, task_info: Optional[TaskInfo]):
+        if task_info:
+            await self.manager.retry_task(task_info.post_id)
+
     async def update_task(self):
         while self.alive:
             tasks = await self.manager.get_tasks(self.count_slots, offset=self.paginator.get_current_offset())
@@ -77,15 +98,8 @@ class DownloadsCenterPage(ft.View):
             self.status_line.title = f"In progress: {pending} / {self.manager.total_tasks}"
             for slot_no in range(self.count_slots):
                 if slot_no <= len(tasks) - 1:
-                    self.slots[slot_no].update_view(
-                        author=tasks[slot_no].author,
-                        post_id=tasks[slot_no].post_id,
-                        percent=tasks[slot_no].percent,
-                        path=tasks[slot_no].path,
-                        title=tasks[slot_no].title,
-                        visible=True,
-                    )
+                    self.slots[slot_no].update_view(tasks[slot_no], visible=True)
                 else:
-                    self.slots[slot_no].update_view()
+                    self.slots[slot_no].update_view(visible=False)
             self.update()
             await asyncio.sleep(.1)

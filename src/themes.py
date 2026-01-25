@@ -1,5 +1,6 @@
 import flet as ft
 
+
 LIGHT_COLORS = {
     "background": "#f6f6f6",
     "surface": "#ffffff",
@@ -23,6 +24,7 @@ DARK_COLORS = {
     "error": "#ff6b6b",
     "success": "#81c784",
 }
+
 
 LIGHT_THEME = ft.Theme(
     color_scheme=ft.ColorScheme(
