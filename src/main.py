@@ -4,6 +4,7 @@ import flet as ft
 
 import __version__ as app_version
 from core.downloads_manager import DownloadManager
+from core.logger import setup_logger
 from pages.download_post import DownloadPostPage
 from pages.downloads_center import DownloadsCenterPage
 from pages.settings_page import SettingsPage
@@ -16,6 +17,9 @@ async def main(page: ft.Page):
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme")
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
+
+    logger = setup_logger()
+    logger.info(f"Starting {app_version.NAME} v{app_version.VERSION}...")
 
     manager = DownloadManager()
 
@@ -35,7 +39,10 @@ async def main(page: ft.Page):
         page.update()
 
     page.on_route_change = route_change
+    await page.push_route("/download-post")
     route_change(page)
+
+    logger.info("Router is set up, starting task manager...")
 
     # def window_event(e: ft.WindowEvent):
     #     if e.type == ft.WindowEventType.CLOSE:
@@ -44,5 +51,6 @@ async def main(page: ft.Page):
     # page.window.on_event = window_event
 
     asyncio.create_task(manager.mainloop())
+    logger.info("Task manager started")
 
 ft.run(main)

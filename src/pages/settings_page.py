@@ -20,4 +20,4 @@ class SettingsPage(ft.View):
         ]
 
     async def go_to_index(self):
-         await self.page.push_route("/")
+         await self.page.push_route("/download-post")

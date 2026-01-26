@@ -70,7 +70,7 @@ class DownloadsCenterPage(ft.View):
 
     async def go_to_index(self):
         self.on_destroy()
-        await self.page.push_route("/")
+        await self.page.push_route("/download-post")
 
     def will_unmount(self):
         self.on_destroy()
@@ -94,8 +94,13 @@ class DownloadsCenterPage(ft.View):
         while self.alive:
             tasks = await self.manager.get_tasks(self.count_slots, offset=self.paginator.get_current_offset())
             self.paginator.set_total_items(self.manager.total_tasks)
-            pending = await self.manager.get_pending_tasks()
-            self.status_line.title = f"In progress: {pending} / {self.manager.total_tasks}"
+            pending = await self.manager.get_pending_tasks_count()
+            active_total = await self.manager.get_active_tasks_count()
+            self.status_line.title = f"In progress: {pending} / {active_total}"
+            if pending > 0:
+                self.stop_all_button.visible = True
+            else:
+                self.stop_all_button.visible = False
             for slot_no in range(self.count_slots):
                 if slot_no <= len(tasks) - 1:
                     self.slots[slot_no].update_view(tasks[slot_no], visible=True)

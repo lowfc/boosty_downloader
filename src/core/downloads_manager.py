@@ -26,11 +26,19 @@ class DownloadManager:
                         self._tasks[post_id].launch()
             await asyncio.sleep(5)
 
-    async def get_pending_tasks(self) -> int:
+    async def get_pending_tasks_count(self) -> int:
         async with self._lock:
             result = 0
             for post_id in self._tasks.keys():
                 if self._tasks[post_id].pending:
+                    result += 1
+            return result
+
+    async def get_active_tasks_count(self) -> int:
+        async with self._lock:
+            result = 0
+            for post_id in self._tasks.keys():
+                if not self._tasks[post_id].finished:
                     result += 1
             return result
 
@@ -50,8 +58,10 @@ class DownloadManager:
                         author=self._tasks[post_id].author,
                         path=self._tasks[post_id].path,
                         post_id=post_id,
-                        closed=not self._tasks[post_id].pending,
+                        finished=self._tasks[post_id].finished,
                         error=self._tasks[post_id].error_description,
+                        count_files=self._tasks[post_id].count_files,
+                        total_weight=self._tasks[post_id].total_weight,
                     ))
                     if len(result) == limit:
                         return result

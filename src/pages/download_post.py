@@ -24,32 +24,39 @@ class DownloadPostPage(ft.View):
         )
         self.controls = [
             components.AppBar(self.manager),
-            ft.Row(controls=[
-                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=lambda e: asyncio.create_task(self.go_to_index())),
-                ft.Text("Download post", size=24, weight=ft.FontWeight.BOLD),
-            ]),
+            # ft.Row(controls=[
+            #     ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=lambda e: asyncio.create_task(self.go_to_index())),
+            #     ft.Text("Download post", size=24, weight=ft.FontWeight.BOLD),
+            # ]),
             ft.Container(
                 alignment=ft.Alignment.CENTER,
                 expand=True,
                 content=ft.Column(
                     alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=20,
+                    spacing=15,
                     controls=[
                         self.text_field,
                         ft.Button(
-                            content="Download",
-                            icon=ft.Icon(ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY),
-                            height=50,
-                            width=150,
+                            content=ft.Text("Download", size=17),
+                            icon=ft.Icon(ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16),
+                            height=60,
+                            width=180,
                             color=ft.Colors.ON_SURFACE,
                             on_click=lambda e: asyncio.create_task(self.download_post()),
+                        ),
+                        ft.Button(
+                            content=ft.Text("Paste"),
+                            icon=ft.Icon(ft.Icons.COPY, color=ft.Colors.PRIMARY, size=13),
+                            height=40,
+                            width=110,
+                            color=ft.Colors.ON_SURFACE,
+                            on_click=lambda e: asyncio.create_task(self.parse_clipboard_link()),
                         ),
                     ]
                 )
             )
         ]
-        asyncio.create_task(self.parse_clipboard_link())
 
     async def parse_clipboard_link(self):
         clipboard = await ft.Clipboard().get()
@@ -58,6 +65,7 @@ class DownloadPostPage(ft.View):
             if post_info:
                 self.text_field.value = post_info.generate_url()
                 self.page.update()
+                await self.download_post()
 
     async def go_to_index(self):
         await self.page.push_route("/")

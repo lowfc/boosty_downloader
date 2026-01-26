@@ -4,6 +4,7 @@ import flet as ft
 
 import __version__ as app_version
 import components
+from core.utils import get_destination_folder
 
 
 @ft.control
@@ -22,10 +23,10 @@ class SettingsGroup(ft.ListView):
         self.switch_download_videos = ft.Switch(label="Download videos", value=True, padding=10)
         self.switch_download_audios = ft.Switch(label="Download audios", value=True, padding=10)
         self.switch_download_files = ft.Switch(label="Download attached files", value=True, padding=10)
-        self.media_size_dropdown = ft.Dropdown(
+        self.video_size_dropdown = ft.Dropdown(
             width=700,
             value="max",
-            label="Preferred media size",
+            label="Preferred video size",
             border_color=ft.Colors.TRANSPARENT,
             filled=True,
             fill_color=ft.Colors.SURFACE_CONTAINER,
@@ -103,7 +104,7 @@ class SettingsGroup(ft.ListView):
             ft.Column(
                 spacing=25,
                 controls=[
-                    self.media_size_dropdown,
+                    self.video_size_dropdown,
                     self.post_text_format_dropdown,
                 ]
             ),
@@ -168,6 +169,8 @@ class SettingsGroup(ft.ListView):
         await ft.SharedPreferences().set("download-chunk-size", str(new_chunk_size))
         await ft.SharedPreferences().set("download-timeout", str(new_download_timeout))
         await ft.SharedPreferences().set("download-max-parallelism", str(new_max_parallelism))
+        await ft.SharedPreferences().set("post-text-format", str(self.post_text_format_dropdown.value))
+        await ft.SharedPreferences().set("preferred-video-size", str(self.video_size_dropdown.value))
 
         self.page.show_dialog(ft.SnackBar(ft.Text("Saved")))
 
@@ -188,7 +191,9 @@ class SettingsGroup(ft.ListView):
         initial_chunk_size = int(await ft.SharedPreferences().get("download-chunk-size") or 153600)
         initial_download_timeout = int(await ft.SharedPreferences().get("download-timeout") or 3600)
         initial_max_parallelism = int(await ft.SharedPreferences().get("download-max-parallelism") or 5)
-        initial_download_folder = await ft.SharedPreferences().get("download-folder") or r"C:\boosty_dumps"
+        initial_download_folder = await get_destination_folder()
+        initial_video_size = await ft.SharedPreferences().get("preferred-video-size") or "max"
+        initial_post_text_format = await ft.SharedPreferences().get("post-text-format") or "md"
 
         self.switch_download_photos.value = initial_download_photos
         self.switch_download_videos.value = initial_download_videos
@@ -198,5 +203,7 @@ class SettingsGroup(ft.ListView):
         self.download_timeout_textfield.value = initial_download_timeout
         self.max_parallelism_textfield.value = initial_max_parallelism
         self.current_download_folder_text.value = initial_download_folder
+        self.video_size_dropdown.value = initial_video_size
+        self.post_text_format_dropdown.value = initial_post_text_format
         self.disabled = False
         self.page.update()

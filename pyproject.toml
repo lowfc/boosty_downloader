@@ -8,9 +8,11 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
+  "aiofiles>=25.1.0",
   "aiohttp>=3.13.3",
   "flet>=0.80.2",
   "pyinstaller>=6.18.0",
+  "tqdm>=4.67.1",
 ]
 
 [dependency-groups]
