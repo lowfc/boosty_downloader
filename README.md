@@ -1,4 +1,4 @@
-[<img src="assets/head.svg">](https://github.com/lowfc/boosty_downloader/releases)
+[<img src="https://github.com/lowfc/boosty_downloader/raw/refs/heads/develop-v2/assets/head.svg">](https://github.com/lowfc/boosty_downloader/releases)
 
 ![GitHub stars](https://img.shields.io/github/stars/lowfc/boosty_downloader?style=flat-square)
 ![GitHub issues](https://img.shields.io/github/issues/lowfc/boosty_downloader?style=flat-square)
@@ -7,13 +7,19 @@
 
 ---
 
+Coming soon...
+
 ## 🪄 Features
+
+Coming soon...
 
 ## 💻 Installation
 
+Coming soon...
+
 ## 🐍 Development
 
-### Build the app
+### Run the app
 
 Run as a desktop app:
 
