@@ -4,7 +4,7 @@ import flet as ft
 
 import __version__ as app_version
 import components
-from core.utils import get_destination_folder
+from core.utils import get_destination_folder, get_download_settings
 
 
 @ft.control
@@ -25,8 +25,8 @@ class SettingsGroup(ft.ListView):
         self.switch_download_files = ft.Switch(label="Download attached files", value=True, padding=10)
         self.video_size_dropdown = ft.Dropdown(
             width=700,
-            value="max",
-            label="Preferred video size",
+            value="ultra_hd",
+            label="Restrict video size",
             border_color=ft.Colors.TRANSPARENT,
             filled=True,
             fill_color=ft.Colors.SURFACE_CONTAINER,
@@ -35,8 +35,7 @@ class SettingsGroup(ft.ListView):
                 ft.DropdownOption(key="medium", text="Medium"),
                 ft.DropdownOption(key="high", text="High"),
                 ft.DropdownOption(key="full_hd", text="Full HD"),
-                ft.DropdownOption(key="ultra_hd", text="Ultra HD"),
-                ft.DropdownOption(key="max", text="Max available"),
+                ft.DropdownOption(key="ultra_hd", text="Ultra HD (no restrict)"),
             ],
         )
         self.post_text_format_dropdown = ft.Dropdown(
@@ -175,35 +174,17 @@ class SettingsGroup(ft.ListView):
         self.page.show_dialog(ft.SnackBar(ft.Text("Saved")))
 
     async def set_initial_values(self):
-        initial_download_photos = await ft.SharedPreferences().get("need-download-photos") == "True"
-        if initial_download_photos is None:
-            initial_download_photos = True
-        initial_download_videos = await ft.SharedPreferences().get("need-download-videos") == "True"
-        if initial_download_videos is None:
-            initial_download_videos = True
-        initial_download_audios = await ft.SharedPreferences().get("need-download-audios") == "True"
-        if initial_download_audios is None:
-            initial_download_audios = True
-        initial_download_files = await ft.SharedPreferences().get("need-download-files") == "True"
-        if initial_download_files is None:
-            initial_download_files = True
+        settings = await get_download_settings()
 
-        initial_chunk_size = int(await ft.SharedPreferences().get("download-chunk-size") or 153600)
-        initial_download_timeout = int(await ft.SharedPreferences().get("download-timeout") or 3600)
-        initial_max_parallelism = int(await ft.SharedPreferences().get("download-max-parallelism") or 5)
-        initial_download_folder = await get_destination_folder()
-        initial_video_size = await ft.SharedPreferences().get("preferred-video-size") or "max"
-        initial_post_text_format = await ft.SharedPreferences().get("post-text-format") or "md"
-
-        self.switch_download_photos.value = initial_download_photos
-        self.switch_download_videos.value = initial_download_videos
-        self.switch_download_audios.value = initial_download_audios
-        self.switch_download_files.value = initial_download_files
-        self.chunk_size_textfield.value = initial_chunk_size
-        self.download_timeout_textfield.value = initial_download_timeout
-        self.max_parallelism_textfield.value = initial_max_parallelism
-        self.current_download_folder_text.value = initial_download_folder
-        self.video_size_dropdown.value = initial_video_size
-        self.post_text_format_dropdown.value = initial_post_text_format
+        self.switch_download_photos.value = settings.need_download_photos
+        self.switch_download_videos.value = settings.need_download_videos
+        self.switch_download_audios.value = settings.need_download_audios
+        self.switch_download_files.value = settings.need_download_files
+        self.chunk_size_textfield.value = str(settings.chunk_size)
+        self.download_timeout_textfield.value = str(settings.download_timeout)
+        self.max_parallelism_textfield.value = str(settings.max_parallelism)
+        self.current_download_folder_text.value = settings.downloads_folder
+        self.video_size_dropdown.value = settings.preferred_video_size
+        self.post_text_format_dropdown.value = settings.post_text_format
         self.disabled = False
         self.page.update()

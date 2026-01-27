@@ -3,12 +3,11 @@ import os
 import re
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 import flet as ft
 
-from core.defs.common import PostInfo
-
+from core.defs.common import PostInfo, DownloadingSettingsDto
 
 logger = logging.getLogger(__name__)
 
@@ -78,3 +77,58 @@ def validate_windows_dir_name(dir_name: str) -> "str | None":
     clean_name = clean_name[:255]
 
     return clean_name
+
+
+def sign_url(url: str, qs: str) -> str:
+    parsed_url = urlparse(url)
+    existing_params = {}
+    if parsed_url.query:
+        existing_params = dict(parse_qsl(parsed_url.query))
+
+    if qs.startswith('?'):
+        qs = qs[1:]
+    new_params = dict(parse_qsl(qs))
+
+    for key, value in new_params.items():
+        if key not in existing_params:
+            existing_params[key] = value
+
+    new_query_string = urlencode(existing_params)
+    updated_url = parsed_url._replace(query=new_query_string)
+
+    return updated_url.geturl()
+
+
+async def get_download_settings() -> DownloadingSettingsDto:
+    need_download_photos = await ft.SharedPreferences().get("need-download-photos") == "True"
+    if need_download_photos is None:
+        need_download_photos = True
+    need_download_videos = await ft.SharedPreferences().get("need-download-videos") == "True"
+    if need_download_videos is None:
+        need_download_videos = True
+    need_download_audios = await ft.SharedPreferences().get("need-download-audios") == "True"
+    if need_download_audios is None:
+        need_download_audios = True
+    need_download_files = await ft.SharedPreferences().get("need-download-files") == "True"
+    if need_download_files is None:
+        need_download_files = True
+
+    chunk_size = int(await ft.SharedPreferences().get("download-chunk-size") or 153600)
+    download_timeout = int(await ft.SharedPreferences().get("download-timeout") or 3600)
+    preferred_video_size = await ft.SharedPreferences().get("preferred-video-size") or "ultra_hd"
+    post_text_format = await ft.SharedPreferences().get("post-text-format") or "raw"
+    max_parallelism = int(await ft.SharedPreferences().get("download-max-parallelism") or 5)
+    downloads_folder = await get_destination_folder()
+
+    return DownloadingSettingsDto(
+        need_download_photos=need_download_photos,
+        need_download_videos=need_download_videos,
+        need_download_audios=need_download_audios,
+        need_download_files=need_download_files,
+        chunk_size=chunk_size,
+        download_timeout=download_timeout,
+        preferred_video_size=preferred_video_size,
+        post_text_format=post_text_format,
+        downloads_folder=downloads_folder,
+        max_parallelism=max_parallelism
+    )

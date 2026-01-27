@@ -1,7 +1,8 @@
 from aiohttp import ClientSession
 
 from core.boosty.defs import BoostyPostDto, BoostyMediaType, BoostyImageDto, BoostyVideoDto, BoostyVideoSizesType, \
-    BoostyPlayerUrlDto, BoostyAudioDto, BoostyFileDto, BoostyTextDto, BoostyLinkDto
+    BoostyPlayerUrlDto, BoostyAudioDto, BoostyFileDto, BoostyTextDto, BoostyLinkDto, VIDEO_QUALITY_GRADE, \
+    BoostyPostTextDto
 
 
 class BoostyClient:
@@ -31,6 +32,8 @@ class BoostyClient:
             response = await session.get(url)
             response.raise_for_status()
             content = await response.json()
+
+        text_content = BoostyPostTextDto()
         result = BoostyPostDto(
             has_access=content["hasAccess"],
             id=content["id"],
@@ -50,12 +53,11 @@ class BoostyClient:
                         size=media["size"],
                     ))
                 case BoostyMediaType.VIDEO.value:
-                    video = BoostyVideoDto()
+                    video = BoostyVideoDto(id=media["id"], title=media["title"])
                     for url in media["playerUrls"]:
-                        if url["url"] != "":
+                        if url["url"] != "" and url["type"] in VIDEO_QUALITY_GRADE:
                             size = BoostyVideoSizesType(url["type"])
                             video.player_urls[size] = BoostyPlayerUrlDto(
-                                id=url["id"],
                                 url=url["url"],
                                 size=size,
                             )
@@ -65,6 +67,7 @@ class BoostyClient:
                         id=media["id"],
                         url=media["url"],
                         size=media["size"],
+                        title=media["title"],
                     ))
                 case BoostyMediaType.FILE.value:
                     result.media.append(BoostyFileDto(
@@ -74,14 +77,15 @@ class BoostyClient:
                         title=media["title"],
                     ))
                 case BoostyMediaType.TEXT.value:
-                    result.media.append(BoostyTextDto(
+                    text_content.content.append(BoostyTextDto(
                         content=media["content"],
                         modificator=media["modificator"],
                     ))
                 case BoostyMediaType.LINK.value:
-                    result.media.append(BoostyLinkDto(
+                    text_content.content.append(BoostyLinkDto(
                         content=media["content"],
                         url=media["url"],
                     ))
 
+        result.text_content = text_content
         return result

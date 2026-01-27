@@ -14,10 +14,9 @@ from themes import LIGHT_THEME, DARK_THEME
 
 async def main(page: ft.Page):
     page.title = f"{app_version.NAME} {app_version.VERSION}"
-    page.theme_mode = await ft.SharedPreferences().get("current-app-theme")
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
-
+    page.theme_mode = await ft.SharedPreferences().get("current-app-theme")
     logger = setup_logger()
     logger.info(f"Starting {app_version.NAME} v{app_version.VERSION}...")
 

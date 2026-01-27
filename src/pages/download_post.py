@@ -13,7 +13,7 @@ class DownloadPostPage(ft.View):
         self.manager = manager
         self.route = "/download-post"
         self.text_field = ft.TextField(
-            prefix_icon=ft.Icons.LINK,
+            prefix_icon=ft.IconButton(ft.Icons.LINK, on_click=self.parse_clipboard_link),
             hint_text="https://boosty.to/author/posts/dba61f8b-d6dd-4105-9d00-db1c46f13946",
             width=615,
             value="",
@@ -40,19 +40,11 @@ class DownloadPostPage(ft.View):
                         ft.Button(
                             content=ft.Text("Download", size=17),
                             icon=ft.Icon(ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16),
-                            height=60,
-                            width=180,
+                            height=50,
+                            width=150,
                             color=ft.Colors.ON_SURFACE,
-                            on_click=lambda e: asyncio.create_task(self.download_post()),
-                        ),
-                        ft.Button(
-                            content=ft.Text("Paste"),
-                            icon=ft.Icon(ft.Icons.COPY, color=ft.Colors.PRIMARY, size=13),
-                            height=40,
-                            width=110,
-                            color=ft.Colors.ON_SURFACE,
-                            on_click=lambda e: asyncio.create_task(self.parse_clipboard_link()),
-                        ),
+                            on_click=self.download_post,
+                        )
                     ]
                 )
             )
