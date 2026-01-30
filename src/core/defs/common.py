@@ -1,4 +1,11 @@
+import base64
+import json
 from dataclasses import dataclass
+from typing import Optional
+
+from core.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 @dataclass
@@ -8,6 +15,26 @@ class PostInfo:
 
     def generate_url(self) -> str:
         return f"https://boosty.to/{self.author}/posts/{self.id}"
+
+
+@dataclass
+class AuthToken:
+    authorization: str
+    cookie: str
+    expires_in: int
+
+    @staticmethod
+    def from_str(data: str) -> Optional['AuthToken']:
+        try:
+            decoded = base64.b64decode(data)
+            result = json.loads(decoded)
+            return AuthToken(
+                authorization=result['authorization'],
+                expires_in=int(result['expires_in'] / 1000),
+                cookie=result['full_cookie'],
+            )
+        except Exception as e:
+            logger.error("Failed decode auth token", exc_info=e)
 
 
 @dataclass

@@ -14,7 +14,7 @@ from core.boosty.defs import BoostyImageDto, BoostyAudioDto, BoostyFileDto, Boos
 from core.defs.common import DownloadingSettingsDto
 from core.defs.tasks import TaskError
 from core.logger import setup_logger
-from core.utils import get_destination_folder, validate_windows_dir_name, sign_url, get_download_settings
+from core.utils import validate_windows_dir_name, sign_url, get_download_settings
 
 logger = setup_logger(__name__)
 

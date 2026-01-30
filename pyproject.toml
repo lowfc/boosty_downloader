@@ -5,7 +5,7 @@ description = "App for download boosty content"
 readme = "README.md"
 requires-python = ">=3.13"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "Rowdy Beaver", email = "lowfc@mail.ru" }
 ]
 dependencies = [
   "aiofiles>=25.1.0",
@@ -21,9 +21,9 @@ dev = [
 ]
 
 [tool.flet]
-org = "community.made"
+org = "lowfc"
 product = "boosty_downloader"
-company = "community.made"
+company = "lowfc"
 copyright = "MiT License"
 
 [tool.flet.app]

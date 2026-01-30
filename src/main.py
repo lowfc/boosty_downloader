@@ -5,6 +5,7 @@ import flet as ft
 import __version__ as app_version
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
+from pages.auth_management import AuthManagementPage
 from pages.download_post import DownloadPostPage
 from pages.downloads_center import DownloadsCenterPage
 from pages.settings_page import SettingsPage
@@ -34,6 +35,8 @@ async def main(page: ft.Page):
                 page.views.append(DownloadPostPage(manager))
             case "/downloads-center":
                 page.views.append(DownloadsCenterPage(manager))
+            case "/auth-management":
+                page.views.append(AuthManagementPage(manager))
 
         page.update()
 

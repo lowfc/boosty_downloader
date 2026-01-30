@@ -1,5 +1,3 @@
-import asyncio
-
 import flet as ft
 
 import components

@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
@@ -8,8 +9,9 @@ from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 import flet as ft
 
 from core.defs.common import PostInfo, DownloadingSettingsDto
+from core.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 post_link_re = re.compile(r'https://boosty\.to/(.*)/posts/([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})', re.I)
 
@@ -43,10 +45,10 @@ async def get_destination_folder():
         try:
             downloads_path = os.path.join(os.environ['USERPROFILE'], 'Downloads')
             if downloads_path:
-                return str(downloads_path)
+                return str(os.path.join(downloads_path, "boosty.to"))
         except Exception as e:
             logger.error("Failed get downloads folder", exc_info=e)
-        return r"C:\boosty_dumps"
+        return r"C:\boosty.to"
     return download_folder
 
 
