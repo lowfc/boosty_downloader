@@ -41,7 +41,6 @@ async def main(page: ft.Page):
         page.update()
 
     page.on_route_change = route_change
-    await page.push_route("/download-post")
     route_change(page)
 
     logger.info("Router is set up, starting task manager...")

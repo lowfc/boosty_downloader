@@ -6,7 +6,7 @@ import aiofiles
 import flet as ft
 
 import components
-from core.AuthorizationProvider import AuthorizationProvider
+from core.authorization_provider import AuthorizationProvider
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 
@@ -46,27 +46,27 @@ class AuthManagementPage(ft.View):
                 ft.Text(f"2. Paste script into the browser console on boosty", size=20, weight=ft.FontWeight.BOLD),
                 ft.Text(f"Press the F12 key when you are on the boosty page, and then paste the text into the console."),
                 ft.Container(
-                    bgcolor="#FFA700",
+                    bgcolor="#db7943",
                     expand=True,
                     padding=10,
                     border_radius=5,
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.INFO, color="#A66D00"),
+                            ft.Icon(ft.Icons.INFO, color="#965132"),
                             ft.Text("Make sure that you are logged in to your account on the website.",
-                                    color="#513500"),
+                                    color="#4c2313"),
                         ])
                 ),
                 ft.Container(
-                    bgcolor="#FFA700",
+                    bgcolor="#db7943",
                     expand=True,
                     padding=10,
                     border_radius=5,
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.INFO, color="#A66D00"),
+                            ft.Icon(ft.Icons.INFO, color="#965132"),
                             ft.Text("If the browser shows a warning about code insertion, follow its instructions. Usually you just need to enter 'allow pasting' and press enter.",
-                                    color="#513500", width=500),
+                                    color="#4c2313", width=500),
                         ])
                 ),
                 ft.Text(f"3. Authorize app", size=20, weight=ft.FontWeight.BOLD),
@@ -87,7 +87,7 @@ class AuthManagementPage(ft.View):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=20,
-            height=400,
+            expand=True,
             controls=[
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
@@ -112,7 +112,6 @@ class AuthManagementPage(ft.View):
         asyncio.create_task(self.render_page())
 
     async def render_page(self):
-        # TODO: refactor
         base_view: "list[ft.Control]" = [
             components.AppBar(self.manager),
             ft.Row([
@@ -127,11 +126,15 @@ class AuthManagementPage(ft.View):
                 now = datetime.datetime.now(datetime.timezone.utc)
                 if now < expires_in:
                     delta = expires_in - now
+                    days = delta.days
                     hours = delta.seconds // 3600
+                    msg = "Token will valid for "
+                    if days > 0:
+                        msg += f"{days} days, "
                     if hours == 0:
-                        self.auth_expires_info.value = f"Token will valid for next {delta.seconds // 60} minutes."
+                        self.auth_expires_info.value = msg + f"{delta.seconds // 60} minutes."
                     else:
-                        self.auth_expires_info.value = f"Token will valid for next {delta.seconds // 3600} hours."
+                        self.auth_expires_info.value = msg + f"{delta.seconds // 3600} hours."
                     base_view.append(self.deauth_view)
                     self.controls = base_view
                     self.page.update()
@@ -144,7 +147,7 @@ class AuthManagementPage(ft.View):
         self.page.update()
 
     async def go_to_index(self):
-        await self.page.push_route("/download-post")
+        await self.page.push_route("/")
 
     async def copy_script(self):
         async with aiofiles.open(fr"{os.getcwd()}\js\auth_getter_minify.js", mode="r") as f:

@@ -3,7 +3,7 @@ import datetime
 
 import flet as ft
 
-from core.AuthorizationProvider import AuthorizationProvider
+from core.authorization_provider import AuthorizationProvider
 from core.downloads_manager import DownloadManager
 
 

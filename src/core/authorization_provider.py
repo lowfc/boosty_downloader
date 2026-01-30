@@ -25,3 +25,17 @@ class AuthorizationProvider:
         if not expires_in:
             return None
         return datetime.datetime.fromtimestamp(int(expires_in), datetime.timezone.utc)
+
+    @classmethod
+    async def get_authorization_if_valid(cls) -> Optional[AuthToken]:
+        expires_in = await ft.SharedPreferences().get("ba-expires-in")
+        if not expires_in:
+            return None
+        expires_date = datetime.datetime.fromtimestamp(int(expires_in), datetime.timezone.utc)
+        if datetime.datetime.now(datetime.timezone.utc) < expires_date:
+            return AuthToken(
+                authorization=await ft.SharedPreferences().get("ba-authorization"),
+                cookie=await ft.SharedPreferences().get("ba-cookie"),
+                expires_in=int(expires_in),
+            )
+        return None

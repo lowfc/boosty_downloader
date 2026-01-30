@@ -70,7 +70,7 @@ class DownloadsCenterPage(ft.View):
 
     async def go_to_index(self):
         self.on_destroy()
-        await self.page.push_route("/download-post")
+        await self.page.push_route("/")
 
     def will_unmount(self):
         self.on_destroy()

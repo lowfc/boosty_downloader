@@ -1,6 +1,8 @@
 import asyncio
 import os
+import time
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
 
@@ -8,11 +10,12 @@ import aiofiles
 from aiohttp import ClientSession
 from tqdm.asyncio import tqdm_asyncio
 
+from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
-from core.boosty.defs import BoostyImageDto, BoostyAudioDto, BoostyFileDto, BoostyVideoDto, BoostyTextDto, \
-    BoostyLinkDto, VIDEO_QUALITY_GRADE, BoostyPostDto
+from core.boosty.defs import BoostyImageDto, BoostyAudioDto, BoostyFileDto, BoostyVideoDto, VIDEO_QUALITY_GRADE, BoostyPostDto
 from core.defs.common import DownloadingSettingsDto
 from core.defs.tasks import TaskError
+from core.draftjs_converter import DraftJsConverter
 from core.logger import setup_logger
 from core.utils import validate_windows_dir_name, sign_url, get_download_settings
 
@@ -190,10 +193,12 @@ class Task:
         self._pending = True
         async with self._semaphore:
             settings = await get_download_settings()
+            auth_token = await AuthorizationProvider.get_authorization_if_valid()
             client = BoostyClient(
                 chunk_size=settings.chunk_size,
                 download_timeout=settings.download_timeout,
                 post_text_in_md=settings.post_text_format == "md",
+                auth_token=auth_token,
             )
             try:
                 post_info = await client.get_post_info(self.author, self.post_id)
@@ -232,11 +237,15 @@ class Task:
             self.path = post_path
 
             try:
-                text_content = post_info.text_content.get_content(
-                    title=post_info.title,
-                    publish_time=post_info.publish_time,
-                    md=settings.post_text_format == "md",
-                )
+                parser = DraftJsConverter(post_info.text_content.content)
+                post_time = datetime.fromtimestamp(post_info.publish_time)
+                fmt_date = post_time.strftime('%d.%m.%Y %H:%M')
+                if settings.post_text_format == "md":
+                    text_content = f"# {post_info.title}\n" + parser.to_markdown() + "\n\n"
+                    text_content += f"---\n\n*Published {fmt_date}*\n"
+                else:
+                    text_content = f"{post_info.title} \n\n" + parser.to_plain_text() + "\n\n"
+                    text_content += f"[Published {fmt_date}]\n"
             except Exception as e:
                 logger.error("Failed get post text content due unexpected error", exc_info=e)
                 text_content = None

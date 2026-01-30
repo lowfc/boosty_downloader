@@ -22,10 +22,10 @@ class DownloadPostPage(ft.View):
         )
         self.controls = [
             components.AppBar(self.manager),
-            # ft.Row(controls=[
-            #     ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=lambda e: asyncio.create_task(self.go_to_index())),
-            #     ft.Text("Download post", size=24, weight=ft.FontWeight.BOLD),
-            # ]),
+            ft.Row(controls=[
+                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index),
+                ft.Text("Download post", size=24, weight=ft.FontWeight.BOLD),
+            ]),
             ft.Container(
                 alignment=ft.Alignment.CENTER,
                 expand=True,
