@@ -93,7 +93,7 @@ class BoostyClient:
                         size=media["size"],
                         title=media["title"],
                     ))
-                case BoostyMediaType.TEXT.value:
+                case BoostyMediaType.TEXT.value | BoostyMediaType.HEADER.value:
                     text_content.content.append(BoostyTextDto(
                         content=media["content"],
                         modificator=media["modificator"],

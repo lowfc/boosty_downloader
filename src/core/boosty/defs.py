@@ -11,6 +11,7 @@ class BoostyMediaType(str, Enum):
     FILE = "file"
     LINK = "link"
     TEXT = "text"
+    HEADER = "header"
     LIST = "list"
 
 class BoostyVideoSizesType(str, Enum):

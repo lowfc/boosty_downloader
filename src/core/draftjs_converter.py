@@ -12,6 +12,7 @@ class DraftJsConverter:
     }
 
     BLOCK_TYPES = {
+        "header": "## ",
         "header-one": "# ",
         "header-two": "## ",
         "header-three": "### ",
@@ -37,8 +38,11 @@ class DraftJsConverter:
         if not styles:
             return text
 
+        text_length = len(text)
         points = []
         for style_id, offset, length in styles:
+            if offset > text_length:
+                continue
             tag = self.STYLE_MAP.get(style_id, "")
             if tag:
                 points.append((offset, tag))
@@ -77,7 +81,9 @@ class DraftJsConverter:
         result = []
         for item in self.data:
             if isinstance(item, BoostyLinkDto):
-                result.append(f"[{item.content}]({item.url})")
+                text, b_type, styles = self._parse_boosty_text(item.content)
+                formatted_text = self._apply_markdown_styles(text, styles)
+                result.append(f"[{formatted_text}]({item.url})")
 
             elif isinstance(item, BoostyTextDto):
                 text, b_type, styles = self._parse_boosty_text(item.content)
@@ -106,7 +112,8 @@ class DraftJsConverter:
 
         for item in self.data:
             if isinstance(item, BoostyLinkDto):
-                result.append(f"{item.content} (ссылка: {item.url})")
+                text, _, _ = self._parse_boosty_text(item.content)
+                result.append(f"{text} (ссылка: {item.url})")
             elif isinstance(item, BoostyTextDto):
                 text, _, _ = self._parse_boosty_text(item.content)
                 result.append(text)
