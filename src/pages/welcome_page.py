@@ -81,6 +81,23 @@ class WelcomePage(ft.View):
                                     )
                                 ),
                             ]
+                        ),
+                        ft.PopupMenuButton(
+                            content=ft.Container(
+                                content=ft.Row([
+                                    ft.Icon(ft.Icons.MORE_HORIZ),
+                                    ft.Text("Instruments", align=ft.Alignment.CENTER),
+                                ], width=120, alignment=ft.MainAxisAlignment.CENTER),
+                                padding=ft.Padding.all(5),
+                            ),
+                            items=[
+                                ft.PopupMenuItem(
+                                    content=ft.Row([ft.Icon(ft.Icons.MERGE),
+                                                    ft.Text("Merge author's content")]),
+                                    on_click=self.go_to_content_merger
+                                ),
+                            ],
+                            menu_position=ft.PopupMenuPosition.UNDER,
                         )
                     ]
                 )
@@ -89,3 +106,6 @@ class WelcomePage(ft.View):
 
     async def go_to_download_post(self):
         await self.page.push_route("/download-post")
+
+    async def go_to_content_merger(self):
+        await self.page.push_route("/merge-author-content")

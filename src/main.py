@@ -8,6 +8,7 @@ from core.logger import setup_logger
 from pages.auth_management import AuthManagementPage
 from pages.download_post import DownloadPostPage
 from pages.downloads_center import DownloadsCenterPage
+from pages.merge_author_content import MergeAuthorContentPage
 from pages.settings_page import SettingsPage
 from pages.welcome_page import WelcomePage
 from themes import LIGHT_THEME, DARK_THEME
@@ -35,6 +36,8 @@ async def main(page: ft.Page):
                 page.views.append(DownloadsCenterPage(manager))
             case "/auth-management":
                 page.views.append(AuthManagementPage(manager))
+            case "/merge-author-content":
+                page.views.append(MergeAuthorContentPage(manager))
 
         page.update()
 

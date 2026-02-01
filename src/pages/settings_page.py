@@ -1,5 +1,3 @@
-import asyncio
-
 import flet as ft
 
 import components
@@ -13,7 +11,7 @@ class SettingsPage(ft.View):
         self.controls = [
             components.AppBar(manager),
             ft.Row(controls=[
-                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=lambda e: asyncio.create_task(self.go_to_index())),
+                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index),
                 ft.Text("Settings", size=24, weight=ft.FontWeight.BOLD),
             ]),
             components.SettingsGroup()
