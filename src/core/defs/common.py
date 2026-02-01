@@ -5,7 +5,7 @@ from typing import Optional
 
 from core.logger import setup_logger
 
-logger = setup_logger(__name__)
+logger = setup_logger()
 
 
 @dataclass

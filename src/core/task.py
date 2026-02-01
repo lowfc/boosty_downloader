@@ -18,7 +18,7 @@ from core.draftjs_converter import DraftJsConverter
 from core.logger import setup_logger
 from core.utils import validate_windows_dir_name, sign_url, get_download_settings
 
-logger = setup_logger(__name__)
+logger = setup_logger()
 
 
 @dataclass
@@ -225,6 +225,7 @@ class Task:
                 if title:
                     post_path = Path(settings.downloads_folder) / self.author / (title + "_" + self.post_id)
 
+            self.path = post_path
             if os.path.isdir(post_path):
                 if len(os.listdir(post_path)) > 0:
                     logger.error(f"Post directory already exists: {post_path}")
@@ -233,17 +234,23 @@ class Task:
                 post_path.mkdir(parents=True)
                 logger.info(f"Post directory created: {post_path}")
 
-            self.path = post_path
-
             try:
                 parser = DraftJsConverter(post_info.text_content.content)
                 post_time = datetime.fromtimestamp(post_info.publish_time)
                 fmt_date = post_time.strftime('%d.%m.%Y %H:%M')
                 if settings.post_text_format == "md":
-                    text_content = f"# {post_info.title}\n" + parser.to_markdown() + "\n\n"
+                    if post_info.title:
+                        text_content = f"# {post_info.title}\n"
+                    else:
+                        text_content = ""
+                    text_content += parser.to_markdown() + "\n\n"
                     text_content += f"---\n\n*Published {fmt_date}*\n"
                 else:
-                    text_content = f"{post_info.title} \n\n" + parser.to_plain_text() + "\n\n"
+                    if post_info.title:
+                        text_content = f"{post_info.title} \n\n"
+                    else:
+                        text_content = ""
+                    text_content += parser.to_plain_text() + "\n\n"
                     text_content += f"[Published {fmt_date}]\n"
             except Exception as e:
                 logger.error("Failed get post text content due unexpected error", exc_info=e)

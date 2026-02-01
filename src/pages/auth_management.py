@@ -10,7 +10,7 @@ from core.authorization_provider import AuthorizationProvider
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 
-logger = setup_logger(__name__)
+logger = setup_logger()
 
 
 class AuthManagementPage(ft.View):

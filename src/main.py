@@ -18,8 +18,6 @@ async def main(page: ft.Page):
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme")
-    logger = setup_logger()
-    logger.info(f"Starting {app_version.NAME} v{app_version.VERSION}...")
 
     manager = DownloadManager()
 
@@ -45,13 +43,37 @@ async def main(page: ft.Page):
 
     logger.info("Router is set up, starting task manager...")
 
-    # def window_event(e: ft.WindowEvent):
-    #     if e.type == ft.WindowEventType.CLOSE:
-    #         asyncio.create_task(page.window.destroy())
-    # page.window.prevent_close = True
-    # page.window.on_event = window_event
+    async def check_active_downloads_on_close():
+        if await manager.get_active_tasks_count() > 0:
+            page.show_dialog(
+                ft.AlertDialog(
+                    title=ft.Text("Some downloads are incomplete"),
+                    content=ft.Text("Are you sure you want to exit the app?"),
+                    actions=[
+                        ft.TextButton("No", on_click=lambda e: page.pop_dialog()),
+                        ft.TextButton("Yes", on_click=lambda e: asyncio.create_task(page.window.destroy()))
+                    ],
+                    open=True,
+                )
+            )
+            page.update()
+        else:
+            await page.window.destroy()
+
+    def window_event(e: ft.WindowEvent):
+        if e.type == ft.WindowEventType.CLOSE:
+            asyncio.create_task(check_active_downloads_on_close())
+    page.window.prevent_close = True
+    page.window.on_event = window_event
 
     asyncio.create_task(manager.mainloop())
     logger.info("Task manager started")
 
-ft.run(main)
+
+if __name__ == "__main__":
+    logger = setup_logger()
+    logger.info(f"Starting {app_version.NAME} v{app_version.VERSION}...")
+    try:
+        ft.run(main)
+    except Exception as err:
+        logger.critical("Unhandled exception", exc_info=err)

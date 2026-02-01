@@ -46,12 +46,17 @@ class DownloadManager:
     def total_tasks(self) -> int:
         return len(self._tasks)
 
-    async def get_tasks(self, limit: int = 10, offset: int = 0) -> List[TaskInfo]:
+    async def get_tasks(self, limit: int = 10, offset: int = 0, reverse: bool = False) -> List[TaskInfo]:
         result = []
         current_offset = 0
         async with self._lock:
-            for n, post_id in enumerate(self._tasks.keys()):
+            if reverse:
+                task_keys = tuple(reversed(self._tasks.keys()))
+            else:
+                task_keys = tuple(self._tasks.keys())
+            for i in range(len(task_keys)):
                 if current_offset >= offset:
+                    post_id = task_keys[i]
                     result.append(TaskInfo(
                         percent=self._tasks[post_id].percent,
                         title=self._tasks[post_id].title,

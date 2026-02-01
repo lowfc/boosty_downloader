@@ -92,7 +92,11 @@ class DownloadsCenterPage(ft.View):
 
     async def update_task(self):
         while self.alive:
-            tasks = await self.manager.get_tasks(self.count_slots, offset=self.paginator.get_current_offset())
+            tasks = await self.manager.get_tasks(
+                self.count_slots,
+                offset=self.paginator.get_current_offset(),
+                reverse=True
+            )
             self.paginator.set_total_items(self.manager.total_tasks)
             pending = await self.manager.get_pending_tasks_count()
             active_total = await self.manager.get_active_tasks_count()
