@@ -7,6 +7,7 @@ from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from pages.auth_management import AuthManagementPage
 from pages.download_post import DownloadPostPage
+from pages.download_several_posts import DownloadSeveralPostsPage
 from pages.downloads_center import DownloadsCenterPage
 from pages.merge_author_content import MergeAuthorContentPage
 from pages.settings_page import SettingsPage
@@ -38,6 +39,8 @@ async def main(page: ft.Page):
                 page.views.append(AuthManagementPage(manager))
             case "/merge-author-content":
                 page.views.append(MergeAuthorContentPage(manager))
+            case "/download-several-posts":
+                page.views.append(DownloadSeveralPostsPage(manager))
 
         page.update()
 

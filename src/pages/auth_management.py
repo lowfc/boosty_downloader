@@ -54,7 +54,7 @@ class AuthManagementPage(ft.View):
                         controls=[
                             ft.Icon(ft.Icons.INFO, color="#965132"),
                             ft.Text("Make sure that you are logged in to your account on the website.",
-                                    color="#4c2313"),
+                                    color="#4c2313", width=570, weight=ft.FontWeight.BOLD),
                         ])
                 ),
                 ft.Container(
@@ -66,7 +66,7 @@ class AuthManagementPage(ft.View):
                         controls=[
                             ft.Icon(ft.Icons.INFO, color="#965132"),
                             ft.Text("If the browser shows a warning about code insertion, follow its instructions. Usually you just need to enter 'allow pasting' and press enter.",
-                                    color="#4c2313", width=500),
+                                    color="#4c2313", width=570, weight=ft.FontWeight.BOLD),
                         ])
                 ),
                 ft.Text(f"3. Authorize app", size=20, weight=ft.FontWeight.BOLD),

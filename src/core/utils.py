@@ -13,7 +13,8 @@ from core.logger import setup_logger
 
 logger = setup_logger()
 
-post_link_re = re.compile(r'https://boosty\.to/(.*)/posts/([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})', re.I)
+post_link_re = re.compile(r'(https://)?boosty\.to/(.*)/posts/([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})', re.I)
+author_link_re = re.compile(r'(https://)?boosty\.to/(.*)$', re.I)
 
 
 def parse_post_link(post_link: str) -> Optional[PostInfo]:
@@ -33,10 +34,21 @@ def parse_post_link(post_link: str) -> Optional[PostInfo]:
     result = post_link_re.match(clean_url)
     if result:
         return PostInfo(
-            author=result.group(1),
-            id=result.group(2)
+            author=result.group(2),
+            id=result.group(3)
         )
     return None
+
+
+def parse_author_link(author_link: str) -> Optional[str]:
+    try:
+        result = author_link_re.match(author_link)
+        if result:
+            return result.group(2)
+        return author_link.replace("/", "")
+    except Exception as e:
+        logger.error(f"Error parsing author link: '{author_link}'", exc_info=e)
+        return None
 
 
 async def get_destination_folder():

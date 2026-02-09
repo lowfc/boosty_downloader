@@ -42,7 +42,7 @@ class WelcomePage(ft.View):
                                                         alignment=ft.MainAxisAlignment.CENTER,
                                                         spacing=2,
                                                         controls=[
-                                                            ft.Text(value="Download post", size=20,
+                                                            ft.Text(value="One post", size=20,
                                                                     color=ft.Colors.ON_SURFACE_VARIANT),
                                                             ft.Text(
                                                                 value="download a specific author's post via a direct link",
@@ -53,7 +53,7 @@ class WelcomePage(ft.View):
                                             ]
                                         )
                                     ),
-                                    on_click=lambda e: asyncio.create_task(self.go_to_download_post()),
+                                    on_click=self.go_to_download_post,
                                 ),
                                 ft.Button(
                                     content=ft.Container(
@@ -68,17 +68,18 @@ class WelcomePage(ft.View):
                                                         alignment=ft.MainAxisAlignment.CENTER,
                                                         spacing=2,
                                                         controls=[
-                                                            ft.Text(value="View posts", size=20,
+                                                            ft.Text(value="Several posts", size=20,
                                                                     color=ft.Colors.ON_SURFACE_VARIANT),
                                                             ft.Text(
-                                                                value="view all author's posts and download the necessary ones",
+                                                                value="download several of the author's posts by parameters",
                                                                 color=ft.Colors.ON_SURFACE_VARIANT),
                                                         ],
                                                     ),
                                                 ),
                                             ]
                                         )
-                                    )
+                                    ),
+                                    on_click=self.go_to_mass_downloader,
                                 ),
                             ]
                         ),
@@ -109,3 +110,6 @@ class WelcomePage(ft.View):
 
     async def go_to_content_merger(self):
         await self.page.push_route("/merge-author-content")
+
+    async def go_to_mass_downloader(self):
+        await self.page.push_route("/download-several-posts")

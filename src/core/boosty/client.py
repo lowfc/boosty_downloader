@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from aiohttp import ClientSession
 
@@ -41,6 +41,68 @@ class BoostyClient:
     def get_client_session(self) -> ClientSession:
         return ClientSession(headers=self._get_headers())
 
+    def _wrap_media_item(self, media: dict) -> Union[
+        BoostyImageDto,
+        BoostyVideoDto,
+        BoostyAudioDto,
+        BoostyFileDto,
+        BoostyTextDto,
+        BoostyLinkDto,
+        BoostyListDto,
+        None
+    ]:
+        match media["type"]:
+            case BoostyMediaType.IMAGE.value:
+                if "width" not in media:  # issues/30 "узкая" картинка
+                    return None
+                return BoostyImageDto(
+                    id=media["id"],
+                    url=media["url"],
+                    width=media["width"],
+                    height=media["height"],
+                    size=media["size"],
+                )
+            case BoostyMediaType.VIDEO.value:
+                video = BoostyVideoDto(id=media["id"], title=media["title"])
+                for url in media["playerUrls"]:
+                    if url["url"] != "" and url["type"] in VIDEO_QUALITY_GRADE:
+                        size = BoostyVideoSizesType(url["type"])
+                        video.player_urls[size] = BoostyPlayerUrlDto(
+                            url=url["url"],
+                            size=size,
+                        )
+                return video
+            case BoostyMediaType.AUDIO.value:
+                return BoostyAudioDto(
+                    id=media["id"],
+                    url=media["url"],
+                    size=media["size"],
+                    title=media["title"],
+                )
+            case BoostyMediaType.FILE.value:
+                return BoostyFileDto(
+                    id=media["id"],
+                    url=media["url"],
+                    size=media["size"],
+                    title=media["title"],
+                )
+            case BoostyMediaType.TEXT.value | BoostyMediaType.HEADER.value:
+                return BoostyTextDto(
+                    content=media["content"],
+                    modificator=media["modificator"],
+                )
+            case BoostyMediaType.LINK.value:
+                return BoostyLinkDto(
+                    content=media["content"],
+                    url=media["url"],
+                )
+            case BoostyMediaType.LIST.value:
+                return BoostyListDto(
+                    style=media["style"],
+                    items=media["items"],
+                )
+        return None
+
     async def get_post_info(self, author: str, post_id: str) -> BoostyPostDto:
         url = self.base_url + f"/v1/blog/{author}/post/{post_id}"
         async with self.get_client_session() as session:
@@ -58,56 +120,12 @@ class BoostyClient:
         )
 
         for media in content["data"]:
-            match media["type"]:
-                case BoostyMediaType.IMAGE.value:
-                    if "width" not in media:  # issues/30 "узкая" картинка
-                        continue
-                    result.media.append(BoostyImageDto(
-                        id=media["id"],
-                        url=media["url"],
-                        width=media["width"],
-                        height=media["height"],
-                        size=media["size"],
-                    ))
-                case BoostyMediaType.VIDEO.value:
-                    video = BoostyVideoDto(id=media["id"], title=media["title"])
-                    for url in media["playerUrls"]:
-                        if url["url"] != "" and url["type"] in VIDEO_QUALITY_GRADE:
-                            size = BoostyVideoSizesType(url["type"])
-                            video.player_urls[size] = BoostyPlayerUrlDto(
-                                url=url["url"],
-                                size=size,
-                            )
-                    result.media.append(video)
-                case BoostyMediaType.AUDIO.value:
-                    result.media.append(BoostyAudioDto(
-                        id=media["id"],
-                        url=media["url"],
-                        size=media["size"],
-                        title=media["title"],
-                    ))
-                case BoostyMediaType.FILE.value:
-                    result.media.append(BoostyFileDto(
-                        id=media["id"],
-                        url=media["url"],
-                        size=media["size"],
-                        title=media["title"],
-                    ))
-                case BoostyMediaType.TEXT.value | BoostyMediaType.HEADER.value:
-                    text_content.content.append(BoostyTextDto(
-                        content=media["content"],
-                        modificator=media["modificator"],
-                    ))
-                case BoostyMediaType.LINK.value:
-                    text_content.content.append(BoostyLinkDto(
-                        content=media["content"],
-                        url=media["url"],
-                    ))
-                case BoostyMediaType.LIST.value:
-                    text_content.content.append(BoostyListDto(
-                        style=media["style"],
-                        items=media["items"],
-                    ))
+            wrapped_media = self._wrap_media_item(media)
+            if wrapped_media:
+                if isinstance(wrapped_media, (BoostyTextDto, BoostyLinkDto, BoostyListDto)):
+                    text_content.content.append(wrapped_media)
+                else:
+                    result.media.append(wrapped_media)
 
         result.text_content = text_content
         return result

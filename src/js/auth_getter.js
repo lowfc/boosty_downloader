@@ -4,7 +4,8 @@ function getDecodedCookie(cookieName) {
         '%22': '"',
         '%3A': ':',
         '%2C': ',',
-        '%7D': '}'
+        '%7B': '{',
+        '%7D': '}',
     };
 
     for (let cookie of cookies) {
@@ -44,4 +45,3 @@ if (window.location.hostname === 'boosty.to') {
 } else {
     console.warn("There is", window.location.hostname, ", not boosty.to =)")
 }
-

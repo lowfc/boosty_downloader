@@ -63,6 +63,7 @@ class MergeAuthorContentPage(ft.View):
         self.merge_photos_check = ft.Checkbox(label="Photos", value=False, on_change=self.update_state)
         self.merge_videos_check = ft.Checkbox(label="Videos", value=False, on_change=self.update_state)
         self.merge_audios_check = ft.Checkbox(label="Audios", value=False, on_change=self.update_state)
+        self.add_post_title_to_filename = ft.Checkbox(label="Add post title to filename", value=False, width=200)
         self.proceed_button = ft.Button("Proceed", width=200, height=50, disabled=True, on_click=self.do_merge)
         self.controls = [
             components.AppBar(manager),
@@ -83,6 +84,7 @@ class MergeAuthorContentPage(ft.View):
                             self.merge_videos_check,
                             self.merge_audios_check,
                         ], spacing=15, alignment=ft.MainAxisAlignment.CENTER),
+                        self.add_post_title_to_filename,
                         self.proceed_button,
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -132,6 +134,7 @@ class MergeAuthorContentPage(ft.View):
         self.disabled = True
         self.proceed_button.text = "Working..."
         self.page.update()
+        await asyncio.sleep(2)
         posts = os.listdir(source_folder)
         stats = {
             'posts': len(posts),
@@ -146,6 +149,7 @@ class MergeAuthorContentPage(ft.View):
         video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm', '.m4v', '.mpg', '.mpeg'}
         audio_extensions = {'.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a', '.aiff'}
         action = self.action_type.value
+        add_post_filename = self.add_post_title_to_filename.value
         for post in posts:
             for filename in os.listdir(source_folder / post):
                 source_path = source_folder / post / filename
@@ -164,7 +168,10 @@ class MergeAuthorContentPage(ft.View):
                 if not file_type:
                     continue
 
-                target_path = destination_folder / filename
+                if add_post_filename:
+                    target_path = destination_folder / (post + "_" + filename)
+                else:
+                    target_path = destination_folder / filename
                 if target_path.exists():
                     continue
 
