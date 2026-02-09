@@ -7,11 +7,29 @@
 
 ---
 
-Coming soon...
+Application for downloading content from boosty.to
 
 ## 🪄 Features
 
-Coming soon...
+#### 🔗 Download post by link
+
+<img src="./assets/demo_1.gif" alt="">
+
+#### 📆 Download posts with a filter by publication date
+
+#### Supported content types:
+
+- 🖼️ Photos
+- 📽️ Videos
+- 🎧 Audios
+- 📂 Attached files
+- 📝 Post text and header
+
+#### Supported operating systems:
+
+- ✅ Windows
+- ⬜ Linux (coming soon)
+- ⬜ macOS (coming soon)
 
 ## 💻 Installation
 
