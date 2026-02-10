@@ -9,13 +9,18 @@
 
 Application for downloading content from boosty.to
 
-## 🪄 Features
+## 👀 Demo 
 
-#### 🔗 Download post by link
+You can download content available to you according to your subscription level. To download restricted content, please log in.
 
 <img src="./assets/demo_1.gif" alt="">
 
-#### 📆 Download posts with a filter by publication date
+## 🪄 Features
+
+#### Download methods
+
+- 🔗 Download post by link
+- 📆 Download posts with a filter by publication date
 
 #### Supported content types:
 

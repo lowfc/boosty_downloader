@@ -1,8 +1,11 @@
+import asyncio
 import datetime
 
 import flet as ft
 
 import components
+from core.authorization_provider import AuthorizationProvider
+from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.utils import parse_author_link
 
@@ -36,7 +39,7 @@ class DownloadSeveralPostsPage(ft.View):
         self.date_from_text = ft.Text("", size=20, weight=ft.FontWeight.BOLD)
         self.date_to_text = ft.Text("", size=20, weight=ft.FontWeight.BOLD)
         self.status_text = ft.Text(
-            "Searching posts by your criteria...",
+            "Preparing...",
             size=16,
             weight=ft.FontWeight.W_600,
         )
@@ -127,8 +130,22 @@ class DownloadSeveralPostsPage(ft.View):
         await self.page.push_route("/")
 
     def handle_date_picker_change(self, e: ft.Event[ft.DateRangePicker]):
-        self.parse_from = e.control.start_value
-        self.parse_to = e.control.end_value
+        self.parse_from = datetime.datetime(
+            year=e.control.start_value.year,
+            month=e.control.start_value.month,
+            day=e.control.start_value.day,
+            hour=0,
+            minute=0,
+            second=0
+        )
+        self.parse_to = datetime.datetime(
+            year=e.control.end_value.year,
+            month=e.control.end_value.month,
+            day=e.control.end_value.day,
+            hour=23,
+            minute=59,
+            second=59
+        )
         self.update_ranges()
 
     async def download_posts(self):
@@ -142,3 +159,61 @@ class DownloadSeveralPostsPage(ft.View):
                 )
             )
             return
+        self.progress_container.visible = True
+        self.disabled = True
+        self.page.update()
+        await asyncio.sleep(.5)
+        author_name = parse_author_link(self.text_field.value)
+        auth_token = await AuthorizationProvider.get_authorization_if_valid()
+        client = BoostyClient(
+            chunk_size=3600,
+            download_timeout=500,
+            auth_token=auth_token,
+        )
+        max_int_id = await client.get_max_int_id(author_name)
+        if not max_int_id:
+            self.page.show_dialog(
+                ft.AlertDialog(
+                    title=ft.Text("Empty page"),
+                    content=ft.Text("An error has occurred, or author have no posts. Please try again later."),
+                    actions=[ft.TextButton("Ok", on_click=lambda e: self.page.pop_dialog())],
+                    open=True,
+                )
+            )
+            return
+
+        self.status_text.value = "Searching posts by your criteria..."
+        self.page.update()
+        offset = f"{int(self.parse_to.timestamp())}:{max_int_id + 1}"
+        left_border = int(self.parse_from.timestamp())
+        prepared_posts = []
+        run = True
+        while run:
+            post_list = await client.get_posts_list(author_name, offset=offset)
+            offset = post_list.extra.offset
+
+            for post in post_list.data:
+                if post.publish_time >= left_border:
+                    prepared_posts.append(post)
+                else:
+                    run = False
+
+            if post_list.extra.is_last:
+                run = False
+            self.description_text.value = f"{len(prepared_posts)} posts found"
+            self.page.update()
+            await asyncio.sleep(.5)
+
+        self.status_text.value = "Creating tasks in the manager"
+        tasks_created = 0
+        for post in prepared_posts:
+            await self.manager.add_task(author_name, post.id, post)
+            await asyncio.sleep(.1)
+            tasks_created += 1
+            self.description_text.value = f"{tasks_created} tasks created"
+            self.page.update()
+
+        self.progress_container.visible = False
+        self.disabled = False
+        await asyncio.sleep(.5)
+        self.page.update()

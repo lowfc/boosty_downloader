@@ -32,7 +32,13 @@ class FinalDownloadTaskDto:
 class Task:
     """ Репрезентация таска фоновой загрузки файлов """
 
-    def __init__(self, semaphore: asyncio.Semaphore, author: str, post_id: str):
+    def __init__(
+        self,
+        semaphore: asyncio.Semaphore,
+        author: str,
+        post_id: str,
+        post_info: Optional[BoostyPostDto] = None,
+    ):
         self._semaphore = semaphore
         self.author = author
         self.post_id = post_id
@@ -47,6 +53,7 @@ class Task:
         self._finished = False
         self._count_files = 0
         self._total_weight = 0
+        self._post_info = post_info
         self.error_description: Optional[TaskError] = None
 
     def ready(self) -> bool:
@@ -154,10 +161,11 @@ class Task:
                 for i in range(lborder_quality, len(VIDEO_QUALITY_GRADE)):
                     url_info = media.player_urls.get(VIDEO_QUALITY_GRADE[i])
                     if url_info:
+                        path = post_path / validate_windows_dir_name(media.get_title())
                         download_items.append(
                             FinalDownloadTaskDto(
                                 final_url=url_info.url,
-                                save_path=post_path / media.get_title(),
+                                save_path=path,
                                 fetch_file_size=True
                             )
                         )
@@ -166,20 +174,22 @@ class Task:
             elif isinstance(media, BoostyAudioDto) and settings.need_download_audios:  # audio
                 if post_info.signed_query:
                     self._total_weight += media.size
+                    path = post_path / validate_windows_dir_name(media.get_title())
                     download_items.append(
                         FinalDownloadTaskDto(
                             final_url=sign_url(media.url, post_info.signed_query),
-                            save_path=post_path / media.get_title()
+                            save_path=path
                         )
                     )
 
             elif isinstance(media, BoostyFileDto) and settings.need_download_files:  # file
                 if post_info.signed_query:
                     self._total_weight += media.size
+                    path = post_path / validate_windows_dir_name(media.title)
                     download_items.append(
                         FinalDownloadTaskDto(
                             final_url=sign_url(media.url, post_info.signed_query),
-                            save_path=post_path / media.title,
+                            save_path=path,
                         )
                     )
 
@@ -196,14 +206,18 @@ class Task:
             client = BoostyClient(
                 chunk_size=settings.chunk_size,
                 download_timeout=settings.download_timeout,
-                post_text_in_md=settings.post_text_format == "md",
                 auth_token=auth_token,
             )
-            try:
-                post_info = await client.get_post_info(self.author, self.post_id)
-            except Exception as e:
-                logger.error("Failed fetch post info due unexpected error", exc_info=e)
-                return self._fallback(TaskError.ERROR)
+
+            if self._post_info:
+                post_info = self._post_info
+            else:
+                try:
+                    post_info = await client.get_post_info(self.author, self.post_id)
+                except Exception as e:
+                    logger.error("Failed fetch post info due unexpected error", exc_info=e)
+                    return self._fallback(TaskError.ERROR)
+
 
             if post_info.title:
                 self.title = post_info.title
@@ -221,8 +235,7 @@ class Task:
 
             post_path = Path(settings.downloads_folder) / self.author / self.post_id
             if post_info.title:
-                title = validate_windows_dir_name(post_info.title)
-                if title:
+                if title := validate_windows_dir_name(post_info.title):
                     post_path = Path(settings.downloads_folder) / self.author / (title + "_" + self.post_id)
 
             self.path = post_path

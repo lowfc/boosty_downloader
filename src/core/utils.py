@@ -64,7 +64,7 @@ async def get_destination_folder():
     return download_folder
 
 
-def validate_windows_dir_name(dir_name: str) -> "str | None":
+def validate_windows_dir_name(dir_name: str) -> str:
     """
     Проверяет и исправляет имя директории для Windows.
     Возвращает корректное имя директории.
@@ -85,11 +85,7 @@ def validate_windows_dir_name(dir_name: str) -> "str | None":
     if base_name in reserved_names:
         clean_name = f"_{clean_name}_post"
 
-    if not clean_name:
-        return None
-
     clean_name = clean_name[:255]
-
     return clean_name
 
 

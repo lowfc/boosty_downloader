@@ -1,6 +1,7 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 
+from core.boosty.defs import BoostyPostDto
 from core.defs.tasks import TaskInfo
 from core.task import Task
 
@@ -13,10 +14,10 @@ class DownloadManager:
         self._lock = asyncio.Lock()
         self._closed = False
 
-    async def add_task(self, author: str, post_id: str):
+    async def add_task(self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None):
         async with self._lock:
             if not post_id in self._tasks.keys():
-                self._tasks[post_id] = Task(self._semaphore, post_id=post_id, author=author)
+                self._tasks[post_id] = Task(self._semaphore, post_id=post_id, author=author, post_info=post_info)
 
     async def mainloop(self):
         while not self._closed:

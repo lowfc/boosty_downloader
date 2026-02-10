@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Union, Dict
-
+from typing import List, Union, Dict, Optional
 
 
 class BoostyMediaType(str, Enum):
@@ -96,8 +95,9 @@ class BoostyPostTextDto:
 class BoostyPostDto:
     has_access: bool
     id: str
-    title: str
+    int_id: int
     publish_time: int
+    title: Optional[str] = None
     signed_query: str = ""
     text_content: BoostyPostTextDto = field(default_factory=BoostyPostTextDto)
     media: List[Union[
@@ -106,3 +106,18 @@ class BoostyPostDto:
         BoostyAudioDto,
         BoostyFileDto
     ]] = field(default_factory=list)
+
+
+@dataclass
+class BoostyExtraDto:
+    is_last: bool
+    offset: str
+
+
+@dataclass
+class BoostyPostsListDto:
+    extra: BoostyExtraDto
+    data: List[BoostyPostDto] = field(default_factory=list)
+
+    def have_posts(self) -> bool:
+        return len(self.data) > 0
