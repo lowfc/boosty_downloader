@@ -1,5 +1,3 @@
-import asyncio
-
 import flet as ft
 
 import components
@@ -71,7 +69,7 @@ class WelcomePage(ft.View):
                                                             ft.Text(value="Several posts", size=20,
                                                                     color=ft.Colors.ON_SURFACE_VARIANT),
                                                             ft.Text(
-                                                                value="download several of the author's posts by parameters",
+                                                                value="download an author's posts over a given time period",
                                                                 color=ft.Colors.ON_SURFACE_VARIANT),
                                                         ],
                                                     ),

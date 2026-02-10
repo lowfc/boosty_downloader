@@ -13,12 +13,14 @@ class BoostyMediaType(str, Enum):
     HEADER = "header"
     LIST = "list"
 
+
 class BoostyVideoSizesType(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     FULL_HD = "full_hd"
     ULTRA_HD = "ultra_hd"
+
 
 VIDEO_QUALITY_GRADE = (
     BoostyVideoSizesType.ULTRA_HD.value,
@@ -37,10 +39,12 @@ class BoostyImageDto:
     height: int
     size: int
 
+
 @dataclass
 class BoostyPlayerUrlDto:
     url: str
     size: BoostyVideoSizesType
+
 
 @dataclass
 class BoostyVideoDto:
@@ -62,6 +66,7 @@ class BoostyAudioDto:
     def get_title(self) -> str:
         return self.title if self.title else f"{self.id}.mp3"
 
+
 @dataclass
 class BoostyFileDto:
     id: str
@@ -75,6 +80,7 @@ class BoostyTextDto:
     content: str
     modificator: str
 
+
 @dataclass
 class BoostyLinkDto:
     content: str
@@ -85,6 +91,7 @@ class BoostyLinkDto:
 class BoostyListDto:
     style: str
     items: List[Dict] = field(default_factory=list)
+
 
 @dataclass
 class BoostyPostTextDto:

@@ -68,6 +68,10 @@ class Task:
         return self._finished
 
     @property
+    def fallen(self) -> bool:
+        return self._finished and self._error
+
+    @property
     def pending(self) -> bool:
         return self._pending
 

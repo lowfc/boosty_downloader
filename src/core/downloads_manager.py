@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from core.boosty.defs import BoostyPostDto
 from core.defs.tasks import TaskInfo
@@ -8,16 +8,21 @@ from core.task import Task
 
 class DownloadManager:
     def __init__(self, maximum_concurrency: int = 5):
-        self._tasks = {}
+        self._tasks: Dict[str, "Task"] = {}
         self.maximum_concurrency = maximum_concurrency
         self._semaphore = asyncio.Semaphore(self.maximum_concurrency)
         self._lock = asyncio.Lock()
         self._closed = False
 
-    async def add_task(self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None):
+    async def add_task(self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None) -> bool:
         async with self._lock:
-            if not post_id in self._tasks.keys():
-                self._tasks[post_id] = Task(self._semaphore, post_id=post_id, author=author, post_info=post_info)
+            if post_id in self._tasks.keys():
+                if self._tasks[post_id].fallen:
+                    del self._tasks[post_id]
+                else:
+                    return False
+            self._tasks[post_id] = Task(self._semaphore, post_id=post_id, author=author, post_info=post_info)
+            return True
 
     async def mainloop(self):
         while not self._closed:

@@ -60,9 +60,6 @@ class DownloadPostPage(ft.View):
     async def go_to_index(self):
         await self.page.push_route("/")
 
-    async def add_download_task(self, author: str, post_id: str):
-        await self.manager.add_task(author, post_id)
-
     async def download_post(self):
         if self.text_field.value.strip() == "":
             self.page.show_dialog(
@@ -87,5 +84,8 @@ class DownloadPostPage(ft.View):
             return
         self.text_field.value = ""
         self.page.update()
-        self.page.show_dialog(ft.SnackBar(ft.Text("Queued")))
-        await self.manager.add_task(rel_post_link.author, rel_post_link.id)
+        add_result = await self.manager.add_task(rel_post_link.author, rel_post_link.id)
+        if add_result:
+            self.page.show_dialog(ft.SnackBar(ft.Text("Queued")))
+        else:
+            self.page.show_dialog(ft.SnackBar(ft.Text("Already in queue")))

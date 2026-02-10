@@ -26,14 +26,14 @@ class DownloadSeveralPostsPage(ft.View):
             hint_style=ft.TextStyle(color=ft.Colors.GREY_600),
         )
         today = datetime.datetime.now()
-        self.parse_from = datetime.datetime(year=today.year, month=today.month, day=today.day - 3)
-        self.parse_to = datetime.datetime(year=today.year, month=today.month, day=today.day)
+        self.parse_from = datetime.datetime(year=today.year, month=today.month, day=today.day - 3, tzinfo=datetime.timezone.utc)
+        self.parse_to = datetime.datetime(year=today.year, month=today.month, day=today.day, tzinfo=datetime.timezone.utc)
         self.date_range_picker = ft.DateRangePicker(
             start_value=self.parse_from,
             end_value=self.parse_to,
             entry_mode=ft.DatePickerEntryMode.CALENDAR_ONLY,
             on_change=self.handle_date_picker_change,
-            first_date=datetime.datetime(today.year - 10, 1, 1),
+            first_date=datetime.datetime(today.year - 10, 1, 1, tzinfo=datetime.timezone.utc),
             last_date=self.parse_to,
         )
         self.date_from_text = ft.Text("", size=20, weight=ft.FontWeight.BOLD)
@@ -124,6 +124,8 @@ class DownloadSeveralPostsPage(ft.View):
     def update_ranges(self):
         self.date_from_text.value = self.parse_from.strftime("%d.%m.%Y")
         self.date_to_text.value = self.parse_to.strftime("%d.%m.%Y")
+        self.date_range_picker.start_value = self.parse_from
+        self.date_range_picker.end_value =  self.parse_to
         self.page.update()
 
     async def go_to_index(self):
@@ -136,7 +138,8 @@ class DownloadSeveralPostsPage(ft.View):
             day=e.control.start_value.day,
             hour=0,
             minute=0,
-            second=0
+            second=0,
+            tzinfo=datetime.timezone.utc
         )
         self.parse_to = datetime.datetime(
             year=e.control.end_value.year,
@@ -144,7 +147,8 @@ class DownloadSeveralPostsPage(ft.View):
             day=e.control.end_value.day,
             hour=23,
             minute=59,
-            second=59
+            second=59,
+            tzinfo=datetime.timezone.utc
         )
         self.update_ranges()
 
@@ -207,9 +211,9 @@ class DownloadSeveralPostsPage(ft.View):
         self.status_text.value = "Creating tasks in the manager"
         tasks_created = 0
         for post in prepared_posts:
-            await self.manager.add_task(author_name, post.id, post)
+            if await self.manager.add_task(author_name, post.id, post):
+                tasks_created += 1
             await asyncio.sleep(.1)
-            tasks_created += 1
             self.description_text.value = f"{tasks_created} tasks created"
             self.page.update()
 
