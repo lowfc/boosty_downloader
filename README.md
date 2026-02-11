@@ -11,7 +11,7 @@ Application for downloading content from boosty.to
 
 ## 👀 Demo
 
-<img src="./assets/demo_1.gif" alt="">
+<img src="assets/demo_1.1.gif" alt="">
 
 You can download content available to you according to your subscription level. 
 To download restricted content, please log in.
