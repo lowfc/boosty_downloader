@@ -95,6 +95,11 @@ class WelcomePage(ft.View):
                                                     ft.Text("Merge author's content")]),
                                     on_click=self.go_to_content_merger
                                 ),
+                                ft.PopupMenuItem(
+                                    content=ft.Row([ft.Icon(ft.Icons.IMAGE),
+                                                    ft.Text("Download image by link")]),
+                                    on_click=self.go_to_media_downloader
+                                ),
                             ],
                             menu_position=ft.PopupMenuPosition.UNDER,
                         )
@@ -108,6 +113,9 @@ class WelcomePage(ft.View):
 
     async def go_to_content_merger(self):
         await self.page.push_route("/merge-author-content")
+
+    async def go_to_media_downloader(self):
+        await self.page.push_route("/download-media-by-link")
 
     async def go_to_mass_downloader(self):
         await self.page.push_route("/download-several-posts")

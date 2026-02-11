@@ -9,11 +9,12 @@
 
 Application for downloading content from boosty.to
 
-## 👀 Demo 
-
-You can download content available to you according to your subscription level. To download restricted content, please log in.
+## 👀 Demo
 
 <img src="./assets/demo_1.gif" alt="">
+
+You can download content available to you according to your subscription level. 
+To download restricted content, please log in.
 
 ## 🪄 Features
 
@@ -21,8 +22,9 @@ You can download content available to you according to your subscription level. 
 
 - 🔗 Download post by link
 - 📆 Download posts with a filter by publication date
+- ✉️ Download image by link, including from personal messages
 
-#### Supported content types:
+#### Supported content types
 
 - 🖼️ Photos
 - 📽️ Videos
@@ -30,11 +32,13 @@ You can download content available to you according to your subscription level. 
 - 📂 Attached files
 - 📝 Post text and header
 
-#### Supported operating systems:
+#### Supported operating systems
 
 - ✅ Windows
 - ⬜ Linux (coming soon)
 - ⬜ macOS (coming soon)
+
+#### Authorization ability
 
 ## 💻 Installation
 

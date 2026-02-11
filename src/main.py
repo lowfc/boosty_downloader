@@ -6,6 +6,7 @@ import __version__ as app_version
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from pages.auth_management import AuthManagementPage
+from pages.download_image_by_link import DownloadImageByLinkPage
 from pages.download_post import DownloadPostPage
 from pages.download_several_posts import DownloadSeveralPostsPage
 from pages.downloads_center import DownloadsCenterPage
@@ -41,6 +42,8 @@ async def main(page: ft.Page):
                 page.views.append(MergeAuthorContentPage(manager))
             case "/download-several-posts":
                 page.views.append(DownloadSeveralPostsPage(manager))
+            case "/download-media-by-link":
+                page.views.append(DownloadImageByLinkPage(manager))
 
         page.update()
 

@@ -13,8 +13,13 @@ from core.logger import setup_logger
 
 logger = setup_logger()
 
-post_link_re = re.compile(r'(https://)?boosty\.to/(.*)/posts/([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})', re.I)
+uuid4_re_pattern = "[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}"
+post_link_re = re.compile(rf'(https://)?boosty\.to/(.*)/posts/({uuid4_re_pattern})', re.I)
 author_link_re = re.compile(r'(https://)?boosty\.to/(.*)$', re.I)
+image_link_feed_re = re.compile(rf'(https://)?boosty\.to/app/feed/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})', re.I)
+image_link_author_feed_re = re.compile(rf'(https://)?boosty\.to/(.*)/blog/media/{uuid4_re_pattern}/({uuid4_re_pattern})', re.I)
+image_link_author_post_re = re.compile(rf'(https://)?boosty\.to/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})', re.I)
+image_link_direct_message_re = re.compile(rf'(https://)?boosty\.to/app/messages/media/(\d)+/({uuid4_re_pattern})', re.I)
 
 
 def parse_post_link(post_link: str) -> Optional[PostInfo]:
@@ -38,6 +43,26 @@ def parse_post_link(post_link: str) -> Optional[PostInfo]:
             id=result.group(3)
         )
     return None
+
+
+def parse_image_link(image_link: str) -> Optional[str]:
+    try:
+        parsed_url = urlparse(image_link)
+        clean_url = urlunparse((
+            parsed_url.scheme,
+            parsed_url.netloc,
+            parsed_url.path,
+            '',
+            '',
+            ''
+        ))
+        for exp in (image_link_feed_re, image_link_author_feed_re, image_link_author_post_re, image_link_direct_message_re):
+            if result := exp.match(clean_url):
+                return result.group(3)
+        return None
+    except Exception as e:
+        logger.error(f"Error parsing image link: '{image_link}'", exc_info=e)
+        return None
 
 
 def parse_author_link(author_link: str) -> Optional[str]:

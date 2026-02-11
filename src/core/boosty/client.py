@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 import core.boosty.defs as cdefs
 from core.defs.common import AuthToken
@@ -35,7 +35,7 @@ class BoostyClient:
         return self._base_headers
 
     def get_client_session(self) -> ClientSession:
-        return ClientSession(headers=self._get_headers())
+        return ClientSession(headers=self._get_headers(), timeout=ClientTimeout(total=self.download_timeout))
 
     def _wrap_media_item(self, media: dict) -> Union[
         cdefs.BoostyImageDto,
