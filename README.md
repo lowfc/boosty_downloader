@@ -40,6 +40,14 @@ To download restricted content, please log in.
 
 #### Authorization ability
 
+Authorize app to get available for you private content:
+
+<img src="assets/demo_2.0.gif" alt="">
+
+## ⬇️ Download
+
+Coming soon...
+
 ## 💻 Installation
 
 Coming soon...

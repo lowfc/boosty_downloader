@@ -92,7 +92,7 @@ class DownloadSeveralPostsPage(ft.View):
                             ft.Text("—", size=20),
                             self.date_to_text,
                             ft.IconButton(
-                                ft.Icon(ft.Icons.EDIT_CALENDAR_ROUNDED, size=20),
+                                ft.Icon(ft.Icons.EDIT_CALENDAR, size=20),
                                 on_click=lambda x: self.page.show_dialog(self.date_range_picker),
                             ),
                         ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
