@@ -20,7 +20,7 @@ async def main(page: ft.Page):
     page.title = f"{app_version.NAME} {app_version.VERSION}"
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
-    page.theme_mode = await ft.SharedPreferences().get("current-app-theme")
+    page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
 
     manager = DownloadManager()
 

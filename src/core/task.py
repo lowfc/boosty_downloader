@@ -232,9 +232,15 @@ class Task:
                 logger.error(f"User have no access to the post {self.post_id}, cancelled")
                 return self._fallback(TaskError.ACCESS_DENIED)
 
-            logger.info(f"Home dir: {settings.downloads_folder}")
-            if not os.path.isdir(settings.downloads_folder):
-                logger.error(f"Home directory does not exist: {settings.downloads_folder}")
+            downloads_folder = Path(settings.downloads_folder)
+            logger.info(f"Home dir: {downloads_folder}")
+
+            try:
+                if not os.path.isdir(settings.downloads_folder):
+                    logger.error(f"Home directory does not exist: {settings.downloads_folder}, creating")
+                    downloads_folder.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error("Failed create or check home directory", exc_info=e)
                 return self._fallback(TaskError.NO_HOME_FOLDER)
 
             post_path = Path(settings.downloads_folder) / self.author / self.post_id

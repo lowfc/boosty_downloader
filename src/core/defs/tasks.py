@@ -31,5 +31,5 @@ TASK_ERROR_STATUS_LINE = {
     TaskError.ERROR: [ft.Icons.CANCEL_ROUNDED, "An error has occurred"],
     TaskError.ALREADY_EXISTS: [ft.Icons.REMOVE_RED_EYE_ROUNDED, "Already exists"],
     TaskError.ACCESS_DENIED: [ft.Icons.LOCK_ROUNDED, "Don't have access to post"],
-    TaskError.NO_HOME_FOLDER: [ft.Icons.FOLDER_OFF, "Download directory does not exists"],
+    TaskError.NO_HOME_FOLDER: [ft.Icons.FOLDER_OFF, "Download directory unavailable"],
 }

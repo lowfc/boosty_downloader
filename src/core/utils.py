@@ -135,24 +135,47 @@ def sign_url(url: str, qs: str) -> str:
 
 
 async def get_download_settings() -> DownloadingSettingsDto:
-    need_download_photos = await ft.SharedPreferences().get("need-download-photos") == "True"
-    if need_download_photos is None:
+    need_download_photos = await ft.SharedPreferences().get("need-download-photos")
+    if need_download_photos == "True" or need_download_photos is None:
         need_download_photos = True
-    need_download_videos = await ft.SharedPreferences().get("need-download-videos") == "True"
-    if need_download_videos is None:
+    else:
+        need_download_photos = False
+
+    need_download_videos = await ft.SharedPreferences().get("need-download-videos")
+    if need_download_videos == "True" or need_download_videos is None:
         need_download_videos = True
-    need_download_audios = await ft.SharedPreferences().get("need-download-audios") == "True"
-    if need_download_audios is None:
+    else:
+        need_download_videos = False
+
+    need_download_audios = await ft.SharedPreferences().get("need-download-audios")
+    if need_download_audios == "True" or need_download_audios is None:
         need_download_audios = True
-    need_download_files = await ft.SharedPreferences().get("need-download-files") == "True"
-    if need_download_files is None:
+    else:
+        need_download_audios = False
+
+    need_download_files = await ft.SharedPreferences().get("need-download-files")
+    if need_download_files == "True" or need_download_files is None:
         need_download_files = True
+    else:
+        need_download_files = False
 
     chunk_size = int(await ft.SharedPreferences().get("download-chunk-size") or 153600)
+    if chunk_size < 1500:
+        chunk_size = 1500
+    elif chunk_size > 500000:
+        chunk_size = 500000
     download_timeout = int(await ft.SharedPreferences().get("download-timeout") or 3600)
+    if download_timeout < 100:
+        download_timeout = 100
+    elif download_timeout > 1000000:
+        download_timeout = 1000000
     preferred_video_size = await ft.SharedPreferences().get("preferred-video-size") or "ultra_hd"
     post_text_format = await ft.SharedPreferences().get("post-text-format") or "raw"
     max_parallelism = int(await ft.SharedPreferences().get("download-max-parallelism") or 5)
+    if max_parallelism < 1:
+        max_parallelism = 1
+    elif max_parallelism > 30:
+        max_parallelism = 30
     downloads_folder = await get_destination_folder()
 
     return DownloadingSettingsDto(
