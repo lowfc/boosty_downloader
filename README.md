@@ -50,7 +50,7 @@ Authorize app to get available for you private content:
 
 #### Windows
 
-1. Download the archive: <a href="https://github.com/lowfc/boosty_downloader/releases/download/3.0.0/Boosty Downloader 3.0.0 win.zip">Click here to download</a>
+1. Download the archive: <a href="https://github.com/lowfc/boosty_downloader/releases/download/3.0.0/Boosty.Downloader.3.0.0.win.zip">Click here to download</a>
 2. Unzip the archive to any folder 
 
 ⚠️ Important: the path to this folder must contain only latin characters. Make sure that the folder path does not contain cyrillic or other prohibited characters.
