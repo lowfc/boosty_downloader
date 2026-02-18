@@ -4,7 +4,7 @@ import flet as ft
 
 import __version__ as app_version
 import components
-from core.utils import get_destination_folder, get_download_settings
+from core.utils import get_download_settings
 
 
 @ft.control
@@ -71,10 +71,11 @@ class SettingsGroup(ft.ListView):
             ft.Text(
                 spans=[
                     ft.TextSpan(
-                        f"{app_version.NAME} {app_version.VERSION} [{app_version.PLATFORM}]",
+                        f"{app_version.NAME} {app_version.VERSION} ",
                         ft.TextStyle(weight=ft.FontWeight.BOLD, size=25, color=ft.Colors.ON_SURFACE),
                         url=app_version.URL
-                    )
+                    ),
+                    ft.TextSpan(f"{app_version.PLATFORM} build v{app_version.BUILD}")
                 ]
             ),
             ft.Text("Download folder", theme_style=ft.TextThemeStyle.LABEL_MEDIUM),

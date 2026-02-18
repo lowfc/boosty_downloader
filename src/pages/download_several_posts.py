@@ -26,7 +26,7 @@ class DownloadSeveralPostsPage(ft.View):
             hint_style=ft.TextStyle(color=ft.Colors.GREY_600),
         )
         today = datetime.datetime.now()
-        self.parse_from = datetime.datetime(year=today.year, month=today.month, day=today.day - 3, tzinfo=datetime.timezone.utc)
+        self.parse_from = datetime.datetime(year=today.year, month=today.month, day=today.day - 2, tzinfo=datetime.timezone.utc)
         self.parse_to = datetime.datetime(year=today.year, month=today.month, day=today.day, tzinfo=datetime.timezone.utc)
         self.date_range_picker = ft.DateRangePicker(
             start_value=self.parse_from,
@@ -124,32 +124,16 @@ class DownloadSeveralPostsPage(ft.View):
     def update_ranges(self):
         self.date_from_text.value = self.parse_from.strftime("%d.%m.%Y")
         self.date_to_text.value = self.parse_to.strftime("%d.%m.%Y")
-        self.date_range_picker.start_value = self.parse_from
-        self.date_range_picker.end_value =  self.parse_to
         self.page.update()
 
     async def go_to_index(self):
         await self.page.push_route("/")
 
     def handle_date_picker_change(self, e: ft.Event[ft.DateRangePicker]):
-        self.parse_from = datetime.datetime(
-            year=e.control.start_value.year,
-            month=e.control.start_value.month,
-            day=e.control.start_value.day,
-            hour=0,
-            minute=0,
-            second=0,
-            tzinfo=datetime.timezone.utc
-        )
-        self.parse_to = datetime.datetime(
-            year=e.control.end_value.year,
-            month=e.control.end_value.month,
-            day=e.control.end_value.day,
-            hour=23,
-            minute=59,
-            second=59,
-            tzinfo=datetime.timezone.utc
-        )
+        self.parse_from = e.control.start_value.astimezone()
+        self.parse_to = e.control.end_value.astimezone().replace(hour=23, minute=59, second=59)
+        self.date_range_picker.start_value = e.control.start_value
+        self.date_range_picker.end_value = e.control.end_value
         self.update_ranges()
 
     async def download_posts(self):
@@ -188,17 +172,18 @@ class DownloadSeveralPostsPage(ft.View):
 
         self.status_text.value = "Searching posts by your criteria..."
         self.page.update()
-        offset = f"{int(self.parse_to.timestamp())}:{max_int_id + 1}"
-        left_border = int(self.parse_from.timestamp())
+        left_border = int(self.parse_from.astimezone(datetime.timezone.utc).timestamp())
+        right_border = int(self.parse_to.astimezone(datetime.timezone.utc).timestamp())
+        offset = f"{right_border}:{max_int_id + 1}"
         prepared_posts = []
         run = True
         while run:
             post_list = await client.get_posts_list(author_name, offset=offset)
             offset = post_list.extra.offset
-
             for post in post_list.data:
                 if post.publish_time >= left_border:
-                    prepared_posts.append(post)
+                    if post.has_access:
+                        prepared_posts.append(post)
                 else:
                     run = False
 

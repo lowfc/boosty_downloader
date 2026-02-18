@@ -111,6 +111,18 @@ class DownloadImageByLinkPage(ft.View):
             return
 
         link_uuid = parse_image_link(link)
+        if not link_uuid:
+            self.page.show_dialog(
+                ft.AlertDialog(
+                    title=ft.Text("Not this link"),
+                    content=ft.Text("This utility is for download a PICTURE using a direct link (to picture) from "
+                                    "the posts list or private messages (you can get this link in the browser address bar)."),
+                    actions=[ft.TextButton("I get it", on_click=lambda ev: self.page.pop_dialog())],
+                    open=True,
+                )
+            )
+            return
+
         download_path = Path(self.current_destination_folder_text.value) / f"{link_uuid}.jpg"
         if download_path.exists():
             self.page.show_dialog(

@@ -26,13 +26,13 @@ For the full legal text, see the [official CC BY-NC 4.0 license](https://creativ
 
 1.1. This software (hereinafter referred to as the "Software") is freely distributed with open source code and is intended solely for personal, non-commercial use.
 
-1.2. The Software is designed to synchronize (download) content owned by the user from the boosty.to platform to the user's local device.
+1.2. The Software is designed to download content owned by the user from the boosty.to platform to the user's local device.
 
 1.3. The developer (author) of the Software is not related to the boosty.to platform and is not affiliated with it.
 
 **2. Terms of Use**
 
-2.1. The user agrees to use the Software only for synchronizing (downloading) content for which they are the rights holder.
+2.1. The user agrees to use the Software only for downloading content for which they are the rights holder.
 
 2.2. It is prohibited to use the Software to download content belonging to others without the explicit permission of the rights holder.
 
@@ -62,6 +62,6 @@ For the full legal text, see the [official CC BY-NC 4.0 license](https://creativ
 
 ---
 
-01.01.2026
+18.02.2026
 
 Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)

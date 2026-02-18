@@ -30,7 +30,7 @@ class MergeAuthorContentPage(ft.View):
         )
         self.authors_dropdown = ft.Dropdown(
             width=500,
-            label="Choose author",
+            label="Choose author's folder",
             border_color=ft.Colors.TRANSPARENT,
             filled=True,
             fill_color=ft.Colors.SURFACE_CONTAINER,
@@ -103,7 +103,10 @@ class MergeAuthorContentPage(ft.View):
 
     async def load_main_options(self):
         self.settings = await get_download_settings()
-        folders = os.listdir(self.settings.downloads_folder)
+        folders = []
+        folder = Path(self.settings.downloads_folder)
+        if folder.exists():
+            folders = [d.name for d in folder.iterdir() if d.is_dir()]
         self.authors_dropdown.options = [ft.DropdownOption(key=str(i), text=str(i)) for i in folders]
         self.page.update()
 

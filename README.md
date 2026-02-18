@@ -16,6 +16,8 @@ Application for downloading content from boosty.to
 You can download content available to you according to your subscription level. 
 To download restricted content, please log in.
 
+By using the application, you agree to the <a href="https://github.com/lowfc/boosty_downloader/blob/develop/LICENSE.md">user agreement</a>.
+
 ## 🪄 Features
 
 #### Download methods
@@ -44,13 +46,16 @@ Authorize app to get available for you private content:
 
 <img src="assets/demo_2.0.gif" alt="">
 
-## ⬇️ Download
-
-Coming soon...
-
 ## 💻 Installation
 
-Coming soon...
+#### Windows
+
+1. Download the archive: <a href="https://github.com/lowfc/boosty_downloader/releases/download/3.0.0/Boosty Downloader 3.0.0 win.zip">Click here to download</a>
+2. Unzip the archive to any folder 
+
+⚠️ Important: the path to this folder must contain only latin characters. Make sure that the folder path does not contain cyrillic or other prohibited characters.
+
+3. Run file boosty_downloader.exe
 
 ## 🐍 Development
 
