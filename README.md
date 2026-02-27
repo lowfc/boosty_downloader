@@ -11,7 +11,7 @@ Application for downloading content from boosty.to
 
 ## 👀 Demo
 
-<img src="https://i.postimg.cc/DzZPM2nV/demo-1-1.gif" alt="demo">
+[![demo-1-1.gif](https://i.postimg.cc/DzZPM2nV/demo-1-1.gif)](https://postimg.cc/BjrF8fjN)
 
 You can download content available to you according to your subscription level. 
 To download restricted content, please log in.
@@ -44,7 +44,7 @@ By using the application, you agree to the <a href="https://github.com/lowfc/boo
 
 Authorize app to get available for you private content:
 
-<img src="https://i.postimg.cc/65JzpJLw/demo-2-0.gif" alt="auth-demo">
+[![demo-2-0.gif](https://i.postimg.cc/65JzpJLw/demo-2-0.gif)](https://postimg.cc/LhDjxWb0)
 
 ## 💻 Installation
 
