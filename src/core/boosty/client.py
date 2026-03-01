@@ -4,6 +4,9 @@ from aiohttp import ClientSession, ClientTimeout
 
 import core.boosty.defs as cdefs
 from core.defs.common import AuthToken
+from core.logger import setup_logger
+
+logger = setup_logger()
 
 
 class BoostyClient:
@@ -175,8 +178,12 @@ class BoostyClient:
 
 
     async def get_max_int_id(self, author: str) -> Optional[int]:
-        post_list = await self.get_posts_list(author, limit=1)
-        if not post_list.have_posts():
+        try:
+            post_list = await self.get_posts_list(author, limit=1)
+            if not post_list.have_posts():
+                return None
+            post = post_list.data[0]
+            return post.int_id
+        except Exception as e:
+            logger.error(e)
             return None
-        post = post_list.data[0]
-        return post.int_id
