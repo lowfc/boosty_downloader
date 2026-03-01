@@ -7,7 +7,11 @@ import components
 from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
+from core.logger import setup_logger
 from core.utils import parse_author_link
+
+
+logger = setup_logger()
 
 
 class DownloadSeveralPostsPage(ft.View):
@@ -26,7 +30,8 @@ class DownloadSeveralPostsPage(ft.View):
             hint_style=ft.TextStyle(color=ft.Colors.GREY_600),
         )
         today = datetime.datetime.now()
-        self.parse_from = datetime.datetime(year=today.year, month=today.month, day=today.day - 2, tzinfo=datetime.timezone.utc)
+        start_range = today - datetime.timedelta(days=2)
+        self.parse_from = datetime.datetime(year=start_range.year, month=start_range.month, day=start_range.day, tzinfo=datetime.timezone.utc)
         self.parse_to = datetime.datetime(year=today.year, month=today.month, day=today.day, tzinfo=datetime.timezone.utc)
         self.date_range_picker = ft.DateRangePicker(
             start_value=self.parse_from,
@@ -164,10 +169,13 @@ class DownloadSeveralPostsPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Empty page"),
                     content=ft.Text("An error has occurred, or author have no posts. Please try again later."),
-                    actions=[ft.TextButton("Ok", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[ft.TextButton("Ok", on_click=lambda ev: self.page.pop_dialog())],
                     open=True,
                 )
             )
+            self.progress_container.visible = False
+            self.disabled = False
+            self.page.update()
             return
 
         self.status_text.value = "Searching posts by your criteria..."
@@ -178,7 +186,22 @@ class DownloadSeveralPostsPage(ft.View):
         prepared_posts = []
         run = True
         while run:
-            post_list = await client.get_posts_list(author_name, offset=offset)
+            try:
+                post_list = await client.get_posts_list(author_name, offset=offset)
+            except Exception as e:
+                logger.error(e)
+                self.page.show_dialog(
+                    ft.AlertDialog(
+                        title=ft.Text("Unexpected error on checking posts"),
+                        content=ft.Text("An error has occurred when searching posts. Please, check url correctness or try again later."),
+                        actions=[ft.TextButton("Ok", on_click=lambda ev: self.page.pop_dialog())],
+                        open=True,
+                    )
+                )
+                self.progress_container.visible = False
+                self.disabled = False
+                self.page.update()
+                return
             offset = post_list.extra.offset
             for post in post_list.data:
                 if post.publish_time >= left_border:

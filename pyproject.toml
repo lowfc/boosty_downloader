@@ -1,6 +1,6 @@
 [project]
 name = "boosty_downloader"
-version = "3.0.0"
+version = "3.0.1"
 description = "App for download boosty content"
 readme = "README.md"
 requires-python = ">=3.13"
