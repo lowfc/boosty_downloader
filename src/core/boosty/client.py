@@ -173,6 +173,7 @@ class BoostyClient:
                         text_content.content.append(wrapped_media)
                     else:
                         new_post.media.append(wrapped_media)
+            new_post.text_content = text_content
             result.data.append(new_post)
         return result
 

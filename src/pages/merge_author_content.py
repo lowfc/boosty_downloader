@@ -102,7 +102,8 @@ class MergeAuthorContentPage(ft.View):
         asyncio.create_task(self.load_main_options())
 
     async def load_main_options(self):
-        self.settings = await get_download_settings()
+        device_info = await self.page.get_device_info()
+        self.settings = await get_download_settings(device_info)
         folders = []
         folder = Path(self.settings.downloads_folder)
         if folder.exists():

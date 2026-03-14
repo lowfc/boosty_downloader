@@ -15,7 +15,7 @@ class TaskError(Enum):
 
 @dataclass
 class TaskInfo:
-    percent: int
+    percent: float
     title: str
     author: str
     post_id: str
