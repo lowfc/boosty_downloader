@@ -75,7 +75,7 @@ class SettingsGroup(ft.ListView):
                         ft.TextStyle(weight=ft.FontWeight.BOLD, size=25, color=ft.Colors.ON_SURFACE),
                         url=app_version.URL
                     ),
-                    ft.TextSpan(f"{app_version.PLATFORM} build v{app_version.BUILD}")
+                    ft.TextSpan(f"build v{app_version.BUILD}")
                 ]
             ),
             ft.Text("Download folder", theme_style=ft.TextThemeStyle.LABEL_MEDIUM),
@@ -175,7 +175,8 @@ class SettingsGroup(ft.ListView):
         self.page.show_dialog(ft.SnackBar(ft.Text("Saved")))
 
     async def set_initial_values(self):
-        settings = await get_download_settings()
+        device_info = await self.page.get_device_info()
+        settings = await get_download_settings(device_info)
 
         self.switch_download_photos.value = settings.need_download_photos
         self.switch_download_videos.value = settings.need_download_videos

@@ -1,7 +1,5 @@
-import logging
 import os
 import re
-from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
@@ -76,16 +74,24 @@ def parse_author_link(author_link: str) -> Optional[str]:
         return None
 
 
-async def get_destination_folder():
+def get_default_downloads_folder(device_info: "ft.DeviceInfo") -> Optional[Path]:
+    if isinstance(device_info, ft.WindowsDeviceInfo):
+        return Path(f"C:\\Users\\{device_info.user_name}\\Downloads")
+    elif isinstance(device_info, ft.LinuxDeviceInfo):
+        return Path(f"/home/{device_info.machine_id}/Downloads")
+    elif isinstance(device_info, ft.MacDeviceInfo):
+        return Path("~/Downloads")
+    return None
+
+
+async def get_destination_folder(device_info: Optional["ft.DeviceInfo"]) -> Optional[str]:
     download_folder = await ft.SharedPreferences().get("download-folder")
-    if not download_folder:
+    if not download_folder and device_info:
         try:
-            downloads_path = os.path.join(os.environ['USERPROFILE'], 'Downloads')
-            if downloads_path:
-                return str(os.path.join(downloads_path, "boosty.to"))
+            return str(get_default_downloads_folder(device_info))
         except Exception as e:
             logger.error("Failed get downloads folder", exc_info=e)
-        return r"C:\boosty.to"
+        return None
     return download_folder
 
 
@@ -134,7 +140,11 @@ def sign_url(url: str, qs: str) -> str:
     return updated_url.geturl()
 
 
-async def get_download_settings() -> DownloadingSettingsDto:
+async def get_download_settings(device_info: Optional["ft.DeviceInfo"]) -> Optional[DownloadingSettingsDto]:
+    downloads_folder = await get_destination_folder(device_info)
+    if not downloads_folder:
+        return None
+
     need_download_photos = await ft.SharedPreferences().get("need-download-photos")
     if need_download_photos == "True" or need_download_photos is None:
         need_download_photos = True
@@ -176,7 +186,6 @@ async def get_download_settings() -> DownloadingSettingsDto:
         max_parallelism = 1
     elif max_parallelism > 30:
         max_parallelism = 30
-    downloads_folder = await get_destination_folder()
 
     return DownloadingSettingsDto(
         need_download_photos=need_download_photos,

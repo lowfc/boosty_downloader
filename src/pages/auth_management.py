@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+from pathlib import Path
 
 import aiofiles
 import flet as ft
@@ -150,7 +151,8 @@ class AuthManagementPage(ft.View):
         await self.page.push_route("/")
 
     async def copy_script(self):
-        async with aiofiles.open(fr"{os.getcwd()}\js\auth_getter_minify.js", mode="r") as f:
+        script_path = Path(os.getcwd()) / "js/auth_getter_minify.js"
+        async with aiofiles.open(script_path, mode="r") as f:
             await ft.Clipboard().set(
                 await f.read()
             )

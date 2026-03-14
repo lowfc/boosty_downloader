@@ -10,7 +10,7 @@ import components
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from core.utils import parse_image_link, get_download_settings
+from core.utils import parse_image_link, get_download_settings, get_default_downloads_folder
 
 logger = setup_logger()
 
@@ -88,12 +88,16 @@ class DownloadImageByLinkPage(ft.View):
         await self.page.push_route("/")
 
     def build(self):
-        downloads_path = os.path.join(os.environ['USERPROFILE'], 'Downloads')
-        if downloads_path:
-            self.current_destination_folder_text.value = downloads_path
+        asyncio.create_task(self.async_build())
+
+    async def async_build(self):
+        device_info = await self.page.get_device_info()
+        default_downloads_path = get_default_downloads_folder(device_info)
+        if default_downloads_path:
+            self.current_destination_folder_text.value = str(default_downloads_path)
         else:
-            self.current_destination_folder_text.value = r"C:\boosty.to"
-        self.page.add()
+            self.current_destination_folder_text.value = ""
+        self.page.update()
 
     async def pick_destination_folder(self):
         path = await ft.FilePicker().get_directory_path()
@@ -122,8 +126,18 @@ class DownloadImageByLinkPage(ft.View):
                 )
             )
             return
-
-        download_path = Path(self.current_destination_folder_text.value) / f"{link_uuid}.jpg"
+        base_path = Path(self.current_destination_folder_text.value)
+        if not base_path.exists():
+            self.page.show_dialog(
+                ft.AlertDialog(
+                    title=ft.Text("Folder does not exist"),
+                    content=ft.Text("Download folder does not exist"),
+                    actions=[ft.TextButton("Ok, i'll create", on_click=lambda ev: self.page.pop_dialog())],
+                    open=True,
+                )
+            )
+            return
+        download_path = base_path / f"{link_uuid}.jpg"
         if download_path.exists():
             self.page.show_dialog(
                 ft.AlertDialog(
@@ -140,7 +154,8 @@ class DownloadImageByLinkPage(ft.View):
         self.page.update()
         await asyncio.sleep(.1)
 
-        settings = await get_download_settings()
+        device_info = await self.page.get_device_info()
+        settings = await get_download_settings(device_info)
         client = BoostyClient(
             chunk_size=settings.chunk_size,
             download_timeout=settings.download_timeout,

@@ -205,7 +205,10 @@ class Task:
 
         self._pending = True
         async with self._semaphore:
-            settings = await get_download_settings()
+            settings = await get_download_settings(None)
+            if not settings:
+                logger.error("Failed get application settings. It may be that the home folder could not be found.")
+                return self._fallback(TaskError.ERROR)
             auth_token = await AuthorizationProvider.get_authorization_if_valid()
             client = BoostyClient(
                 chunk_size=settings.chunk_size,
