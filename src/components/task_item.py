@@ -69,7 +69,10 @@ class TaskItem(ft.Container):
 
     async def open_task_folder(self):
         if self.path and os.path.isdir(self.path):
-            await self.page.launch_url(f"file://{self.path}")
+            if self.page.platform == ft.PagePlatform.WINDOWS:
+                subprocess.Popen(['explorer', self.path])
+            elif self.page.platform in (ft.PagePlatform.LINUX, ft.PagePlatform.MACOS):
+                await self.page.launch_url(f"file://{self.path}")
 
     def update_view(self, task_info: Optional[TaskInfo] = None, visible = False):
         self.visible = visible
