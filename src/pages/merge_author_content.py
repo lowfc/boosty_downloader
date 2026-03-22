@@ -154,7 +154,12 @@ class MergeAuthorContentPage(ft.View):
         action = self.action_type.value
         add_post_filename = self.add_post_title_to_filename.value
         for post in posts:
-            for filename in os.listdir(source_folder / post):
+            if post == ".DS_Store":
+                continue
+            post_directory = source_folder / post
+            if not os.path.isdir(post_directory):
+                continue
+            for filename in os.listdir(post_directory):
                 source_path = source_folder / post / filename
                 if not os.path.isfile(source_path):
                     continue
