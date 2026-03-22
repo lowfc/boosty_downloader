@@ -10,7 +10,7 @@ import components
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from core.utils import parse_image_link, get_download_settings, get_default_downloads_folder
+from core.utils import parse_image_link, get_download_settings
 
 logger = setup_logger()
 
@@ -91,8 +91,7 @@ class DownloadImageByLinkPage(ft.View):
         asyncio.create_task(self.async_build())
 
     async def async_build(self):
-        device_info = await self.page.get_device_info()
-        default_downloads_path = get_default_downloads_folder(device_info)
+        default_downloads_path = Path().home() / "Downloads"
         if default_downloads_path:
             self.current_destination_folder_text.value = str(default_downloads_path)
         else:
@@ -154,8 +153,7 @@ class DownloadImageByLinkPage(ft.View):
         self.page.update()
         await asyncio.sleep(.1)
 
-        device_info = await self.page.get_device_info()
-        settings = await get_download_settings(device_info)
+        settings = await get_download_settings()
         client = BoostyClient(
             chunk_size=settings.chunk_size,
             download_timeout=settings.download_timeout,

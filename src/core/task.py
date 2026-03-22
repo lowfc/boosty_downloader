@@ -205,7 +205,7 @@ class Task:
 
         self._pending = True
         async with self._semaphore:
-            settings = await get_download_settings(None)
+            settings = await get_download_settings()
             if not settings:
                 logger.error("Failed get application settings. It may be that the home folder could not be found.")
                 return self._fallback(TaskError.ERROR)

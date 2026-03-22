@@ -175,8 +175,7 @@ class SettingsGroup(ft.ListView):
         self.page.show_dialog(ft.SnackBar(ft.Text("Saved")))
 
     async def set_initial_values(self):
-        device_info = await self.page.get_device_info()
-        settings = await get_download_settings(device_info)
+        settings = await get_download_settings()
 
         self.switch_download_photos.value = settings.need_download_photos
         self.switch_download_videos.value = settings.need_download_videos

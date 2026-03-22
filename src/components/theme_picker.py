@@ -67,7 +67,8 @@ class ThemePicker(ft.Dropdown):
         ]
 
     async def actualize_self(self):
-        mode = ThemeMode(await ft.SharedPreferences().get("current-app-theme"))
+        raw_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
+        mode = ThemeMode(raw_mode)
         if mode == ThemeMode.LIGHT:
             self.page.theme_mode = ft.ThemeMode.LIGHT
         elif mode == ThemeMode.DARK:

@@ -1,13 +1,18 @@
 import asyncio
 from typing import List, Optional, Dict
 
+import flet as ft
+
 from core.boosty.defs import BoostyPostDto
 from core.defs.tasks import TaskInfo
 from core.task import Task
 
 
 class DownloadManager:
-    def __init__(self, maximum_concurrency: int = 5):
+    def __init__(
+        self,
+        maximum_concurrency: int = 5,
+    ):
         self._tasks: Dict[str, "Task"] = {}
         self.maximum_concurrency = maximum_concurrency
         self._semaphore = asyncio.Semaphore(self.maximum_concurrency)
@@ -21,7 +26,12 @@ class DownloadManager:
                     del self._tasks[post_id]
                 else:
                     return False
-            self._tasks[post_id] = Task(self._semaphore, post_id=post_id, author=author, post_info=post_info)
+            self._tasks[post_id] = Task(
+                semaphore=self._semaphore,
+                author=author,
+                post_id=post_id,
+                post_info=post_info
+            )
             return True
 
     async def mainloop(self):

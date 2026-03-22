@@ -5,7 +5,6 @@ import flet as ft
 import __version__ as app_version
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from core.utils import get_default_downloads_folder
 from pages.auth_management import AuthManagementPage
 from pages.download_image_by_link import DownloadImageByLinkPage
 from pages.download_post import DownloadPostPage
@@ -22,6 +21,9 @@ async def main(page: ft.Page):
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
+    page.window.width = 1180
+    page.window.height = 700
+    await page.window.center()
 
     manager = DownloadManager()
 
