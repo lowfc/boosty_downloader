@@ -1,4 +1,4 @@
-[<img src="https://github.com/lowfc/boosty_downloader/raw/refs/heads/develop-v2/assets/head.svg">](https://github.com/lowfc/boosty_downloader/releases)
+[<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/head.svg">](https://github.com/lowfc/boosty_downloader/releases)
 
 ![GitHub stars](https://img.shields.io/github/stars/lowfc/boosty_downloader?style=flat-square)
 ![GitHub issues](https://img.shields.io/github/issues/lowfc/boosty_downloader?style=flat-square)
@@ -11,7 +11,7 @@ Application for downloading content from boosty.to
 
 ## 👀 Demo
 
-<img src="assets/demo_1.1.gif" alt="">
+<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/demo_1.1.gif" alt="">
 
 You can download content available to you according to your subscription level. 
 To download restricted content, please log in.
@@ -37,14 +37,17 @@ By using the application, you agree to the <a href="https://github.com/lowfc/boo
 #### Supported operating systems
 
 - ✅ Windows
-- ⬜ Linux (coming soon)
-- ⬜ macOS (coming soon)
+- ✅ macOS
+- ⬜ Linux (not supported yet)
+
+If you want to use the app on Linux, please run it from source code. A build is not yet available.
+
 
 #### Authorization ability
 
 Authorize app to get available for you private content:
 
-<img src="assets/demo_2.0.gif" alt="">
+<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/demo_2.0.gif" alt="">
 
 ## 💻 Installation
 
