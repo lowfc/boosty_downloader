@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 from typing import Optional
@@ -74,21 +73,11 @@ def parse_author_link(author_link: str) -> Optional[str]:
         return None
 
 
-def get_default_downloads_folder(device_info: "ft.DeviceInfo") -> Optional[Path]:
-    if isinstance(device_info, ft.WindowsDeviceInfo):
-        return Path(f"C:\\Users\\{device_info.user_name}\\Downloads")
-    elif isinstance(device_info, ft.LinuxDeviceInfo):
-        return Path(f"/home/{device_info.machine_id}/Downloads")
-    elif isinstance(device_info, ft.MacDeviceInfo):
-        return Path("~/Downloads")
-    return None
-
-
-async def get_destination_folder(device_info: Optional["ft.DeviceInfo"]) -> Optional[str]:
+async def get_destination_folder() -> Optional[str]:
     download_folder = await ft.SharedPreferences().get("download-folder")
-    if not download_folder and device_info:
+    if not download_folder:
         try:
-            return str(get_default_downloads_folder(device_info))
+            return str((Path().home() / "Downloads") / "boosty.to")
         except Exception as e:
             logger.error("Failed get downloads folder", exc_info=e)
         return None
@@ -140,8 +129,8 @@ def sign_url(url: str, qs: str) -> str:
     return updated_url.geturl()
 
 
-async def get_download_settings(device_info: Optional["ft.DeviceInfo"]) -> Optional[DownloadingSettingsDto]:
-    downloads_folder = await get_destination_folder(device_info)
+async def get_download_settings() -> Optional[DownloadingSettingsDto]:
+    downloads_folder = await get_destination_folder()
     if not downloads_folder:
         return None
 
