@@ -11,7 +11,8 @@ logger = setup_logger()
 
 class BoostyClient:
 
-    def __init__(self,
+    def __init__(
+        self,
         chunk_size: int,
         download_timeout: int,
         auth_token: Optional[AuthToken] = None,
@@ -32,13 +33,15 @@ class BoostyClient:
             return {
                 **self._base_headers,
                 "Authorization": f"Bearer {self.auth_token.authorization}",
-                "Cookie": self.auth_token.cookie
-
+                "Cookie": self.auth_token.cookie,
             }
         return self._base_headers
 
     def get_client_session(self) -> ClientSession:
-        return ClientSession(headers=self._get_headers(), timeout=ClientTimeout(total=self.download_timeout))
+        return ClientSession(
+            headers=self._get_headers(),
+            timeout=ClientTimeout(total=self.download_timeout),
+        )
 
     def _wrap_media_item(self, media: dict) -> Union[
         cdefs.BoostyImageDto,
@@ -48,7 +51,7 @@ class BoostyClient:
         cdefs.BoostyTextDto,
         cdefs.BoostyLinkDto,
         cdefs.BoostyListDto,
-        None
+        None,
     ]:
         match media["type"]:
             case cdefs.BoostyMediaType.IMAGE.value:
@@ -122,7 +125,10 @@ class BoostyClient:
         for media in content["data"]:
             wrapped_media = self._wrap_media_item(media)
             if wrapped_media:
-                if isinstance(wrapped_media, (cdefs.BoostyTextDto, cdefs.BoostyLinkDto, cdefs.BoostyListDto)):
+                if isinstance(
+                    wrapped_media,
+                    (cdefs.BoostyTextDto, cdefs.BoostyLinkDto, cdefs.BoostyListDto),
+                ):
                     text_content.content.append(wrapped_media)
                 else:
                     result.media.append(wrapped_media)
@@ -169,14 +175,16 @@ class BoostyClient:
             for media in post["data"]:
                 wrapped_media = self._wrap_media_item(media)
                 if wrapped_media:
-                    if isinstance(wrapped_media, (cdefs.BoostyTextDto, cdefs.BoostyLinkDto, cdefs.BoostyListDto)):
+                    if isinstance(
+                        wrapped_media,
+                        (cdefs.BoostyTextDto, cdefs.BoostyLinkDto, cdefs.BoostyListDto),
+                    ):
                         text_content.content.append(wrapped_media)
                     else:
                         new_post.media.append(wrapped_media)
             new_post.text_content = text_content
             result.data.append(new_post)
         return result
-
 
     async def get_max_int_id(self, author: str) -> Optional[int]:
         try:

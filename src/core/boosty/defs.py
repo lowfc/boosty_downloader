@@ -50,7 +50,9 @@ class BoostyPlayerUrlDto:
 class BoostyVideoDto:
     id: str
     title: str
-    player_urls: Dict[BoostyVideoSizesType, BoostyPlayerUrlDto] = field(default_factory=dict)
+    player_urls: Dict[BoostyVideoSizesType, BoostyPlayerUrlDto] = field(
+        default_factory=dict
+    )
 
     def get_title(self) -> str:
         return f"{self.title if self.title else self.id}.mp4"
@@ -95,7 +97,9 @@ class BoostyListDto:
 
 @dataclass
 class BoostyPostTextDto:
-    content: List[Union[BoostyTextDto, BoostyLinkDto, BoostyListDto]] = field(default_factory=list)
+    content: List[Union[BoostyTextDto, BoostyLinkDto, BoostyListDto]] = field(
+        default_factory=list
+    )
 
 
 @dataclass
@@ -107,12 +111,9 @@ class BoostyPostDto:
     title: Optional[str] = None
     signed_query: str = ""
     text_content: BoostyPostTextDto = field(default_factory=BoostyPostTextDto)
-    media: List[Union[
-        BoostyImageDto,
-        BoostyVideoDto,
-        BoostyAudioDto,
-        BoostyFileDto
-    ]] = field(default_factory=list)
+    media: List[
+        Union[BoostyImageDto, BoostyVideoDto, BoostyAudioDto, BoostyFileDto]
+    ] = field(default_factory=list)
 
 
 @dataclass

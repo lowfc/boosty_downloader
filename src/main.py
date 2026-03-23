@@ -63,7 +63,12 @@ async def main(page: ft.Page):
                     content=ft.Text("Are you sure you want to exit the app?"),
                     actions=[
                         ft.TextButton("No", on_click=lambda e: page.pop_dialog()),
-                        ft.TextButton("Yes", on_click=lambda e: asyncio.create_task(page.window.destroy()))
+                        ft.TextButton(
+                            "Yes",
+                            on_click=lambda e: asyncio.create_task(
+                                page.window.destroy()
+                            ),
+                        ),
                     ],
                     open=True,
                 )
@@ -75,6 +80,7 @@ async def main(page: ft.Page):
     def window_event(e: ft.WindowEvent):
         if e.type == ft.WindowEventType.CLOSE:
             asyncio.create_task(check_active_downloads_on_close())
+
     page.window.prevent_close = True
     page.window.on_event = window_event
 

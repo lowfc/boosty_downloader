@@ -13,7 +13,7 @@ from core.downloads_manager import DownloadManager
 class DownloadsCenterPage(ft.View):
     def __init__(self, manager: DownloadManager):
         super().__init__()
-        self.route="/downloads-center"
+        self.route = "/downloads-center"
         self.list_view = ft.Column(spacing=10)
         self.count_slots = 10
         self.slots: List[TaskItem] = []
@@ -32,30 +32,38 @@ class DownloadsCenterPage(ft.View):
             icon=ft.Icons.STOP,
             icon_color=ft.Colors.PRIMARY,
             bgcolor=ft.Colors.ON_SURFACE_VARIANT,
-            on_click=self.on_all_tasks_cancel
+            on_click=self.on_all_tasks_cancel,
         )
         self.status_line = ft.ListTile(
             leading=ft.Icon(ft.Icons.DOWNLOADING),
             title="In progress: 0 / 0",
-            trailing=self.stop_all_button
+            trailing=self.stop_all_button,
         )
 
         self.controls = [
             components.AppBar(manager),
             ft.Column(
                 controls=[
-                    ft.Row([
-                        ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK),
-                                      on_click=lambda e: asyncio.create_task(self.go_to_index())),
-                        ft.Text("Downloads center", size=24, weight=ft.FontWeight.BOLD),
-                    ]),
+                    ft.Row(
+                        [
+                            ft.IconButton(
+                                ft.Icon(ft.Icons.ARROW_BACK),
+                                on_click=lambda e: asyncio.create_task(
+                                    self.go_to_index()
+                                ),
+                            ),
+                            ft.Text(
+                                "Downloads center", size=24, weight=ft.FontWeight.BOLD
+                            ),
+                        ]
+                    ),
                     ft.Card(
                         shadow_color=ft.Colors.ON_SURFACE_VARIANT,
                         content=ft.Container(
                             padding=10,
                             content=self.status_line,
                         ),
-                    )
+                    ),
                 ]
             ),
             ft.ListView(
@@ -63,8 +71,8 @@ class DownloadsCenterPage(ft.View):
                 controls=[
                     self.list_view,
                     self.paginator,
-                ]
-            )
+                ],
+            ),
         ]
         self.upd_task = asyncio.create_task(self.update_task())
 
@@ -95,7 +103,7 @@ class DownloadsCenterPage(ft.View):
             tasks = await self.manager.get_tasks(
                 self.count_slots,
                 offset=self.paginator.get_current_offset(),
-                reverse=True
+                reverse=True,
             )
             self.paginator.set_total_items(self.manager.total_tasks)
             pending = await self.manager.get_pending_tasks_count()
@@ -111,4 +119,4 @@ class DownloadsCenterPage(ft.View):
                 else:
                     self.slots[slot_no].update_view(visible=False)
             self.update()
-            await asyncio.sleep(.1)
+            await asyncio.sleep(0.1)

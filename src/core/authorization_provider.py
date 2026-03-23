@@ -31,7 +31,9 @@ class AuthorizationProvider:
         expires_in = await ft.SharedPreferences().get("ba-expires-in")
         if not expires_in:
             return None
-        expires_date = datetime.datetime.fromtimestamp(int(expires_in), datetime.timezone.utc)
+        expires_date = datetime.datetime.fromtimestamp(
+            int(expires_in), datetime.timezone.utc
+        )
         if datetime.datetime.now(datetime.timezone.utc) < expires_date:
             return AuthToken(
                 authorization=await ft.SharedPreferences().get("ba-authorization"),

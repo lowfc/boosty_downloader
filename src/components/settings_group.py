@@ -18,11 +18,21 @@ class SettingsGroup(ft.ListView):
         self.width = 700
         self.disabled = True
 
-        self.current_download_folder_text = ft.Text(value="Fetching...", size=20, color=ft.Colors.ON_SURFACE_VARIANT)
-        self.switch_download_photos = ft.Switch(label="Download photos", value=True, padding=10)
-        self.switch_download_videos = ft.Switch(label="Download videos", value=True, padding=10)
-        self.switch_download_audios = ft.Switch(label="Download audios", value=True, padding=10)
-        self.switch_download_files = ft.Switch(label="Download attached files", value=True, padding=10)
+        self.current_download_folder_text = ft.Text(
+            value="Fetching...", size=20, color=ft.Colors.ON_SURFACE_VARIANT
+        )
+        self.switch_download_photos = ft.Switch(
+            label="Download photos", value=True, padding=10
+        )
+        self.switch_download_videos = ft.Switch(
+            label="Download videos", value=True, padding=10
+        )
+        self.switch_download_audios = ft.Switch(
+            label="Download audios", value=True, padding=10
+        )
+        self.switch_download_files = ft.Switch(
+            label="Download attached files", value=True, padding=10
+        )
         self.video_size_dropdown = ft.Dropdown(
             width=700,
             value="ultra_hd",
@@ -51,31 +61,36 @@ class SettingsGroup(ft.ListView):
             ],
         )
         self.chunk_size_textfield = ft.TextField(
-            label="Chunk size", border=ft.InputBorder.UNDERLINE,
+            label="Chunk size",
+            border=ft.InputBorder.UNDERLINE,
             input_filter=ft.NumbersOnlyInputFilter(),
-            value="0"
+            value="0",
         )
         self.download_timeout_textfield = ft.TextField(
             label="Download timeout (sec.)",
             border=ft.InputBorder.UNDERLINE,
             input_filter=ft.NumbersOnlyInputFilter(),
-            value="0"
+            value="0",
         )
         self.max_parallelism_textfield = ft.TextField(
             label="Maximum download parallelism",
             border=ft.InputBorder.UNDERLINE,
             input_filter=ft.NumbersOnlyInputFilter(),
-            value="0"
+            value="0",
         )
         self.controls = [
             ft.Text(
                 spans=[
                     ft.TextSpan(
                         f"{app_version.NAME} {app_version.VERSION} ",
-                        ft.TextStyle(weight=ft.FontWeight.BOLD, size=25, color=ft.Colors.ON_SURFACE),
-                        url=app_version.URL
+                        ft.TextStyle(
+                            weight=ft.FontWeight.BOLD,
+                            size=25,
+                            color=ft.Colors.ON_SURFACE,
+                        ),
+                        url=app_version.URL,
                     ),
-                    ft.TextSpan(f"build v{app_version.BUILD}")
+                    ft.TextSpan(f"build v{app_version.BUILD}"),
                 ]
             ),
             ft.Text("Download folder", theme_style=ft.TextThemeStyle.LABEL_MEDIUM),
@@ -87,12 +102,16 @@ class SettingsGroup(ft.ListView):
                     content=ft.Row(
                         spacing=10,
                         controls=[
-                            ft.Icon(ft.Icons.FOLDER, size=20, color=ft.Colors.ON_SURFACE_VARIANT),
-                            self.current_download_folder_text
+                            ft.Icon(
+                                ft.Icons.FOLDER,
+                                size=20,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            self.current_download_folder_text,
                         ],
                     ),
                 ),
-                on_click=lambda e: asyncio.create_task(self.pick_download_folder())
+                on_click=lambda e: asyncio.create_task(self.pick_download_folder()),
             ),
             ft.Text("App theme", theme_style=ft.TextThemeStyle.LABEL_MEDIUM),
             components.ThemePicker(),
@@ -106,13 +125,18 @@ class SettingsGroup(ft.ListView):
                 controls=[
                     self.video_size_dropdown,
                     self.post_text_format_dropdown,
-                ]
+                ],
             ),
             ft.Text("Download settings", theme_style=ft.TextThemeStyle.LABEL_MEDIUM),
             self.chunk_size_textfield,
             self.download_timeout_textfield,
             self.max_parallelism_textfield,
-            ft.FilledButton("Save", height=50, margin=15, on_click=lambda e: asyncio.create_task(self.apply_settings())),
+            ft.FilledButton(
+                "Save",
+                height=50,
+                margin=15,
+                on_click=lambda e: asyncio.create_task(self.apply_settings()),
+            ),
         ]
 
         asyncio.create_task(self.set_initial_values())
@@ -131,7 +155,11 @@ class SettingsGroup(ft.ListView):
                 ft.AlertDialog(
                     title=ft.Text("Chunk size"),
                     content=ft.Text("Please enter value between 10000 and 500000."),
-                    actions=[ft.TextButton("Understand", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Understand", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -142,8 +170,14 @@ class SettingsGroup(ft.ListView):
             self.page.show_dialog(
                 ft.AlertDialog(
                     title=ft.Text("Download timeout (sec.)"),
-                    content=ft.Text("Not recommended to set timeout less, than 10 seconds."),
-                    actions=[ft.TextButton("Understand", on_click=lambda e: self.page.pop_dialog())],
+                    content=ft.Text(
+                        "Not recommended to set timeout less, than 10 seconds."
+                    ),
+                    actions=[
+                        ft.TextButton(
+                            "Understand", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -155,22 +189,40 @@ class SettingsGroup(ft.ListView):
                 ft.AlertDialog(
                     title=ft.Text("Maximum download parallelism"),
                     content=ft.Text("Please enter value between 1 and 10."),
-                    actions=[ft.TextButton("Understand", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Understand", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
             return
 
-        await ft.SharedPreferences().set("need-download-photos", str(self.switch_download_photos.value))
-        await ft.SharedPreferences().set("need-download-videos", str(self.switch_download_videos.value))
-        await ft.SharedPreferences().set("need-download-audios", str(self.switch_download_audios.value))
-        await ft.SharedPreferences().set("need-download-files", str(self.switch_download_files.value))
+        await ft.SharedPreferences().set(
+            "need-download-photos", str(self.switch_download_photos.value)
+        )
+        await ft.SharedPreferences().set(
+            "need-download-videos", str(self.switch_download_videos.value)
+        )
+        await ft.SharedPreferences().set(
+            "need-download-audios", str(self.switch_download_audios.value)
+        )
+        await ft.SharedPreferences().set(
+            "need-download-files", str(self.switch_download_files.value)
+        )
 
         await ft.SharedPreferences().set("download-chunk-size", str(new_chunk_size))
         await ft.SharedPreferences().set("download-timeout", str(new_download_timeout))
-        await ft.SharedPreferences().set("download-max-parallelism", str(new_max_parallelism))
-        await ft.SharedPreferences().set("post-text-format", str(self.post_text_format_dropdown.value))
-        await ft.SharedPreferences().set("preferred-video-size", str(self.video_size_dropdown.value))
+        await ft.SharedPreferences().set(
+            "download-max-parallelism", str(new_max_parallelism)
+        )
+        await ft.SharedPreferences().set(
+            "post-text-format", str(self.post_text_format_dropdown.value)
+        )
+        await ft.SharedPreferences().set(
+            "preferred-video-size", str(self.video_size_dropdown.value)
+        )
 
         self.page.show_dialog(ft.SnackBar(ft.Text("Saved")))
 
