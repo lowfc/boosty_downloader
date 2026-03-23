@@ -1,0 +1,37 @@
+name: Lint Python Code
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black ruff mypy
+
+      - name: Run black (code formatting check)
+        run: |
+          black --check src/
+
+      - name: Run ruff (linting)
+        run: |
+          ruff check src/
+
+      - name: Run mypy (type checking)
+        run: |
+          mypy src/
