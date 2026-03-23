@@ -1,0 +1,46 @@
+name: Build Flet Windows App
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: '3.13'
+
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+
+      - name: Install Dependencies
+        run: |
+          uv sync --no-dev
+          uv pip install . --system
+
+      - name: Build Flet App
+        run: |
+          flet build windows
+
+      - name: Create Archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\windows\* -DestinationPath "app_win_${{ github.ref_name }}.zip"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: app_win_${{ github.ref_name }}.zip
