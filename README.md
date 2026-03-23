@@ -66,6 +66,10 @@ Authorize app to get available for you private content:
 2. Unzip the archive to any folder
 3. Run file boosty_downloader
 
+⚠️ When attempting to launch the app, you may encounter a warning from the operating system about launching an app from an unknown developer. 
+To open the app anyway, read official instruction (these steps only need to be performed once): https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac
+
+
 ## 🐍 Development
 
 ### Run the app

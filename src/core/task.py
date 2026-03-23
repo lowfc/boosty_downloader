@@ -7,7 +7,6 @@ from typing import Optional, List
 
 import aiofiles
 from aiohttp import ClientSession
-from tqdm.asyncio import tqdm_asyncio
 
 from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
@@ -16,6 +15,7 @@ from core.defs.common import DownloadingSettingsDto
 from core.defs.tasks import TaskError
 from core.draftjs_converter import DraftJsConverter
 from core.logger import setup_logger
+from core.progress_counter import ProgressCounter
 from core.utils import validate_windows_dir_name, sign_url, get_download_settings
 
 logger = setup_logger()
@@ -113,7 +113,7 @@ class Task:
         session: ClientSession,
         file_url: str,
         save_path: Path,
-        pbar: tqdm_asyncio,
+        pbar: ProgressCounter,
         fetch_file_size: bool = False,
         chunk_size: int = 153600,
     ):
@@ -296,7 +296,7 @@ class Task:
             self._percent = 5
 
             self._count_files = len(download_items)
-            with tqdm_asyncio(total=self._total_weight, unit='B', unit_scale=True) as pbar:
+            with ProgressCounter(total=self._total_weight) as pbar:
                 for media in download_items:
                     session = client.get_client_session()
                     try:

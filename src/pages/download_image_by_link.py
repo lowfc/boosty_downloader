@@ -1,15 +1,14 @@
 import asyncio
-import os
 from pathlib import Path
 
 import aiofiles
 import flet as ft
-from tqdm.asyncio import tqdm_asyncio
 
 import components
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
+from core.progress_counter import ProgressCounter
 from core.utils import parse_image_link, get_download_settings
 
 logger = setup_logger()
@@ -160,7 +159,7 @@ class DownloadImageByLinkPage(ft.View):
         )
 
         try:
-            with tqdm_asyncio(total=0, unit='B', unit_scale=True) as pbar:
+            with ProgressCounter(total=0) as pbar:
                 session = client.get_client_session()
                 async with session:
                     async with session.get(f"https://images.boosty.to/image/{link_uuid}") as response:
