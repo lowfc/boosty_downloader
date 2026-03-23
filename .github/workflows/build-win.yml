@@ -1,0 +1,43 @@
+name: Build Flet Windows App
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+
+env:
+  UV_PYTHON: 3.13
+  FLET_CLI_NO_RICH_OUTPUT: 1
+  PYTHONUTF8: 1
+
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build app
+        shell: bash
+        run: |
+          export PYTHONIOENCODING=utf-8
+          uv run flet build windows --yes --verbose
+
+      - name: Create Archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\windows\* -DestinationPath "app_win_${{ github.sha }}.zip"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: app_win_${{ github.sha }}.zip
