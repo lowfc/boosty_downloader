@@ -140,7 +140,7 @@ class MergeAuthorContentPage(ft.View):
         await asyncio.sleep(2)
         posts = os.listdir(source_folder)
         stats = {
-            'posts': len(posts),
+            'posts': 0,
             'photos': 0,
             'videos': 0,
             'audios': 0,
@@ -159,6 +159,7 @@ class MergeAuthorContentPage(ft.View):
             post_directory = source_folder / post
             if not os.path.isdir(post_directory):
                 continue
+            stats["posts"] += 1
             for filename in os.listdir(post_directory):
                 source_path = source_folder / post / filename
                 if not os.path.isfile(source_path):
