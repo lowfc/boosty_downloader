@@ -13,13 +13,13 @@ class ThemeMode(Enum):
 theme_icons = {
     ThemeMode.LIGHT: ft.Icons.LIGHT_MODE,
     ThemeMode.DARK: ft.Icons.DARK_MODE,
-    ThemeMode.SYSTEM: ft.Icons.BRIGHTNESS_AUTO
+    ThemeMode.SYSTEM: ft.Icons.BRIGHTNESS_AUTO,
 }
 
 theme_names = {
     ThemeMode.LIGHT: "Light",
     ThemeMode.DARK: "Dark",
-    ThemeMode.SYSTEM: "System"
+    ThemeMode.SYSTEM: "System",
 }
 
 
@@ -36,33 +36,41 @@ class ThemePicker(ft.Dropdown):
         self.content_padding = ft.padding.symmetric(horizontal=16, vertical=12)
         self.prefix_icon = theme_icons[ThemeMode.SYSTEM]
         self.value = ThemeMode.SYSTEM.value
-        self.on_select = lambda e: asyncio.create_task(self.apply_theme(ThemeMode(e.data)))
+        self.on_select = lambda e: asyncio.create_task(
+            self.apply_theme(ThemeMode(e.data))
+        )
         asyncio.create_task(self.actualize_self())
 
         self.options = [
             ft.dropdown.Option(
                 key=ThemeMode.LIGHT.value,
                 text=theme_names[ThemeMode.LIGHT],
-                content=ft.Row([
-                    ft.Icon(theme_icons[ThemeMode.LIGHT], size=20),
-                    ft.Text(theme_names[ThemeMode.LIGHT])
-                ])
+                content=ft.Row(
+                    [
+                        ft.Icon(theme_icons[ThemeMode.LIGHT], size=20),
+                        ft.Text(theme_names[ThemeMode.LIGHT]),
+                    ]
+                ),
             ),
             ft.dropdown.Option(
                 key=ThemeMode.DARK.value,
                 text=theme_names[ThemeMode.DARK],
-                content=ft.Row([
-                    ft.Icon(theme_icons[ThemeMode.DARK], size=20),
-                    ft.Text(theme_names[ThemeMode.DARK])
-                ])
+                content=ft.Row(
+                    [
+                        ft.Icon(theme_icons[ThemeMode.DARK], size=20),
+                        ft.Text(theme_names[ThemeMode.DARK]),
+                    ]
+                ),
             ),
             ft.dropdown.Option(
                 key=ThemeMode.SYSTEM.value,
                 text=theme_names[ThemeMode.SYSTEM],
-                content=ft.Row([
-                    ft.Icon(theme_icons[ThemeMode.SYSTEM], size=20),
-                    ft.Text(theme_names[ThemeMode.SYSTEM])
-                ])
+                content=ft.Row(
+                    [
+                        ft.Icon(theme_icons[ThemeMode.SYSTEM], size=20),
+                        ft.Text(theme_names[ThemeMode.SYSTEM]),
+                    ]
+                ),
             ),
         ]
 

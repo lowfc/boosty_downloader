@@ -41,22 +41,16 @@ class AuthManagementPage(ft.View):
             align=ft.Alignment.CENTER,
             auto_scroll=True,
             controls=[
-                ft.Text(f"1. Copy script", size=20, weight=ft.FontWeight.BOLD),
-                ft.Text(f"Click the button to copy script:"),
+                ft.Text("1. Copy script", size=20, weight=ft.FontWeight.BOLD),
+                ft.Text("Click the button to copy script:"),
                 self.copy_script_button,
-                ft.Text(f"2. Paste script into the browser console on boosty", size=20, weight=ft.FontWeight.BOLD),
-                ft.Text(f"Press the F12 key when you are on the boosty page, and then paste the text into the console."),
-                ft.Container(
-                    bgcolor="#db7943",
-                    expand=True,
-                    padding=10,
-                    border_radius=5,
-                    content=ft.Row(
-                        controls=[
-                            ft.Icon(ft.Icons.INFO, color="#965132"),
-                            ft.Text("Make sure that you are logged in to your account on the website.",
-                                    color="#4c2313", width=570, weight=ft.FontWeight.BOLD),
-                        ])
+                ft.Text(
+                    "2. Paste script into the browser console on boosty",
+                    size=20,
+                    weight=ft.FontWeight.BOLD,
+                ),
+                ft.Text(
+                    "Press the F12 key when you are on the boosty page, and then paste the text into the console."
                 ),
                 ft.Container(
                     bgcolor="#db7943",
@@ -66,12 +60,36 @@ class AuthManagementPage(ft.View):
                     content=ft.Row(
                         controls=[
                             ft.Icon(ft.Icons.INFO, color="#965132"),
-                            ft.Text("If the browser shows a warning about code insertion, follow its instructions. Usually you just need to enter 'allow pasting' and press enter.",
-                                    color="#4c2313", width=570, weight=ft.FontWeight.BOLD),
-                        ])
+                            ft.Text(
+                                "Make sure that you are logged in to your account on the website.",
+                                color="#4c2313",
+                                width=570,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                        ]
+                    ),
                 ),
-                ft.Text(f"3. Authorize app", size=20, weight=ft.FontWeight.BOLD),
-                ft.Text("Copy the token that appeared in the browser console and paste it here:"),
+                ft.Container(
+                    bgcolor="#db7943",
+                    expand=True,
+                    padding=10,
+                    border_radius=5,
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.INFO, color="#965132"),
+                            ft.Text(
+                                "If the browser shows a warning about code insertion, follow its instructions. Usually you just need to enter 'allow pasting' and press enter.",
+                                color="#4c2313",
+                                width=570,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                        ]
+                    ),
+                ),
+                ft.Text("3. Authorize app", size=20, weight=ft.FontWeight.BOLD),
+                ft.Text(
+                    "Copy the token that appeared in the browser console and paste it here:"
+                ),
                 self.token_text_field,
                 ft.Button(
                     "Save token",
@@ -94,7 +112,12 @@ class AuthManagementPage(ft.View):
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.Icon(ft.Icons.DONE, color=ft.Colors.PRIMARY, size=30),
-                        ft.Text("Logged in", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
+                        ft.Text(
+                            "Logged in",
+                            size=22,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.PRIMARY,
+                        ),
                     ],
                 ),
                 self.auth_expires_info,
@@ -106,7 +129,7 @@ class AuthManagementPage(ft.View):
                     color=ft.Colors.ON_SURFACE,
                     on_click=self.logout,
                 ),
-            ]
+            ],
         )
 
     def build(self):
@@ -115,11 +138,16 @@ class AuthManagementPage(ft.View):
     async def render_page(self):
         base_view: "list[ft.Control]" = [
             components.AppBar(self.manager),
-            ft.Row([
-                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK),
-                              on_click=self.go_to_index),
-                ft.Text("Authorization management", size=24, weight=ft.FontWeight.BOLD),
-            ]),
+            ft.Row(
+                [
+                    ft.IconButton(
+                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
+                    ),
+                    ft.Text(
+                        "Authorization management", size=24, weight=ft.FontWeight.BOLD
+                    ),
+                ]
+            ),
         ]
         expires_in = await AuthorizationProvider.get_token_valid_to()
         if expires_in:
@@ -133,15 +161,21 @@ class AuthManagementPage(ft.View):
                     if days > 0:
                         msg += f"{days} days, "
                     if hours == 0:
-                        self.auth_expires_info.value = msg + f"{delta.seconds // 60} minutes."
+                        self.auth_expires_info.value = (
+                            msg + f"{delta.seconds // 60} minutes."
+                        )
                     else:
-                        self.auth_expires_info.value = msg + f"{delta.seconds // 3600} hours."
+                        self.auth_expires_info.value = (
+                            msg + f"{delta.seconds // 3600} hours."
+                        )
                     base_view.append(self.deauth_view)
                     self.controls = base_view
                     self.page.update()
                     return
             except Exception as e:
-                logger.error(f"Failed decode expires in {expires_in=}, set null", exc_info=e)
+                logger.error(
+                    f"Failed decode expires in {expires_in=}, set null", exc_info=e
+                )
                 await ft.SharedPreferences().remove("ba-expires-in")
         base_view.append(self.auth_view)
         self.controls = base_view
@@ -153,13 +187,15 @@ class AuthManagementPage(ft.View):
     async def copy_script(self):
         script_path = Path(os.getcwd()) / "js/auth_getter_minify.js"
         async with aiofiles.open(script_path, mode="r") as f:
-            await ft.Clipboard().set(
-                await f.read()
+            await ft.Clipboard().set(await f.read())
+            self.copy_script_button.icon = ft.Icon(
+                ft.Icons.DONE, color=ft.Colors.PRIMARY
             )
-            self.copy_script_button.icon = ft.Icon(ft.Icons.DONE, color=ft.Colors.PRIMARY)
             self.page.update()
             await asyncio.sleep(1)
-            self.copy_script_button.icon = ft.Icon(ft.Icons.COPY, color=ft.Colors.PRIMARY)
+            self.copy_script_button.icon = ft.Icon(
+                ft.Icons.COPY, color=ft.Colors.PRIMARY
+            )
             self.page.update()
 
     async def save_new_token(self):
@@ -169,7 +205,11 @@ class AuthManagementPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Empty token"),
                     content=ft.Text("Type token from console into the text field"),
-                    actions=[ft.TextButton("Ops, ok", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Ops, ok", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -180,7 +220,11 @@ class AuthManagementPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Token is incorrect"),
                     content=ft.Text("Are you sure you copied it completely?"),
-                    actions=[ft.TextButton("I'll check", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "I'll check", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )

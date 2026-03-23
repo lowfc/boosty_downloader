@@ -1,8 +1,6 @@
 import asyncio
 from typing import List, Optional, Dict
 
-import flet as ft
-
 from core.boosty.defs import BoostyPostDto
 from core.defs.tasks import TaskInfo
 from core.task import Task
@@ -19,7 +17,9 @@ class DownloadManager:
         self._lock = asyncio.Lock()
         self._closed = False
 
-    async def add_task(self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None) -> bool:
+    async def add_task(
+        self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None
+    ) -> bool:
         async with self._lock:
             if post_id in self._tasks.keys():
                 if self._tasks[post_id].fallen:
@@ -30,7 +30,7 @@ class DownloadManager:
                 semaphore=self._semaphore,
                 author=author,
                 post_id=post_id,
-                post_info=post_info
+                post_info=post_info,
             )
             return True
 
@@ -62,7 +62,9 @@ class DownloadManager:
     def total_tasks(self) -> int:
         return len(self._tasks)
 
-    async def get_tasks(self, limit: int = 10, offset: int = 0, reverse: bool = False) -> List[TaskInfo]:
+    async def get_tasks(
+        self, limit: int = 10, offset: int = 0, reverse: bool = False
+    ) -> List[TaskInfo]:
         result = []
         current_offset = 0
         async with self._lock:
@@ -73,17 +75,19 @@ class DownloadManager:
             for i in range(len(task_keys)):
                 if current_offset >= offset:
                     post_id = task_keys[i]
-                    result.append(TaskInfo(
-                        percent=self._tasks[post_id].percent,
-                        title=self._tasks[post_id].title,
-                        author=self._tasks[post_id].author,
-                        path=self._tasks[post_id].path,
-                        post_id=post_id,
-                        finished=self._tasks[post_id].finished,
-                        error=self._tasks[post_id].error_description,
-                        count_files=self._tasks[post_id].count_files,
-                        total_weight=self._tasks[post_id].total_weight,
-                    ))
+                    result.append(
+                        TaskInfo(
+                            percent=self._tasks[post_id].percent,
+                            title=self._tasks[post_id].title,
+                            author=self._tasks[post_id].author,
+                            path=self._tasks[post_id].path,
+                            post_id=post_id,
+                            finished=self._tasks[post_id].finished,
+                            error=self._tasks[post_id].error_description,
+                            count_files=self._tasks[post_id].count_files,
+                            total_weight=self._tasks[post_id].total_weight,
+                        )
+                    )
                     if len(result) == limit:
                         return result
                 current_offset += 1

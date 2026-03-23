@@ -16,21 +16,17 @@ class Paginator(ft.Row):
         self.spacing = 10
 
         self.btn_prev = ft.IconButton(
-            icon=ft.Icons.ARROW_BACK,
-            on_click=self.prev_page,
-            disabled=True
+            icon=ft.Icons.ARROW_BACK, on_click=self.prev_page, disabled=True
         )
 
         self.btn_next = ft.IconButton(
             icon=ft.Icons.ARROW_FORWARD,
             on_click=self.next_page,
-            disabled=self.page_count <= 1
+            disabled=self.page_count <= 1,
         )
 
         self.text_display = ft.Text(
-            value=self._get_display_text(),
-            size=16,
-            weight=ft.FontWeight.W_500
+            value=self._get_display_text(), size=16, weight=ft.FontWeight.W_500
         )
 
     def _calculate_page_count(self):
@@ -124,8 +120,4 @@ class Paginator(ft.Row):
         return start, end
 
     def build(self):
-        self.controls = [
-            self.btn_prev,
-            self.text_display,
-            self.btn_next
-        ]
+        self.controls = [self.btn_prev, self.text_display, self.btn_next]

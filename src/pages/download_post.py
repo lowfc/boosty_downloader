@@ -11,7 +11,9 @@ class DownloadPostPage(ft.View):
         self.manager = manager
         self.route = "/download-post"
         self.text_field = ft.TextField(
-            prefix_icon=ft.IconButton(ft.Icons.LINK, on_click=self.parse_clipboard_link),
+            prefix_icon=ft.IconButton(
+                ft.Icons.LINK, on_click=self.parse_clipboard_link
+            ),
             hint_text="https://boosty.to/author/posts/dba61f8b-d6dd-4105-9d00-db1c46f13946",
             width=615,
             value="",
@@ -22,10 +24,14 @@ class DownloadPostPage(ft.View):
         )
         self.controls = [
             components.AppBar(self.manager),
-            ft.Row(controls=[
-                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index),
-                ft.Text("Download post", size=24, weight=ft.FontWeight.BOLD),
-            ]),
+            ft.Row(
+                controls=[
+                    ft.IconButton(
+                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
+                    ),
+                    ft.Text("Download post", size=24, weight=ft.FontWeight.BOLD),
+                ]
+            ),
             ft.Container(
                 alignment=ft.Alignment.CENTER,
                 expand=True,
@@ -37,15 +43,17 @@ class DownloadPostPage(ft.View):
                         self.text_field,
                         ft.Button(
                             content=ft.Text("Download", size=17),
-                            icon=ft.Icon(ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16),
+                            icon=ft.Icon(
+                                ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16
+                            ),
                             height=50,
                             width=150,
                             color=ft.Colors.ON_SURFACE,
                             on_click=self.download_post,
-                        )
-                    ]
-                )
-            )
+                        ),
+                    ],
+                ),
+            ),
         ]
 
     async def parse_clipboard_link(self):
@@ -66,7 +74,11 @@ class DownloadPostPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Empty address"),
                     content=ft.Text("Type link to post into the text field"),
-                    actions=[ft.TextButton("Ops, ok", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Ops, ok", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -77,7 +89,11 @@ class DownloadPostPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Link to post seems invalid"),
                     content=ft.Text("It looks like you entered an incorrect link"),
-                    actions=[ft.TextButton("I'll check", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "I'll check", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )

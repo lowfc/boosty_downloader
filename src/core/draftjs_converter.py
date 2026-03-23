@@ -108,7 +108,9 @@ class DraftJsConverter:
             lines = []
             indent = "  " * level
             for i in list_dto.items:
-                text_parts = [self._parse_boosty_text(d.get("content"))[0] for d in i.get("data")]
+                text_parts = [
+                    self._parse_boosty_text(d.get("content"))[0] for d in i.get("data")
+                ]
                 lines.append(f"{indent}- {''.join(text_parts)}")
                 for sub in i.get("items"):
                     lines.extend(process_plain_list(sub, level + 1))

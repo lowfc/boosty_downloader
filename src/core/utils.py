@@ -10,50 +10,57 @@ from core.logger import setup_logger
 
 logger = setup_logger()
 
-uuid4_re_pattern = "[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}"
-post_link_re = re.compile(rf'(https://)?boosty\.to/(.*)/posts/({uuid4_re_pattern})', re.I)
-author_link_re = re.compile(r'(https://)?boosty\.to/(.*)$', re.I)
-image_link_feed_re = re.compile(rf'(https://)?boosty\.to/app/feed/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})', re.I)
-image_link_author_feed_re = re.compile(rf'(https://)?boosty\.to/(.*)/blog/media/{uuid4_re_pattern}/({uuid4_re_pattern})', re.I)
-image_link_author_post_re = re.compile(rf'(https://)?boosty\.to/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})', re.I)
-image_link_direct_message_re = re.compile(rf'(https://)?boosty\.to/app/messages/media/(\d)+/({uuid4_re_pattern})', re.I)
+uuid4_re_pattern = (
+    "[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}"
+)
+post_link_re = re.compile(
+    rf"(https://)?boosty\.to/(.*)/posts/({uuid4_re_pattern})", re.I
+)
+author_link_re = re.compile(r"(https://)?boosty\.to/(.*)$", re.I)
+image_link_feed_re = re.compile(
+    rf"(https://)?boosty\.to/app/feed/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})",
+    re.I,
+)
+image_link_author_feed_re = re.compile(
+    rf"(https://)?boosty\.to/(.*)/blog/media/{uuid4_re_pattern}/({uuid4_re_pattern})",
+    re.I,
+)
+image_link_author_post_re = re.compile(
+    rf"(https://)?boosty\.to/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})",
+    re.I,
+)
+image_link_direct_message_re = re.compile(
+    rf"(https://)?boosty\.to/app/messages/media/(\d)+/({uuid4_re_pattern})", re.I
+)
 
 
 def parse_post_link(post_link: str) -> Optional[PostInfo]:
     try:
         parsed_url = urlparse(post_link)
-        clean_url = urlunparse((
-            parsed_url.scheme,
-            parsed_url.netloc,
-            parsed_url.path,
-            '',
-            '',
-            ''
-        ))
+        clean_url = urlunparse(
+            (parsed_url.scheme, parsed_url.netloc, parsed_url.path, "", "", "")
+        )
     except Exception as e:
         logger.error(f"Error parsing post link: '{post_link}'", exc_info=e)
         return None
     result = post_link_re.match(clean_url)
     if result:
-        return PostInfo(
-            author=result.group(2),
-            id=result.group(3)
-        )
+        return PostInfo(author=result.group(2), id=result.group(3))
     return None
 
 
 def parse_image_link(image_link: str) -> Optional[str]:
     try:
         parsed_url = urlparse(image_link)
-        clean_url = urlunparse((
-            parsed_url.scheme,
-            parsed_url.netloc,
-            parsed_url.path,
-            '',
-            '',
-            ''
-        ))
-        for exp in (image_link_feed_re, image_link_author_feed_re, image_link_author_post_re, image_link_direct_message_re):
+        clean_url = urlunparse(
+            (parsed_url.scheme, parsed_url.netloc, parsed_url.path, "", "", "")
+        )
+        for exp in (
+            image_link_feed_re,
+            image_link_author_feed_re,
+            image_link_author_post_re,
+            image_link_direct_message_re,
+        ):
             if result := exp.match(clean_url):
                 return result.group(3)
         return None
@@ -92,14 +99,33 @@ def validate_windows_dir_name(dir_name: str) -> str:
     illegal_chars = r'[<>:"/\\|?*\x00-\x1f]'
 
     reserved_names = {
-        'CON', 'PRN', 'AUX', 'NUL',
-        'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
-        'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
     }
 
-    clean_name = re.sub(illegal_chars, '_', dir_name)
+    clean_name = re.sub(illegal_chars, "_", dir_name)
 
-    clean_name = clean_name.strip(' .')
+    clean_name = clean_name.strip(" .")
 
     base_name = Path(clean_name).stem.upper()
     if base_name in reserved_names:
@@ -115,7 +141,7 @@ def sign_url(url: str, qs: str) -> str:
     if parsed_url.query:
         existing_params = dict(parse_qsl(parsed_url.query))
 
-    if qs.startswith('?'):
+    if qs.startswith("?"):
         qs = qs[1:]
     new_params = dict(parse_qsl(qs))
 
@@ -168,9 +194,13 @@ async def get_download_settings() -> Optional[DownloadingSettingsDto]:
         download_timeout = 100
     elif download_timeout > 1000000:
         download_timeout = 1000000
-    preferred_video_size = await ft.SharedPreferences().get("preferred-video-size") or "ultra_hd"
+    preferred_video_size = (
+        await ft.SharedPreferences().get("preferred-video-size") or "ultra_hd"
+    )
     post_text_format = await ft.SharedPreferences().get("post-text-format") or "raw"
-    max_parallelism = int(await ft.SharedPreferences().get("download-max-parallelism") or 5)
+    max_parallelism = int(
+        await ft.SharedPreferences().get("download-max-parallelism") or 5
+    )
     if max_parallelism < 1:
         max_parallelism = 1
     elif max_parallelism > 30:
@@ -186,5 +216,5 @@ async def get_download_settings() -> Optional[DownloadingSettingsDto]:
         preferred_video_size=preferred_video_size,
         post_text_format=post_text_format,
         downloads_folder=downloads_folder,
-        max_parallelism=max_parallelism
+        max_parallelism=max_parallelism,
     )

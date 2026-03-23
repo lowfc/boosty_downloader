@@ -24,12 +24,11 @@ class AppBar(ft.AppBar):
 
     def __init__(self, manager: DownloadManager):
         super().__init__()
-        self.title = ft.Row(
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            width=300
-        )
+        self.title = ft.Row(vertical_alignment=ft.CrossAxisAlignment.CENTER, width=300)
         self.downloads_badge = ft.Badge(label="", bgcolor=ft.Colors.PRIMARY)
-        self.downloads_button = ft.IconButton(ft.Icons.DOWNLOAD, on_click=self.go_to_downloads_center)
+        self.downloads_button = ft.IconButton(
+            ft.Icons.DOWNLOAD, on_click=self.go_to_downloads_center
+        )
         self.actions = [
             self.downloads_button,
             ft.IconButton(ft.Icons.ACCOUNT_CIRCLE, on_click=self.go_to_auth_management),
@@ -54,7 +53,10 @@ class AppBar(ft.AppBar):
                 self.downloads_button.badge = self.downloads_badge
             else:
                 self.downloads_badge.badge = None
-            if self.token_expires_in and datetime.datetime.now(datetime.timezone.utc) < self.token_expires_in:
+            if (
+                self.token_expires_in
+                and datetime.datetime.now(datetime.timezone.utc) < self.token_expires_in
+            ):
                 self.title.controls = [
                     ft.Icon(ft.Icons.SPELLCHECK, color=ft.Colors.ON_SURFACE_VARIANT),
                 ]
@@ -69,8 +71,8 @@ class AppBar(ft.AppBar):
                         color=ft.Colors.ON_SURFACE_VARIANT,
                         tooltip=ft.Tooltip(
                             message="To watch and download private content available to you, log in the app (button on the right)",
-                            mouse_cursor=ft.MouseCursor.CLICK
-                        )
+                            mouse_cursor=ft.MouseCursor.CLICK,
+                        ),
                     ),
                 ]
             self.update()

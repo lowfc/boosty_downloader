@@ -2,7 +2,7 @@ import logging
 import sys
 
 
-def setup_logger(log_file='runtime.log'):
+def setup_logger(log_file="runtime.log"):
     logger = logging.getLogger("boosty_downloader_logger")
 
     if logger.handlers:
@@ -11,8 +11,8 @@ def setup_logger(log_file='runtime.log'):
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        fmt='[%(levelname)s] %(asctime)s %(filename)s %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="[%(levelname)s] %(asctime)s %(filename)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     console_handler = logging.StreamHandler(sys.stdout)
@@ -20,7 +20,7 @@ def setup_logger(log_file='runtime.log'):
     console_handler.setFormatter(formatter)
 
     try:
-        file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+        file_handler = logging.FileHandler(log_file, mode="w", encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
