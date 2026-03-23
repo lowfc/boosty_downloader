@@ -69,6 +69,11 @@ Authorize app to get available for you private content:
 ⚠️ When attempting to launch the app, you may encounter a warning from the operating system about launching an app from an unknown developer. 
 To open the app anyway, read official instruction (these steps only need to be performed once): https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac
 
+#### CLI
+
+If you want to use the CLI version, or the version with UI doesn't work for you, recommended to use this version:
+
+https://github.com/Banana-P0wer/Cli-Banana-BoostyDownloader
 
 ## 🐍 Development
 
