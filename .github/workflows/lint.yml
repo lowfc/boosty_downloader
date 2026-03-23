@@ -5,11 +5,15 @@ on:
     branches:
       - develop
       - master
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-
+    continue-on-error: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
