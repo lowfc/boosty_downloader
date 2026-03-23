@@ -1,8 +1,12 @@
 name: Build Flet Windows App
 on:
-  push:
-    tags:
-      - 'v*'
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   build-windows:
