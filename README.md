@@ -71,7 +71,7 @@ To open the app anyway, read official instruction (these steps only need to be p
 
 #### CLI
 
-If you want to use the CLI version, or the version with UI doesn't work for you, recommended to use this version:
+If you want to use the CLI version, or the version with UI doesn't work for you, recommended to use this app:
 
 https://github.com/Banana-P0wer/Cli-Banana-BoostyDownloader
 
