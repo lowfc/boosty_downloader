@@ -83,14 +83,14 @@ class MergeAuthorContentPage(ft.View):
         self.controls = [
             components.AppBar(manager),
             ft.Row(
-                controls=[
+                [
                     ft.IconButton(
                         ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
                     ),
                     ft.Text("Content merger", size=24, weight=ft.FontWeight.BOLD),
                 ]
             ),
-            ft.Row(
+            ft.ListView(
                 [
                     ft.Column(
                         [

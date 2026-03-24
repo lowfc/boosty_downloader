@@ -21,8 +21,10 @@ async def main(page: ft.Page):
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
-    page.window.width = 1180
-    page.window.height = 700
+    page.window.width = 1200
+    page.window.min_width = 1100
+    page.window.height = 750
+    page.window.min_height = 500
     await page.window.center()
 
     manager = DownloadManager()

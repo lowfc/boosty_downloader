@@ -40,6 +40,7 @@ class AuthManagementPage(ft.View):
             width=650,
             align=ft.Alignment.CENTER,
             auto_scroll=True,
+            expand=True,
             controls=[
                 ft.Text("1. Copy script", size=20, weight=ft.FontWeight.BOLD),
                 ft.Text("Click the button to copy script:"),
@@ -53,16 +54,15 @@ class AuthManagementPage(ft.View):
                     "Press the F12 key when you are on the boosty page, and then paste the text into the console."
                 ),
                 ft.Container(
-                    bgcolor="#db7943",
+                    bgcolor=ft.Colors.SURFACE_CONTAINER,
                     expand=True,
                     padding=10,
                     border_radius=5,
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.INFO, color="#965132"),
+                            ft.Icon(ft.Icons.INFO, color=ft.Colors.ON_SURFACE),
                             ft.Text(
                                 "Make sure that you are logged in to your account on the website.",
-                                color="#4c2313",
                                 width=570,
                                 weight=ft.FontWeight.BOLD,
                             ),
@@ -70,16 +70,15 @@ class AuthManagementPage(ft.View):
                     ),
                 ),
                 ft.Container(
-                    bgcolor="#db7943",
+                    bgcolor=ft.Colors.SURFACE_CONTAINER,
                     expand=True,
                     padding=10,
                     border_radius=5,
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.INFO, color="#965132"),
+                            ft.Icon(ft.Icons.INFO, color=ft.Colors.ON_SURFACE),
                             ft.Text(
                                 "If the browser shows a warning about code insertion, follow its instructions. Usually you just need to enter 'allow pasting' and press enter.",
-                                color="#4c2313",
                                 width=570,
                                 weight=ft.FontWeight.BOLD,
                             ),
