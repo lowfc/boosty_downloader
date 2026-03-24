@@ -1,0 +1,43 @@
+name: Build Flet Linux App
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+env:
+  UV_PYTHON: 3.13
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Build app
+        shell: bash
+        run: |
+          uv run flet build linux --yes --verbose
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app_linux_${{ github.sha }}.zip
+          path: build/linux/*
