@@ -1,4 +1,4 @@
-name: Build Flet Windows App
+name: Build Flet macOS App
 on:
   pull_request:
     branches:
@@ -10,12 +10,10 @@ on:
 
 env:
   UV_PYTHON: 3.13
-  FLET_CLI_NO_RICH_OUTPUT: 1
-  PYTHONUTF8: 1
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build-macos:
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,13 +22,10 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Build app
-        shell: bash
-        run: |
-          export PYTHONIOENCODING=utf-8
-          uv run flet build windows --yes --verbose
+        run: uv run flet build macos --yes --verbose
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app_win_${{ github.sha }}.zip
-          path: build\windows\*
+          name: app_macOS_${{ github.sha }}.zip
+          path: build/macos/*
