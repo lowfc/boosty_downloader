@@ -2,7 +2,7 @@ name: Build Flet Windows App
 on:
   pull_request:
     branches:
-      - develop
+      - master
     types:
       - opened
       - synchronize
@@ -31,13 +31,8 @@ jobs:
           export PYTHONIOENCODING=utf-8
           uv run flet build windows --yes --verbose
 
-      - name: Create Archive
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build\windows\* -DestinationPath "app_win_${{ github.sha }}.zip"
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-binary
-          path: app_win_${{ github.sha }}.zip
+          name: app_win_${{ github.sha }}.zip
+          path: build\windows\*
