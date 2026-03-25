@@ -10,7 +10,14 @@ from aiohttp import ClientSession
 
 from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
-from core.boosty.defs import BoostyImageDto, BoostyAudioDto, BoostyFileDto, BoostyVideoDto, VIDEO_QUALITY_GRADE, BoostyPostDto
+from core.boosty.defs import (
+    BoostyImageDto,
+    BoostyAudioDto,
+    BoostyFileDto,
+    BoostyVideoDto,
+    VIDEO_QUALITY_GRADE,
+    BoostyPostDto,
+)
 from core.defs.common import DownloadingSettingsDto
 from core.defs.tasks import TaskError
 from core.draftjs_converter import DraftJsConverter
@@ -28,9 +35,8 @@ class FinalDownloadTaskDto:
     fetch_file_size: bool = False
 
 
-
 class Task:
-    """ Репрезентация таска фоновой загрузки файлов """
+    """Репрезентация таска фоновой загрузки файлов"""
 
     def __init__(
         self,
@@ -66,10 +72,6 @@ class Task:
     @property
     def finished(self) -> bool:
         return self._finished
-
-    @property
-    def fallen(self) -> bool:
-        return self._finished and self._error
 
     @property
     def pending(self) -> bool:
@@ -123,10 +125,10 @@ class Task:
                 logger.debug(f"Got response {response.status}")
                 response.raise_for_status()
                 if fetch_file_size:
-                    """ Так как не для всех файлов заранее известен размер, фетчим его в рантайме """
+                    """Так как не для всех файлов заранее известен размер, фетчим его в рантайме"""
                     self._total_weight += response.content_length
                     pbar.total = self._total_weight
-                async with aiofiles.open(save_path, 'wb') as f:
+                async with aiofiles.open(save_path, "wb") as f:
                     logger.debug(f"Writing file {save_path}")
                     async for chunk in response.content.iter_chunked(chunk_size):
                         if chunk:
@@ -151,7 +153,9 @@ class Task:
     ) -> List[FinalDownloadTaskDto]:
         download_items = []
         for media in post_info.media:
-            if isinstance(media, BoostyImageDto) and settings.need_download_photos:  # photo
+            if (
+                isinstance(media, BoostyImageDto) and settings.need_download_photos
+            ):  # photo
                 self._total_weight += media.size
                 download_items.append(
                     FinalDownloadTaskDto(
@@ -160,8 +164,12 @@ class Task:
                     )
                 )
 
-            elif isinstance(media, BoostyVideoDto) and settings.need_download_videos:  # video
-                lborder_quality = VIDEO_QUALITY_GRADE.index(settings.preferred_video_size)
+            elif (
+                isinstance(media, BoostyVideoDto) and settings.need_download_videos
+            ):  # video
+                lborder_quality = VIDEO_QUALITY_GRADE.index(
+                    settings.preferred_video_size
+                )
                 for i in range(lborder_quality, len(VIDEO_QUALITY_GRADE)):
                     url_info = media.player_urls.get(VIDEO_QUALITY_GRADE[i])
                     if url_info:
@@ -170,23 +178,27 @@ class Task:
                             FinalDownloadTaskDto(
                                 final_url=url_info.url,
                                 save_path=path,
-                                fetch_file_size=True
+                                fetch_file_size=True,
                             )
                         )
                         break
 
-            elif isinstance(media, BoostyAudioDto) and settings.need_download_audios:  # audio
+            elif (
+                isinstance(media, BoostyAudioDto) and settings.need_download_audios
+            ):  # audio
                 if post_info.signed_query:
                     self._total_weight += media.size
                     path = post_path / validate_windows_dir_name(media.get_title())
                     download_items.append(
                         FinalDownloadTaskDto(
                             final_url=sign_url(media.url, post_info.signed_query),
-                            save_path=path
+                            save_path=path,
                         )
                     )
 
-            elif isinstance(media, BoostyFileDto) and settings.need_download_files:  # file
+            elif (
+                isinstance(media, BoostyFileDto) and settings.need_download_files
+            ):  # file
                 if post_info.signed_query:
                     self._total_weight += media.size
                     path = post_path / validate_windows_dir_name(media.title)
@@ -207,7 +219,9 @@ class Task:
         async with self._semaphore:
             settings = await get_download_settings()
             if not settings:
-                logger.error("Failed get application settings. It may be that the home folder could not be found.")
+                logger.error(
+                    "Failed get application settings. It may be that the home folder could not be found."
+                )
                 return self._fallback(TaskError.ERROR)
             auth_token = await AuthorizationProvider.get_authorization_if_valid()
             client = BoostyClient(
@@ -222,9 +236,10 @@ class Task:
                 try:
                     post_info = await client.get_post_info(self.author, self.post_id)
                 except Exception as e:
-                    logger.error("Failed fetch post info due unexpected error", exc_info=e)
+                    logger.error(
+                        "Failed fetch post info due unexpected error", exc_info=e
+                    )
                     return self._fallback(TaskError.ERROR)
-
 
             if post_info.title:
                 self.title = post_info.title
@@ -232,7 +247,9 @@ class Task:
             self._percent = 2
 
             if not post_info.has_access:
-                logger.error(f"User have no access to the post {self.post_id}, cancelled")
+                logger.error(
+                    f"User have no access to the post {self.post_id}, cancelled"
+                )
                 return self._fallback(TaskError.ACCESS_DENIED)
 
             downloads_folder = Path(settings.downloads_folder)
@@ -240,7 +257,9 @@ class Task:
 
             try:
                 if not os.path.isdir(settings.downloads_folder):
-                    logger.error(f"Home directory does not exist: {settings.downloads_folder}, creating")
+                    logger.error(
+                        f"Home directory does not exist: {settings.downloads_folder}, creating"
+                    )
                     downloads_folder.mkdir(parents=True, exist_ok=True)
             except Exception as e:
                 logger.error("Failed create or check home directory", exc_info=e)
@@ -249,7 +268,11 @@ class Task:
             post_path = Path(settings.downloads_folder) / self.author / self.post_id
             if post_info.title:
                 if title := validate_windows_dir_name(post_info.title):
-                    post_path = Path(settings.downloads_folder) / self.author / (title + "_" + self.post_id)
+                    post_path = (
+                        Path(settings.downloads_folder)
+                        / self.author
+                        / (title + "_" + self.post_id)
+                    )
 
             self.path = post_path
             if os.path.isdir(post_path):
@@ -263,7 +286,7 @@ class Task:
             try:
                 parser = DraftJsConverter(post_info.text_content.content)
                 post_time = datetime.fromtimestamp(post_info.publish_time)
-                fmt_date = post_time.strftime('%d.%m.%Y %H:%M')
+                fmt_date = post_time.strftime("%d.%m.%Y %H:%M")
                 if settings.post_text_format == "md":
                     if post_info.title:
                         text_content = f"# {post_info.title}\n"
@@ -279,19 +302,23 @@ class Task:
                     text_content += parser.to_plain_text() + "\n\n"
                     text_content += f"[Published {fmt_date}]\n"
             except Exception as e:
-                logger.error("Failed get post text content due unexpected error", exc_info=e)
+                logger.error(
+                    "Failed get post text content due unexpected error", exc_info=e
+                )
                 text_content = None
 
             if text_content:
-                text_file_path = post_path / ("content.txt" if settings.post_text_format == "raw" else "content.md")
+                text_file_path = post_path / (
+                    "content.txt"
+                    if settings.post_text_format == "raw"
+                    else "content.md"
+                )
                 logger.info(f"Creating text file: {text_file_path}")
-                async with aiofiles.open(text_file_path, 'w', encoding="utf-8") as f:
+                async with aiofiles.open(text_file_path, "w", encoding="utf-8") as f:
                     await f.write(text_content)
 
             download_items = self._prepare_download_tasks(
-                post_path=post_path,
-                post_info=post_info,
-                settings=settings
+                post_path=post_path, post_info=post_info, settings=settings
             )
             self._percent = 5
 
@@ -311,7 +338,7 @@ class Task:
                     except Exception as e:
                         logger.error("Error downloading file", exc_info=e)
                         return self._fallback(TaskError.ERROR)
-                    await asyncio.sleep(.1)
+                    await asyncio.sleep(0.1)
 
             self._done = True
             self._percent = 100

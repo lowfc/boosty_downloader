@@ -10,7 +10,6 @@ from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from core.utils import parse_author_link
 
-
 logger = setup_logger()
 
 
@@ -20,7 +19,9 @@ class DownloadSeveralPostsPage(ft.View):
         self.manager = manager
         self.route = "/download-several-posts"
         self.text_field = ft.TextField(
-            prefix_icon=ft.IconButton(ft.Icons.ACCOUNT_CIRCLE, on_click=self.parse_clipboard_content),
+            prefix_icon=ft.IconButton(
+                ft.Icons.ACCOUNT_CIRCLE, on_click=self.parse_clipboard_content
+            ),
             hint_text="https://boosty.to/author",
             width=450,
             value="",
@@ -31,14 +32,26 @@ class DownloadSeveralPostsPage(ft.View):
         )
         today = datetime.datetime.now()
         start_range = today - datetime.timedelta(days=2)
-        self.parse_from = datetime.datetime(year=start_range.year, month=start_range.month, day=start_range.day, tzinfo=datetime.timezone.utc)
-        self.parse_to = datetime.datetime(year=today.year, month=today.month, day=today.day, tzinfo=datetime.timezone.utc)
+        self.parse_from = datetime.datetime(
+            year=start_range.year,
+            month=start_range.month,
+            day=start_range.day,
+            tzinfo=datetime.timezone.utc,
+        )
+        self.parse_to = datetime.datetime(
+            year=today.year,
+            month=today.month,
+            day=today.day,
+            tzinfo=datetime.timezone.utc,
+        )
         self.date_range_picker = ft.DateRangePicker(
             start_value=self.parse_from,
             end_value=self.parse_to,
             entry_mode=ft.DatePickerEntryMode.CALENDAR_ONLY,
             on_change=self.handle_date_picker_change,
-            first_date=datetime.datetime(today.year - 10, 1, 1, tzinfo=datetime.timezone.utc),
+            first_date=datetime.datetime(
+                today.year - 10, 1, 1, tzinfo=datetime.timezone.utc
+            ),
             last_date=self.parse_to,
         )
         self.date_from_text = ft.Text("", size=20, weight=ft.FontWeight.BOLD)
@@ -78,10 +91,16 @@ class DownloadSeveralPostsPage(ft.View):
         )
         self.controls = [
             components.AppBar(manager),
-            ft.Row(controls=[
-                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index),
-                ft.Text("Download several posts", size=24, weight=ft.FontWeight.BOLD),
-            ]),
+            ft.Row(
+                controls=[
+                    ft.IconButton(
+                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
+                    ),
+                    ft.Text(
+                        "Download several posts", size=24, weight=ft.FontWeight.BOLD
+                    ),
+                ]
+            ),
             ft.Container(
                 alignment=ft.Alignment.CENTER,
                 expand=True,
@@ -92,27 +111,35 @@ class DownloadSeveralPostsPage(ft.View):
                     controls=[
                         self.text_field,
                         ft.Text("Download posts published at:"),
-                        ft.Row([
-                            self.date_from_text,
-                            ft.Text("—", size=20),
-                            self.date_to_text,
-                            ft.IconButton(
-                                ft.Icon(ft.Icons.EDIT_CALENDAR, size=20),
-                                on_click=lambda x: self.page.show_dialog(self.date_range_picker),
-                            ),
-                        ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        ft.Row(
+                            [
+                                self.date_from_text,
+                                ft.Text("—", size=20),
+                                self.date_to_text,
+                                ft.IconButton(
+                                    ft.Icon(ft.Icons.EDIT_CALENDAR, size=20),
+                                    on_click=lambda x: self.page.show_dialog(
+                                        self.date_range_picker
+                                    ),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
                         ft.Button(
                             content=ft.Text("Download", size=17),
-                            icon=ft.Icon(ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16),
+                            icon=ft.Icon(
+                                ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16
+                            ),
                             height=50,
                             width=150,
                             color=ft.Colors.ON_SURFACE,
                             on_click=self.download_posts,
                         ),
-                        self.progress_container
-                    ]
-                )
-            )
+                        self.progress_container,
+                    ],
+                ),
+            ),
         ]
 
     async def parse_clipboard_content(self):
@@ -136,7 +163,9 @@ class DownloadSeveralPostsPage(ft.View):
 
     def handle_date_picker_change(self, e: ft.Event[ft.DateRangePicker]):
         self.parse_from = e.control.start_value.astimezone()
-        self.parse_to = e.control.end_value.astimezone().replace(hour=23, minute=59, second=59)
+        self.parse_to = e.control.end_value.astimezone().replace(
+            hour=23, minute=59, second=59
+        )
         self.date_range_picker.start_value = e.control.start_value
         self.date_range_picker.end_value = e.control.end_value
         self.update_ranges()
@@ -147,7 +176,11 @@ class DownloadSeveralPostsPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Empty author"),
                     content=ft.Text("Type link to author's page or author's nickname"),
-                    actions=[ft.TextButton("Wow, i'll", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Wow, i'll", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -155,7 +188,7 @@ class DownloadSeveralPostsPage(ft.View):
         self.progress_container.visible = True
         self.disabled = True
         self.page.update()
-        await asyncio.sleep(.5)
+        await asyncio.sleep(0.5)
         author_name = parse_author_link(self.text_field.value)
         auth_token = await AuthorizationProvider.get_authorization_if_valid()
         client = BoostyClient(
@@ -168,8 +201,12 @@ class DownloadSeveralPostsPage(ft.View):
             self.page.show_dialog(
                 ft.AlertDialog(
                     title=ft.Text("Empty page"),
-                    content=ft.Text("An error has occurred, or author have no posts. Please try again later."),
-                    actions=[ft.TextButton("Ok", on_click=lambda ev: self.page.pop_dialog())],
+                    content=ft.Text(
+                        "An error has occurred, or author have no posts. Please try again later."
+                    ),
+                    actions=[
+                        ft.TextButton("Ok", on_click=lambda ev: self.page.pop_dialog())
+                    ],
                     open=True,
                 )
             )
@@ -193,8 +230,14 @@ class DownloadSeveralPostsPage(ft.View):
                 self.page.show_dialog(
                     ft.AlertDialog(
                         title=ft.Text("Unexpected error on checking posts"),
-                        content=ft.Text("An error has occurred when searching posts. Please, check url correctness or try again later."),
-                        actions=[ft.TextButton("Ok", on_click=lambda ev: self.page.pop_dialog())],
+                        content=ft.Text(
+                            "An error has occurred when searching posts. Please, check url correctness or try again later."
+                        ),
+                        actions=[
+                            ft.TextButton(
+                                "Ok", on_click=lambda ev: self.page.pop_dialog()
+                            )
+                        ],
                         open=True,
                     )
                 )
@@ -214,18 +257,18 @@ class DownloadSeveralPostsPage(ft.View):
                 run = False
             self.description_text.value = f"{len(prepared_posts)} posts found"
             self.page.update()
-            await asyncio.sleep(.5)
+            await asyncio.sleep(0.5)
 
         self.status_text.value = "Creating tasks in the manager"
         tasks_created = 0
         for post in prepared_posts:
             if await self.manager.add_task(author_name, post.id, post):
                 tasks_created += 1
-            await asyncio.sleep(.1)
+            await asyncio.sleep(0.1)
             self.description_text.value = f"{tasks_created} tasks created"
             self.page.update()
 
         self.progress_container.visible = False
         self.disabled = False
-        await asyncio.sleep(.5)
+        await asyncio.sleep(0.5)
         self.page.update()

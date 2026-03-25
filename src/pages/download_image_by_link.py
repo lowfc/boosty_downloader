@@ -17,7 +17,7 @@ logger = setup_logger()
 class DownloadImageByLinkPage(ft.View):
     def __init__(self, manager: DownloadManager):
         super().__init__()
-        self.route="/download-media-by-link"
+        self.route = "/download-media-by-link"
         self.destination_folder_valid = False
         self.current_destination_folder_text = ft.Text(
             value="Choose download folder",
@@ -36,12 +36,14 @@ class DownloadImageByLinkPage(ft.View):
                 content=ft.Row(
                     spacing=10,
                     controls=[
-                        ft.Icon(ft.Icons.FOLDER, size=20, color=ft.Colors.ON_SURFACE_VARIANT),
-                        self.current_destination_folder_text
+                        ft.Icon(
+                            ft.Icons.FOLDER, size=20, color=ft.Colors.ON_SURFACE_VARIANT
+                        ),
+                        self.current_destination_folder_text,
                     ],
                 ),
             ),
-            on_click=self.pick_destination_folder
+            on_click=self.pick_destination_folder,
         )
         self.text_field = ft.TextField(
             prefix_icon=ft.IconButton(ft.Icons.LINK, on_click=self.download_image),
@@ -53,34 +55,50 @@ class DownloadImageByLinkPage(ft.View):
             fill_color=ft.Colors.SURFACE_CONTAINER,
             hint_style=ft.TextStyle(color=ft.Colors.GREY_600),
         )
-        self.progress = ft.ProgressBar(color=ft.Colors.ORANGE, width=500, value=0, visible=False)
+        self.progress = ft.ProgressBar(
+            color=ft.Colors.ORANGE, width=500, value=0, visible=False
+        )
         self.controls = [
             components.AppBar(manager),
-            ft.Row(controls=[
-                ft.IconButton(ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index),
-                ft.Text("Download image by link", size=24, weight=ft.FontWeight.BOLD),
-            ]),
-            ft.Row([
-                ft.Column([
-                        self.progress,
-                        ft.Text("Paste here link to the image (from feed or direct messages)"),
-                        self.text_field,
-                        self.destination_folder_picker,
-                        ft.Button(
-                            content=ft.Text("Download", size=17),
-                            icon=ft.Icon(ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16),
-                            height=50,
-                            width=150,
-                            color=ft.Colors.ON_SURFACE,
-                            on_click=self.download_image
-                        )
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    expand=True,
-                    spacing=20,
-                )
-            ], expand=True)
+            ft.Row(
+                controls=[
+                    ft.IconButton(
+                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
+                    ),
+                    ft.Text(
+                        "Download image by link", size=24, weight=ft.FontWeight.BOLD
+                    ),
+                ]
+            ),
+            ft.Row(
+                [
+                    ft.Column(
+                        [
+                            self.progress,
+                            ft.Text(
+                                "Paste here link to the image (from feed or direct messages)"
+                            ),
+                            self.text_field,
+                            self.destination_folder_picker,
+                            ft.Button(
+                                content=ft.Text("Download", size=17),
+                                icon=ft.Icon(
+                                    ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16
+                                ),
+                                height=50,
+                                width=150,
+                                color=ft.Colors.ON_SURFACE,
+                                on_click=self.download_image,
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        expand=True,
+                        spacing=20,
+                    )
+                ],
+                expand=True,
+            ),
         ]
 
     async def go_to_index(self):
@@ -117,9 +135,15 @@ class DownloadImageByLinkPage(ft.View):
             self.page.show_dialog(
                 ft.AlertDialog(
                     title=ft.Text("Not this link"),
-                    content=ft.Text("This utility is for download a PICTURE using a direct link (to picture) from "
-                                    "the posts list or private messages (you can get this link in the browser address bar)."),
-                    actions=[ft.TextButton("I get it", on_click=lambda ev: self.page.pop_dialog())],
+                    content=ft.Text(
+                        "This utility is for download a PICTURE using a direct link (to picture) from "
+                        "the posts list or private messages (you can get this link in the browser address bar)."
+                    ),
+                    actions=[
+                        ft.TextButton(
+                            "I get it", on_click=lambda ev: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -130,7 +154,12 @@ class DownloadImageByLinkPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Folder does not exist"),
                     content=ft.Text("Download folder does not exist"),
-                    actions=[ft.TextButton("Ok, i'll create", on_click=lambda ev: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Ok, i'll create",
+                            on_click=lambda ev: self.page.pop_dialog(),
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -141,7 +170,11 @@ class DownloadImageByLinkPage(ft.View):
                 ft.AlertDialog(
                     title=ft.Text("Already exists"),
                     content=ft.Text("File with this name already exists"),
-                    actions=[ft.TextButton("Understood", on_click=lambda e: self.page.pop_dialog())],
+                    actions=[
+                        ft.TextButton(
+                            "Understood", on_click=lambda e: self.page.pop_dialog()
+                        )
+                    ],
                     open=True,
                 )
             )
@@ -150,7 +183,7 @@ class DownloadImageByLinkPage(ft.View):
         self.disabled = True
         self.progress.visible = True
         self.page.update()
-        await asyncio.sleep(.1)
+        await asyncio.sleep(0.1)
 
         settings = await get_download_settings()
         client = BoostyClient(
@@ -162,11 +195,15 @@ class DownloadImageByLinkPage(ft.View):
             with ProgressCounter(total=0) as pbar:
                 session = client.get_client_session()
                 async with session:
-                    async with session.get(f"https://images.boosty.to/image/{link_uuid}") as response:
+                    async with session.get(
+                        f"https://images.boosty.to/image/{link_uuid}"
+                    ) as response:
                         response.raise_for_status()
                         pbar.total = response.content_length
-                        async with aiofiles.open(download_path, 'wb') as f:
-                            async for chunk in response.content.iter_chunked(settings.chunk_size):
+                        async with aiofiles.open(download_path, "wb") as f:
+                            async for chunk in response.content.iter_chunked(
+                                settings.chunk_size
+                            ):
                                 if not chunk:
                                     continue
                                 await f.write(chunk)

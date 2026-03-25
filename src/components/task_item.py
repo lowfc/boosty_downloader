@@ -13,7 +13,7 @@ class TaskItem(ft.Container):
     def __init__(
         self,
         task_info: Optional[TaskInfo] = None,
-        visible = False,
+        visible=False,
         on_cancel: Optional[Callable[[Optional[TaskInfo]], Awaitable]] = None,
         on_retry: Optional[Callable[[Optional[TaskInfo]], Awaitable]] = None,
     ):
@@ -22,17 +22,17 @@ class TaskItem(ft.Container):
         self.folder_open_button = ft.IconButton(
             ft.Icon(ft.Icons.FOLDER, color=ft.Colors.SURFACE_CONTAINER_LOW),
             on_click=self.open_task_folder,
-            bgcolor=ft.Colors.PRIMARY
+            bgcolor=ft.Colors.PRIMARY,
         )
         self.stop_button = ft.IconButton(
             ft.Icon(ft.Icons.STOP, color=ft.Colors.SURFACE_CONTAINER_LOW),
             on_click=self.on_cancel,
-            bgcolor=ft.Colors.PRIMARY
+            bgcolor=ft.Colors.PRIMARY,
         )
         self.retry_button = ft.IconButton(
             ft.Icon(ft.Icons.REFRESH, color=ft.Colors.SURFACE_CONTAINER_LOW),
             on_click=self.on_retry,
-            bgcolor=ft.Colors.PRIMARY
+            bgcolor=ft.Colors.PRIMARY,
         )
         self.task_info = task_info
         if self.task_info:
@@ -70,11 +70,11 @@ class TaskItem(ft.Container):
     async def open_task_folder(self):
         if self.path and os.path.isdir(self.path):
             if self.page.platform == ft.PagePlatform.WINDOWS:
-                subprocess.Popen(['explorer', self.path])
+                subprocess.Popen(["explorer", self.path])
             elif self.page.platform in (ft.PagePlatform.LINUX, ft.PagePlatform.MACOS):
                 await self.page.launch_url(f"file://{self.path}")
 
-    def update_view(self, task_info: Optional[TaskInfo] = None, visible = False):
+    def update_view(self, task_info: Optional[TaskInfo] = None, visible=False):
         self.visible = visible
         if not task_info:
             return
@@ -84,7 +84,7 @@ class TaskItem(ft.Container):
         else:
             self.task_name.value = f"{self.task_info.author} / {self.task_info.post_id}"
         self.path = self.task_info.path
-        if self.task_info.total_weight < 1024 ** 3:
+        if self.task_info.total_weight < 1024**3:
             weight = f"{self.task_info.total_weight / 1024 ** 2:.1f} MB"
         else:
             weight = f"{self.task_info.total_weight / 1024 ** 3:.1f} GB"
@@ -94,8 +94,17 @@ class TaskItem(ft.Container):
                 err_icon, err_descr = TASK_ERROR_STATUS_LINE[self.task_info.error]
                 self.display_task.subtitle = ft.Row(
                     controls=[
-                        ft.Icon(err_icon, color=ft.Colors.RED, align=ft.Alignment.CENTER_LEFT, size=15),
-                        ft.Text(err_descr, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE_VARIANT),
+                        ft.Icon(
+                            err_icon,
+                            color=ft.Colors.RED,
+                            align=ft.Alignment.CENTER_LEFT,
+                            size=15,
+                        ),
+                        ft.Text(
+                            err_descr,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                        ),
                     ]
                 )
                 self.display_task.trailing = self.retry_button
@@ -103,8 +112,17 @@ class TaskItem(ft.Container):
             else:
                 self.display_task.subtitle = ft.Row(
                     controls=[
-                        ft.Icon(ft.Icons.DONE, color=ft.Colors.GREEN, align=ft.Alignment.CENTER_LEFT, size=15),
-                        ft.Text("Complete", weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE_VARIANT),
+                        ft.Icon(
+                            ft.Icons.DONE,
+                            color=ft.Colors.GREEN,
+                            align=ft.Alignment.CENTER_LEFT,
+                            size=15,
+                        ),
+                        ft.Text(
+                            "Complete",
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                        ),
                     ]
                 )
                 self.display_task.trailing = None

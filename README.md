@@ -38,10 +38,7 @@ By using the application, you agree to the <a href="https://github.com/lowfc/boo
 
 - ✅ Windows
 - ✅ macOS
-- ⬜ Linux (not supported yet)
-
-If you want to use the app on Linux, please run it from source code. A build is not yet available.
-
+- ✅ Linux
 
 #### Authorization ability
 
@@ -51,24 +48,17 @@ Authorize app to get available for you private content:
 
 ## 💻 Installation
 
-#### Windows
+1. Go to [latest release](https://github.com/lowfc/boosty_downloader/releases/latest);
+2. Download the archive for your operating system;
+3. Unzip the archive to any folder;
+4. Run the app.
 
-1. Download the archive: <a href="https://github.com/lowfc/boosty_downloader/releases/download/3.0.1/Boosty.Downloader.3.0.1.win.zip">Click here to download</a>
-2. Unzip the archive to any folder 
+⚠️ **Windows**: The path to this folder must contain only latin characters. Make sure that the folder path does not contain cyrillic or other prohibited characters.
 
-⚠️ Important: the path to this folder must contain only latin characters. Make sure that the folder path does not contain cyrillic or other prohibited characters.
-
-3. Run file boosty_downloader.exe
-
-#### macOS
-
-1. Download the archive: <a href="https://github.com/lowfc/boosty_downloader/releases/download/3.0.1/Boosty.Downloader.3.0.1.macOS.zip">Click here to download</a>
-2. Unzip the archive to any folder
-3. Run file boosty_downloader
-
-⚠️ When attempting to launch the app, you may encounter a warning from the operating system about launching an app from an unknown developer. 
+⚠️ **macOS**: When attempting to launch the app, you may encounter a warning from the operating system about launching an app from an unknown developer. 
 To open the app anyway, read official instruction (these steps only need to be performed once): https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac
 
+📟 **CLI**: If you want to use the CLI version of this app, it is maintained in this repository: https://github.com/Banana-P0wer/Cli-Banana-BoostyDownloader
 
 ## 🐍 Development
 

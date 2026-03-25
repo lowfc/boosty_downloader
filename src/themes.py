@@ -1,6 +1,5 @@
 import flet as ft
 
-
 LIGHT_COLORS = {
     "background": "#f6f6f6",
     "surface": "#ffffff",
@@ -42,12 +41,10 @@ LIGHT_THEME = ft.Theme(
         body_medium=ft.TextStyle(color=LIGHT_COLORS["text_primary"]),
         body_small=ft.TextStyle(color=LIGHT_COLORS["text_secondary"]),
         title_large=ft.TextStyle(
-            color=LIGHT_COLORS["text_primary"],
-            weight=ft.FontWeight.BOLD
+            color=LIGHT_COLORS["text_primary"], weight=ft.FontWeight.BOLD
         ),
         title_medium=ft.TextStyle(
-            color=LIGHT_COLORS["text_primary"],
-            weight=ft.FontWeight.W_600
+            color=LIGHT_COLORS["text_primary"], weight=ft.FontWeight.W_600
         ),
         label_large=ft.TextStyle(color=LIGHT_COLORS["text_secondary"]),
     ),
@@ -69,12 +66,10 @@ DARK_THEME = ft.Theme(
         body_medium=ft.TextStyle(color=DARK_COLORS["text_primary"]),
         body_small=ft.TextStyle(color=DARK_COLORS["text_secondary"]),
         title_large=ft.TextStyle(
-            color=DARK_COLORS["text_primary"],
-            weight=ft.FontWeight.BOLD
+            color=DARK_COLORS["text_primary"], weight=ft.FontWeight.BOLD
         ),
         title_medium=ft.TextStyle(
-            color=DARK_COLORS["text_primary"],
-            weight=ft.FontWeight.W_600
+            color=DARK_COLORS["text_primary"], weight=ft.FontWeight.W_600
         ),
         label_large=ft.TextStyle(color=DARK_COLORS["text_secondary"]),
     ),

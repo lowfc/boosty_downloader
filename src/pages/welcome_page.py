@@ -40,15 +40,19 @@ class WelcomePage(ft.View):
                                                         alignment=ft.MainAxisAlignment.CENTER,
                                                         spacing=2,
                                                         controls=[
-                                                            ft.Text(value="One post", size=20,
-                                                                    color=ft.Colors.ON_SURFACE_VARIANT),
+                                                            ft.Text(
+                                                                value="One post",
+                                                                size=20,
+                                                                color=ft.Colors.ON_SURFACE_VARIANT,
+                                                            ),
                                                             ft.Text(
                                                                 value="download a specific author's post via a direct link",
-                                                                color=ft.Colors.ON_SURFACE_VARIANT),
+                                                                color=ft.Colors.ON_SURFACE_VARIANT,
+                                                            ),
                                                         ],
                                                     ),
                                                 ),
-                                            ]
+                                            ],
                                         )
                                     ),
                                     on_click=self.go_to_download_post,
@@ -66,46 +70,64 @@ class WelcomePage(ft.View):
                                                         alignment=ft.MainAxisAlignment.CENTER,
                                                         spacing=2,
                                                         controls=[
-                                                            ft.Text(value="Several posts", size=20,
-                                                                    color=ft.Colors.ON_SURFACE_VARIANT),
+                                                            ft.Text(
+                                                                value="Several posts",
+                                                                size=20,
+                                                                color=ft.Colors.ON_SURFACE_VARIANT,
+                                                            ),
                                                             ft.Text(
                                                                 value="download an author's posts over a given time period",
-                                                                color=ft.Colors.ON_SURFACE_VARIANT),
+                                                                color=ft.Colors.ON_SURFACE_VARIANT,
+                                                            ),
                                                         ],
                                                     ),
                                                 ),
-                                            ]
+                                            ],
                                         )
                                     ),
                                     on_click=self.go_to_mass_downloader,
                                 ),
-                            ]
+                            ],
                         ),
                         ft.PopupMenuButton(
                             content=ft.Container(
-                                content=ft.Row([
-                                    ft.Icon(ft.Icons.MORE_HORIZ),
-                                    ft.Text("Instruments", align=ft.Alignment.CENTER),
-                                ], width=120, alignment=ft.MainAxisAlignment.CENTER),
+                                content=ft.Row(
+                                    [
+                                        ft.Icon(ft.Icons.MORE_HORIZ),
+                                        ft.Text(
+                                            "Instruments", align=ft.Alignment.CENTER
+                                        ),
+                                    ],
+                                    width=120,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                ),
                                 padding=ft.Padding.all(5),
                             ),
                             items=[
                                 ft.PopupMenuItem(
-                                    content=ft.Row([ft.Icon(ft.Icons.MERGE),
-                                                    ft.Text("Merge author's content")]),
-                                    on_click=self.go_to_content_merger
+                                    content=ft.Row(
+                                        [
+                                            ft.Icon(ft.Icons.MERGE),
+                                            ft.Text("Merge author's content"),
+                                        ]
+                                    ),
+                                    on_click=self.go_to_content_merger,
                                 ),
                                 ft.PopupMenuItem(
-                                    content=ft.Row([ft.Icon(ft.Icons.IMAGE),
-                                                    ft.Text("Download image by link")]),
-                                    on_click=self.go_to_media_downloader
+                                    content=ft.Row(
+                                        [
+                                            ft.Icon(ft.Icons.IMAGE),
+                                            ft.Text("Download image by link"),
+                                        ]
+                                    ),
+                                    on_click=self.go_to_media_downloader,
                                 ),
                             ],
                             menu_position=ft.PopupMenuPosition.UNDER,
-                        )
-                    ]
-                )
-            )
+                        ),
+                    ],
+                ),
+            ),
         ]
 
     async def go_to_download_post(self):
