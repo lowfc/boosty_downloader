@@ -1,4 +1,4 @@
 NAME = "Boosty downloader"
-VERSION = "3.0.1"
-BUILD = "4"
+VERSION = "3.0.2"
+BUILD = "1"
 URL = "https://github.com/lowfc/boosty_downloader"

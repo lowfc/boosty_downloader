@@ -90,7 +90,7 @@ class MergeAuthorContentPage(ft.View):
                     ft.Text("Content merger", size=24, weight=ft.FontWeight.BOLD),
                 ]
             ),
-            ft.ListView(
+            ft.Row(
                 [
                     ft.Column(
                         [
@@ -98,7 +98,6 @@ class MergeAuthorContentPage(ft.View):
                                 "Transfer content from the author's post folders to one folder"
                             ),
                             self.action_type,
-                            ft.Icon(ft.Icons.ARROW_DOWNWARD),
                             self.authors_dropdown,
                             ft.Icon(ft.Icons.ARROW_DOWNWARD),
                             self.destination_folder_picker,

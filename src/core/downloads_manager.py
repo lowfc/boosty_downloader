@@ -22,7 +22,7 @@ class DownloadManager:
     ) -> bool:
         async with self._lock:
             if post_id in self._tasks.keys():
-                if self._tasks[post_id].fallen:
+                if self._tasks[post_id].finished:
                     del self._tasks[post_id]
                 else:
                     return False
