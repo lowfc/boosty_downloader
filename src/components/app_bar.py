@@ -24,7 +24,9 @@ class AppBar(ft.AppBar):
 
     def __init__(self, manager: DownloadManager):
         super().__init__()
-        self.title = ft.Row(vertical_alignment=ft.CrossAxisAlignment.CENTER, width=300)
+        self.title = ft.Row(
+            vertical_alignment=ft.CrossAxisAlignment.CENTER, width=300, opacity=0.8
+        )
         self.downloads_badge = ft.Badge(label="", bgcolor=ft.Colors.PRIMARY)
         self.downloads_button = ft.IconButton(
             ft.Icons.DOWNLOAD, on_click=self.go_to_downloads_center
@@ -66,11 +68,11 @@ class AppBar(ft.AppBar):
                     ft.Icon(ft.Icons.MUSIC_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Icon(ft.Icons.FOLDER_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Text(
-                        "No authorization",
-                        size=20,
+                        "Not logged in",
+                        size=18,
                         color=ft.Colors.ON_SURFACE_VARIANT,
                         tooltip=ft.Tooltip(
-                            message="To watch and download private content available to you, log in the app (button on the right)",
+                            message="To download private content available to you, log in the app",
                             mouse_cursor=ft.MouseCursor.CLICK,
                         ),
                     ),

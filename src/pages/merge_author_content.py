@@ -83,7 +83,7 @@ class MergeAuthorContentPage(ft.View):
         self.controls = [
             components.AppBar(manager),
             ft.Row(
-                controls=[
+                [
                     ft.IconButton(
                         ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
                     ),
@@ -98,7 +98,6 @@ class MergeAuthorContentPage(ft.View):
                                 "Transfer content from the author's post folders to one folder"
                             ),
                             self.action_type,
-                            ft.Icon(ft.Icons.ARROW_DOWNWARD),
                             self.authors_dropdown,
                             ft.Icon(ft.Icons.ARROW_DOWNWARD),
                             self.destination_folder_picker,
