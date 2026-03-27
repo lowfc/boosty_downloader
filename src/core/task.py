@@ -119,6 +119,15 @@ class Task:
         fetch_file_size: bool = False,
         chunk_size: int = 153600,
     ):
+        if save_path.exists():
+            logger.info(f"Skip downloading file {save_path} (already exists)")
+            await session.close()
+            size = save_path.stat().st_size
+            self._downloaded_bytes += size
+            pbar.update(size)
+            total = pbar.total or size or 1
+            self._percent = (pbar.n / total) * 100
+            return
         async with session:
             logger.info(f"Downloading file {file_url}")
             async with session.get(file_url) as response:
@@ -133,10 +142,10 @@ class Task:
                     async for chunk in response.content.iter_chunked(chunk_size):
                         if chunk:
                             await f.write(chunk)
-                            chunk_size = len(chunk)
-                            self._downloaded_bytes += chunk_size
-                            pbar.update(chunk_size)
-                            total = pbar.total or chunk_size
+                            new_chunk_size = len(chunk)
+                            self._downloaded_bytes += new_chunk_size
+                            pbar.update(new_chunk_size)
+                            total = pbar.total or new_chunk_size or 1
                             self._percent = (pbar.n / total) * 100
 
     def _fallback(self, err: TaskError) -> None:
@@ -258,7 +267,7 @@ class Task:
             try:
                 if not os.path.isdir(settings.downloads_folder):
                     logger.error(
-                        f"Home directory does not exist: {settings.downloads_folder}, creating"
+                        f"Home directory does not exist: {settings.downloads_folder}, creating..."
                     )
                     downloads_folder.mkdir(parents=True, exist_ok=True)
             except Exception as e:
@@ -275,11 +284,7 @@ class Task:
                     )
 
             self.path = post_path
-            if os.path.isdir(post_path):
-                if len(os.listdir(post_path)) > 0:
-                    logger.error(f"Post directory already exists: {post_path}")
-                    return self._fallback(TaskError.ALREADY_EXISTS)
-            else:
+            if not os.path.isdir(post_path):
                 post_path.mkdir(parents=True)
                 logger.info(f"Post directory created: {post_path}")
 
@@ -313,9 +318,12 @@ class Task:
                     if settings.post_text_format == "raw"
                     else "content.md"
                 )
-                logger.info(f"Creating text file: {text_file_path}")
-                async with aiofiles.open(text_file_path, "w", encoding="utf-8") as f:
-                    await f.write(text_content)
+                if text_file_path.exists():
+                    logger.info(f"Skip creating text file: {text_file_path} (already exists)")
+                else:
+                    logger.info(f"Creating text file: {text_file_path}")
+                    async with aiofiles.open(text_file_path, "w", encoding="utf-8") as f:
+                        await f.write(text_content)
 
             download_items = self._prepare_download_tasks(
                 post_path=post_path, post_info=post_info, settings=settings
