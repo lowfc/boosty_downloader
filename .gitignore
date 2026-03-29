@@ -154,6 +154,7 @@ cython_debug/
 
 # log files
 runtime.log
+runtime.log.*
 
 # dev files
 foobaka.py
