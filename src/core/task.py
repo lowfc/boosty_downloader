@@ -32,7 +32,6 @@ logger = setup_logger()
 class FinalDownloadTaskDto:
     final_url: str
     save_path: Path
-    fetch_file_size: bool = False
 
 
 class Task:
@@ -61,6 +60,7 @@ class Task:
         self._total_weight = 0
         self._post_info = post_info
         self.error_description: Optional[TaskError] = None
+        self._built_client: Optional[BoostyClient] = None
 
     def ready(self) -> bool:
         return not self._done and not self._pending and not self._error
@@ -89,6 +89,39 @@ class Task:
         if self._task is None:
             self._task = asyncio.create_task(self._run())
 
+    async def _build_client(self, force: bool = False) -> Optional[BoostyClient]:
+        if not self._built_client or force:
+            settings = await get_download_settings()
+            if not settings:
+                logger.error(
+                    "Failed get application settings. It may be that the home folder could not be found."
+                )
+                return None
+            auth_token = await AuthorizationProvider.get_authorization_if_valid()
+            self._built_client = BoostyClient(
+                chunk_size=settings.chunk_size,
+                download_timeout=settings.download_timeout,
+                auth_token=auth_token,
+            )
+        return self._built_client
+
+    async def fetch_file_size(self, url: str) -> Optional[int]:
+        client = await self._build_client()
+        if not client:
+            return None
+        session = client.get_client_session()
+        logger.info(f"Fetching file size for {url}")
+        try:
+            async with session.head(url) as response:
+                logger.debug(f"Got response {response.status}")
+                response.raise_for_status()
+                return response.content_length
+        except Exception as e:
+            logger.error("Failed to fetch file size", exc_info=e)
+            return None
+        finally:
+            await session.close()
+
     async def stop(self):
         if self._task:
             self._task.cancel()
@@ -116,7 +149,6 @@ class Task:
         file_url: str,
         save_path: Path,
         pbar: ProgressCounter,
-        fetch_file_size: bool = False,
         chunk_size: int = 153600,
     ):
         if save_path.exists():
@@ -125,7 +157,7 @@ class Task:
             size = save_path.stat().st_size
             self._downloaded_bytes += size
             pbar.update(size)
-            total = pbar.total or size or 1
+            total = pbar.total or 1
             self._percent = (pbar.n / total) * 100
             return
         async with session:
@@ -133,20 +165,17 @@ class Task:
             async with session.get(file_url) as response:
                 logger.debug(f"Got response {response.status}")
                 response.raise_for_status()
-                if fetch_file_size:
-                    """Так как не для всех файлов заранее известен размер, фетчим его в рантайме"""
-                    self._total_weight += response.content_length
-                    pbar.total = self._total_weight
                 async with aiofiles.open(save_path, "wb") as f:
                     logger.debug(f"Writing file {save_path}")
                     async for chunk in response.content.iter_chunked(chunk_size):
-                        if chunk:
-                            await f.write(chunk)
-                            new_chunk_size = len(chunk)
-                            self._downloaded_bytes += new_chunk_size
-                            pbar.update(new_chunk_size)
-                            total = pbar.total or new_chunk_size or 1
-                            self._percent = (pbar.n / total) * 100
+                        if not chunk:
+                            continue
+                        await f.write(chunk)
+                        new_chunk_size = len(chunk)
+                        self._downloaded_bytes += new_chunk_size
+                        pbar.update(new_chunk_size)
+                        total = pbar.total or 1
+                        self._percent = (pbar.n / total) * 100
 
     def _fallback(self, err: TaskError) -> None:
         self._error = True
@@ -154,7 +183,7 @@ class Task:
         self._finished = True
         self._pending = False
 
-    def _prepare_download_tasks(
+    async def _prepare_download_tasks(
         self,
         post_path: Path,
         post_info: BoostyPostDto,
@@ -182,12 +211,15 @@ class Task:
                 for i in range(lborder_quality, len(VIDEO_QUALITY_GRADE)):
                     url_info = media.player_urls.get(VIDEO_QUALITY_GRADE[i])
                     if url_info:
+                        file_size = await self.fetch_file_size(url_info.url)
+                        if not file_size:
+                            raise ValueError(f"Failed fetch file size for {url_info.url}")
+                        self._total_weight += file_size
                         path = post_path / validate_windows_dir_name(media.get_title())
                         download_items.append(
                             FinalDownloadTaskDto(
                                 final_url=url_info.url,
                                 save_path=path,
-                                fetch_file_size=True,
                             )
                         )
                         break
@@ -232,12 +264,12 @@ class Task:
                     "Failed get application settings. It may be that the home folder could not be found."
                 )
                 return self._fallback(TaskError.ERROR)
-            auth_token = await AuthorizationProvider.get_authorization_if_valid()
-            client = BoostyClient(
-                chunk_size=settings.chunk_size,
-                download_timeout=settings.download_timeout,
-                auth_token=auth_token,
-            )
+            client = await self._build_client(force=True)
+            if not client:
+                logger.error(
+                    "Failed build client, task skipped"
+                )
+                return self._fallback(TaskError.ERROR)
 
             if self._post_info:
                 post_info = self._post_info
@@ -252,8 +284,6 @@ class Task:
 
             if post_info.title:
                 self.title = post_info.title
-
-            self._percent = 2
 
             if not post_info.has_access:
                 logger.error(
@@ -325,10 +355,9 @@ class Task:
                     async with aiofiles.open(text_file_path, "w", encoding="utf-8") as f:
                         await f.write(text_content)
 
-            download_items = self._prepare_download_tasks(
+            download_items = await self._prepare_download_tasks(
                 post_path=post_path, post_info=post_info, settings=settings
             )
-            self._percent = 5
 
             self._count_files = len(download_items)
             with ProgressCounter(total=self._total_weight) as pbar:
@@ -340,7 +369,6 @@ class Task:
                             file_url=media.final_url,
                             save_path=media.save_path,
                             pbar=pbar,
-                            fetch_file_size=media.fetch_file_size,
                             chunk_size=settings.chunk_size,
                         )
                     except Exception as e:

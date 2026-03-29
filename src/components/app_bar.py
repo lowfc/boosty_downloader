@@ -41,6 +41,16 @@ class AppBar(ft.AppBar):
         self.bgcolor = ft.Colors.SURFACE_CONTAINER
         self.alive = True
         self.upd_task = asyncio.create_task(self.update_task())
+        self.login_button = ft.TextButton(
+            ft.Text("Not logged in", size=18, color=ft.Colors.ON_SURFACE_VARIANT),
+            style=ft.ButtonStyle(
+                overlay_color=ft.Colors.TRANSPARENT,
+                bgcolor=ft.Colors.TRANSPARENT,
+                elevation=0,
+                padding=0,
+            ),
+            on_click=self.go_to_auth_management
+        )
 
     def on_destroy(self):
         self.alive = False
@@ -62,20 +72,16 @@ class AppBar(ft.AppBar):
                 self.title.controls = [
                     ft.Icon(ft.Icons.SPELLCHECK, color=ft.Colors.ON_SURFACE_VARIANT),
                 ]
+                self.title.tooltip = None
             else:
                 self.title.controls = [
                     ft.Icon(ft.Icons.MONEY_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Icon(ft.Icons.MUSIC_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Icon(ft.Icons.FOLDER_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
-                    ft.Text(
-                        "Not logged in",
-                        size=18,
-                        color=ft.Colors.ON_SURFACE_VARIANT,
-                        tooltip=ft.Tooltip(
-                            message="To download private content available to you, log in the app",
-                            mouse_cursor=ft.MouseCursor.CLICK,
-                        ),
-                    ),
+                    self.login_button
                 ]
+                self.title.tooltip = ft.Tooltip(
+                    message="To download private content available to you, log in the app"
+                )
             self.update()
             await asyncio.sleep(1)
