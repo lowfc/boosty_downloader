@@ -140,7 +140,7 @@ class FeedbackAndBugsPage(ft.View):
         diagnostic = (
             f"App version: v{app_version.VERSION} (build {app_version.BUILD})\n"
         )
-        diagnostic += await self.get_device_info()
+        diagnostic += await self.get_device_info() + "\n"
         diagnostic += f"Last run log: \n{current_log}"
         self.log_text.value = diagnostic
         self.update()
