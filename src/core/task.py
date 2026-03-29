@@ -213,7 +213,9 @@ class Task:
                     if url_info:
                         file_size = await self.fetch_file_size(url_info.url)
                         if not file_size:
-                            raise ValueError(f"Failed fetch file size for {url_info.url}")
+                            raise ValueError(
+                                f"Failed fetch file size for {url_info.url}"
+                            )
                         self._total_weight += file_size
                         path = post_path / validate_windows_dir_name(media.get_title())
                         download_items.append(
@@ -266,9 +268,7 @@ class Task:
                 return self._fallback(TaskError.ERROR)
             client = await self._build_client(force=True)
             if not client:
-                logger.error(
-                    "Failed build client, task skipped"
-                )
+                logger.error("Failed build client, task skipped")
                 return self._fallback(TaskError.ERROR)
 
             if self._post_info:
@@ -349,10 +349,14 @@ class Task:
                     else "content.md"
                 )
                 if text_file_path.exists():
-                    logger.info(f"Skip creating text file: {text_file_path} (already exists)")
+                    logger.info(
+                        f"Skip creating text file: {text_file_path} (already exists)"
+                    )
                 else:
                     logger.info(f"Creating text file: {text_file_path}")
-                    async with aiofiles.open(text_file_path, "w", encoding="utf-8") as f:
+                    async with aiofiles.open(
+                        text_file_path, "w", encoding="utf-8"
+                    ) as f:
                         await f.write(text_content)
 
             download_items = await self._prepare_download_tasks(

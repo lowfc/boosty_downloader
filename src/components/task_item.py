@@ -19,7 +19,9 @@ class TaskItem(ft.Container):
     ):
         super().__init__()
         self.progress_bar = ft.ProgressBar(color=ft.Colors.ORANGE, height=5)
-        self.display_subtitle = ft.Container(self.progress_bar, align=ft.Alignment.CENTER, expand=True)
+        self.display_subtitle = ft.Container(
+            self.progress_bar, align=ft.Alignment.CENTER, expand=True
+        )
         self.folder_open_button = ft.IconButton(
             ft.Icon(ft.Icons.FOLDER, color=ft.Colors.SURFACE_CONTAINER_LOW),
             on_click=self.open_task_folder,
@@ -43,7 +45,12 @@ class TaskItem(ft.Container):
             title = ""
             author = ""
         self.task_name = ft.Text(title, overflow=ft.TextOverflow.ELLIPSIS, expand=True)
-        self.task_prefix = ft.Text(author, color=ft.Colors.SECONDARY, overflow=ft.TextOverflow.ELLIPSIS, weight=ft.FontWeight.W_500)
+        self.task_prefix = ft.Text(
+            author,
+            color=ft.Colors.SECONDARY,
+            overflow=ft.TextOverflow.ELLIPSIS,
+            weight=ft.FontWeight.W_500,
+        )
         self.task_weight = ft.Text("", color=ft.Colors.SECONDARY)
         self.top_row = ft.Row(
             [
@@ -51,7 +58,9 @@ class TaskItem(ft.Container):
                 ft.Text("-"),
                 self.task_name,
                 self.task_weight,
-            ], spacing=5, expand=True,
+            ],
+            spacing=5,
+            expand=True,
         )
         self.trailing_button = ft.Container(self.stop_button)
         self.display_task = ft.Row(
@@ -63,8 +72,10 @@ class TaskItem(ft.Container):
                     expand=True,
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
-                self.trailing_button
-            ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER
+                self.trailing_button,
+            ],
+            spacing=10,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
         self.path = None
         self.visible = visible

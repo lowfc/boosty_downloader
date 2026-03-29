@@ -94,9 +94,7 @@ class WelcomePage(ft.View):
                                 content=ft.Row(
                                     [
                                         ft.Icon(ft.Icons.MORE_HORIZ),
-                                        ft.Text(
-                                            "More", align=ft.Alignment.CENTER
-                                        ),
+                                        ft.Text("More", align=ft.Alignment.CENTER),
                                     ],
                                     width=80,
                                     alignment=ft.MainAxisAlignment.CENTER,

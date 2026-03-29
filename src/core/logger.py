@@ -26,7 +26,7 @@ def setup_logger(log_file="runtime.log"):
             maxBytes=50 * 1024 * 1024,
             backupCount=1,
             mode="w",
-            encoding="utf-8"
+            encoding="utf-8",
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)

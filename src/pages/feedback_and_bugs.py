@@ -23,10 +23,10 @@ class FeedbackAndBugsPage(ft.View):
                     border_radius=5,
                     padding=10,
                     expand=True,
-                    height=300
+                    height=300,
                 )
             ],
-            height=300
+            height=300,
         )
         self.copy_button = ft.Button(
             "Copy diagnostic",
@@ -48,8 +48,10 @@ class FeedbackAndBugsPage(ft.View):
             ft.Column(
                 spacing=10,
                 controls=[
-                    ft.Text("If you'd like to leave feedback about the app or suggest a new feature, "
-                            "please create a discussion thread in the project repository:"),
+                    ft.Text(
+                        "If you'd like to leave feedback about the app or suggest a new feature, "
+                        "please create a discussion thread in the project repository:"
+                    ),
                     ft.Row(
                         spacing=5,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -69,9 +71,11 @@ class FeedbackAndBugsPage(ft.View):
                                     )
                                 ]
                             ),
-                        ]
+                        ],
                     ),
-                    ft.Text("If you encounter a bug, please report it in the project issues section:"),
+                    ft.Text(
+                        "If you encounter a bug, please report it in the project issues section:"
+                    ),
                     ft.Row(
                         spacing=5,
                         controls=[
@@ -90,16 +94,18 @@ class FeedbackAndBugsPage(ft.View):
                                     )
                                 ]
                             ),
-                        ]
+                        ],
                     ),
                     ft.Column(
                         [
-                            ft.Text("To speed up the bug fix, please include diagnostic information with the issue:"),
+                            ft.Text(
+                                "To speed up the bug fix, please include diagnostic information with the issue:"
+                            ),
                             self.logs_field,
                             self.copy_button,
                         ]
-                    )
-                ]
+                    ),
+                ],
             ),
         ]
 
@@ -131,7 +137,9 @@ class FeedbackAndBugsPage(ft.View):
         if log_path.exists():
             with open(log_path, "r", encoding="utf-8") as f:
                 current_log = f.read()
-        diagnostic = f"App version: v{app_version.VERSION} (build {app_version.BUILD})\n"
+        diagnostic = (
+            f"App version: v{app_version.VERSION} (build {app_version.BUILD})\n"
+        )
         diagnostic += await self.get_device_info()
         diagnostic += f"Last run log: \n{current_log}"
         self.log_text.value = diagnostic
@@ -139,12 +147,8 @@ class FeedbackAndBugsPage(ft.View):
 
     async def copy_log(self):
         await ft.Clipboard().set(self.log_text.value)
-        self.copy_button.icon = ft.Icon(
-            ft.Icons.DONE, color=ft.Colors.PRIMARY
-        )
+        self.copy_button.icon = ft.Icon(ft.Icons.DONE, color=ft.Colors.PRIMARY)
         self.page.update()
         await asyncio.sleep(1)
-        self.copy_button.icon = ft.Icon(
-            ft.Icons.COPY, color=ft.Colors.PRIMARY
-        )
+        self.copy_button.icon = ft.Icon(ft.Icons.COPY, color=ft.Colors.PRIMARY)
         self.page.update()

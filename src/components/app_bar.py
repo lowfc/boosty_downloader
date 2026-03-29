@@ -49,7 +49,7 @@ class AppBar(ft.AppBar):
                 elevation=0,
                 padding=0,
             ),
-            on_click=self.go_to_auth_management
+            on_click=self.go_to_auth_management,
         )
 
     def on_destroy(self):
@@ -78,7 +78,7 @@ class AppBar(ft.AppBar):
                     ft.Icon(ft.Icons.MONEY_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Icon(ft.Icons.MUSIC_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Icon(ft.Icons.FOLDER_OFF, color=ft.Colors.ON_SURFACE_VARIANT),
-                    self.login_button
+                    self.login_button,
                 ]
                 self.title.tooltip = ft.Tooltip(
                     message="To download private content available to you, log in the app"
