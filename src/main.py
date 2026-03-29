@@ -10,6 +10,7 @@ from pages.download_image_by_link import DownloadImageByLinkPage
 from pages.download_post import DownloadPostPage
 from pages.download_several_posts import DownloadSeveralPostsPage
 from pages.downloads_center import DownloadsCenterPage
+from pages.feedback_and_bugs import FeedbackAndBugsPage
 from pages.merge_author_content import MergeAuthorContentPage
 from pages.settings_page import SettingsPage
 from pages.welcome_page import WelcomePage
@@ -25,7 +26,6 @@ async def main(page: ft.Page):
     page.window.min_width = 1100
     page.window.height = 750
     page.window.min_height = 500
-    await page.window.center()
 
     manager = DownloadManager()
 
@@ -49,6 +49,8 @@ async def main(page: ft.Page):
                 page.views.append(DownloadSeveralPostsPage(manager))
             case "/download-media-by-link":
                 page.views.append(DownloadImageByLinkPage(manager))
+            case "/feedback-and-bugs":
+                page.views.append(FeedbackAndBugsPage(manager))
 
         page.update()
 

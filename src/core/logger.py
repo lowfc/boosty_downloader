@@ -1,5 +1,6 @@
 import logging
 import sys
+from logging.handlers import RotatingFileHandler
 
 
 def setup_logger(log_file="runtime.log"):
@@ -20,7 +21,13 @@ def setup_logger(log_file="runtime.log"):
     console_handler.setFormatter(formatter)
 
     try:
-        file_handler = logging.FileHandler(log_file, mode="w", encoding="utf-8")
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=50 * 1024 * 1024,
+            backupCount=1,
+            mode="w",
+            encoding="utf-8",
+        )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)

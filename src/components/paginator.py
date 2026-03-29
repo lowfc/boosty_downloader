@@ -56,9 +56,11 @@ class Paginator(ft.Row):
             self.btn_prev.disabled = self.current_page <= 1
             self.btn_next.disabled = self.current_page >= self.page_count
 
-            self.text_display.update()
-            self.btn_prev.update()
-            self.btn_next.update()
+            if self.page_count < 2:
+                self.visible = False
+            else:
+                self.visible = True
+            self.update()
         except RuntimeError:
             return
 
