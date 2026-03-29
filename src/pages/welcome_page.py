@@ -94,16 +94,23 @@ class WelcomePage(ft.View):
                                 content=ft.Row(
                                     [
                                         ft.Icon(ft.Icons.MORE_HORIZ),
-                                        ft.Text(
-                                            "Instruments", align=ft.Alignment.CENTER
-                                        ),
+                                        ft.Text("More", align=ft.Alignment.CENTER),
                                     ],
-                                    width=120,
+                                    width=80,
                                     alignment=ft.MainAxisAlignment.CENTER,
                                 ),
                                 padding=ft.Padding.all(5),
                             ),
                             items=[
+                                ft.PopupMenuItem(
+                                    content=ft.Row(
+                                        [
+                                            ft.Icon(ft.Icons.BUG_REPORT),
+                                            ft.Text("Give feedback or report a bug"),
+                                        ]
+                                    ),
+                                    on_click=self.go_to_feedback,
+                                ),
                                 ft.PopupMenuItem(
                                     content=ft.Row(
                                         [
@@ -141,3 +148,6 @@ class WelcomePage(ft.View):
 
     async def go_to_mass_downloader(self):
         await self.page.push_route("/download-several-posts")
+
+    async def go_to_feedback(self):
+        await self.page.push_route("/feedback-and-bugs")

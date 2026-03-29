@@ -68,6 +68,7 @@ class DownloadsCenterPage(ft.View):
             ),
             ft.ListView(
                 expand=True,
+                spacing=20,
                 controls=[
                     self.list_view,
                     self.paginator,
