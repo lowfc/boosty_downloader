@@ -122,11 +122,11 @@ class FeedbackAndBugsPage(ft.View):
             print(e)
             return ""
         if isinstance(device_info, ft.MacOsDeviceInfo):
-            os_info = f"{device_info.os_release} {device_info.arch} {device_info.major_version} {device_info.minor_version}"
+            os_info = f"macOS {device_info.os_release} {device_info.arch} {device_info.major_version}.{device_info.minor_version}"
         elif isinstance(device_info, ft.WindowsDeviceInfo):
             os_info = f"{device_info.product_name} {device_info.edition_id}"
         elif isinstance(device_info, ft.LinuxDeviceInfo):
-            os_info = f"{device_info.pretty_name} {device_info.version_id}"
+            os_info = f"Linux {device_info.pretty_name} {device_info.version_id}"
         else:
             os_info = "Unknown device"
         return os_info
