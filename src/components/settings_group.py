@@ -62,19 +62,19 @@ class SettingsGroup(ft.ListView):
         )
         self.chunk_size_textfield = ft.TextField(
             label="Chunk size",
-            border=ft.InputBorder.UNDERLINE,
+            border=ft.UnderlineInputBorder(),
             input_filter=ft.NumbersOnlyInputFilter(),
             value="0",
         )
         self.download_timeout_textfield = ft.TextField(
             label="Download timeout (sec.)",
-            border=ft.InputBorder.UNDERLINE,
+            border=ft.UnderlineInputBorder(),
             input_filter=ft.NumbersOnlyInputFilter(),
             value="0",
         )
         self.max_parallelism_textfield = ft.TextField(
             label="Maximum download parallelism",
-            border=ft.InputBorder.UNDERLINE,
+            border=ft.UnderlineInputBorder(),
             input_filter=ft.NumbersOnlyInputFilter(),
             value="0",
         )
