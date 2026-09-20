@@ -86,8 +86,8 @@ class DownloadSeveralPostsPage(ft.View):
                 spacing=16,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            padding=ft.padding.all(16),
-            border_radius=ft.border_radius.all(12),
+            padding=ft.Padding.all(16),
+            border_radius=ft.BorderRadius.all(12),
         )
         self.controls = [
             components.AppBar(manager),

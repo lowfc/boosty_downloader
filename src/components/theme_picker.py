@@ -33,7 +33,7 @@ class ThemePicker(ft.Dropdown):
         self.filled = True
         self.fill_color = ft.Colors.SURFACE_CONTAINER
         self.text_size = 14
-        self.content_padding = ft.padding.symmetric(horizontal=16, vertical=12)
+        self.content_padding = ft.Padding.symmetric(horizontal=16, vertical=12)
         self.prefix_icon = theme_icons[ThemeMode.SYSTEM]
         self.value = ThemeMode.SYSTEM.value
         self.on_select = lambda e: asyncio.create_task(

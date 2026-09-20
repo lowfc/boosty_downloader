@@ -10,13 +10,13 @@ authors = [
 dependencies = [
   "aiofiles>=25.1.0",
   "aiohttp>=3.13.3",
-  "flet>=0.80.2",
+  "flet>=1.0.0",
   "pyinstaller>=6.18.0",
 ]
 
 [dependency-groups]
 dev = [
-  "flet[all]>=0.80.2",
+  "flet[all]>=1.0.0",
 ]
 
 [tool.flet]
