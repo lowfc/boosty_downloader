@@ -5,6 +5,7 @@ import flet as ft
 import __version__ as app_version
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
+from core.utils import get_download_settings
 from core.window import configure_window
 from pages.auth_management import AuthManagementPage
 from pages.download_image_by_link import DownloadImageByLinkPage
@@ -17,6 +18,8 @@ from pages.settings_page import SettingsPage
 from pages.welcome_page import WelcomePage
 from themes import DARK_THEME, LIGHT_THEME
 
+logger = setup_logger()
+
 
 async def main(page: ft.Page):
     page.title = f"{app_version.NAME} {app_version.VERSION}"
@@ -24,9 +27,17 @@ async def main(page: ft.Page):
     page.dark_theme = DARK_THEME
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
 
-    manager = DownloadManager()
+    try:
+        settings = await get_download_settings()
+    except (TypeError, ValueError):
+        logger.warning("Invalid saved download settings; using the default concurrency")
+        settings = None
+    manager = DownloadManager(settings.max_parallelism if settings else 5)
 
     def route_change(e):
+        for view in page.views:
+            if isinstance(view, SettingsPage):
+                view.settings_group.discard_theme_preview()
         page.views.clear()
 
         match page.route:
@@ -92,7 +103,6 @@ async def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    logger = setup_logger()
     logger.info(f"Starting {app_version.NAME} v{app_version.VERSION}...")
     try:
         ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

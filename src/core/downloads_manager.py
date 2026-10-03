@@ -3,6 +3,7 @@ from typing import List, Optional, Dict
 
 from core.boosty.defs import BoostyPostDto
 from core.defs.tasks import TaskInfo
+from core.download_limiter import DownloadLimiter
 from core.task import Task
 
 
@@ -13,9 +14,14 @@ class DownloadManager:
     ):
         self._tasks: Dict[str, "Task"] = {}
         self.maximum_concurrency = maximum_concurrency
-        self._semaphore = asyncio.Semaphore(self.maximum_concurrency)
+        self._semaphore = DownloadLimiter(self.maximum_concurrency)
         self._lock = asyncio.Lock()
         self._closed = False
+
+    async def set_maximum_concurrency(self, limit: int):
+        async with self._lock:
+            await self._semaphore.set_limit(limit)
+            self.maximum_concurrency = limit
 
     async def add_task(
         self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None

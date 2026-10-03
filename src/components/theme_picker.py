@@ -1,4 +1,4 @@
-import asyncio
+from collections.abc import Callable
 from enum import Enum
 
 import flet as ft
@@ -13,9 +13,8 @@ class ThemeMode(Enum):
 theme_icons = {
     ThemeMode.LIGHT: ft.Icons.LIGHT_MODE,
     ThemeMode.DARK: ft.Icons.DARK_MODE,
-    ThemeMode.SYSTEM: ft.Icons.BRIGHTNESS_AUTO,
+    ThemeMode.SYSTEM: ft.Icons.DESKTOP_WINDOWS_OUTLINED,
 }
-
 theme_names = {
     ThemeMode.LIGHT: "Light",
     ThemeMode.DARK: "Dark",
@@ -24,71 +23,60 @@ theme_names = {
 
 
 @ft.control
-class ThemePicker(ft.Dropdown):
-    def __init__(self):
+class ThemePicker(ft.Column):
+    """Choose a draft theme; the settings form owns preview and persistence."""
+
+    def __init__(self, on_theme_change: Callable[[str], None] | None = None):
         super().__init__()
-        self.height = 50
-        self.width = 700
-        self.border = ft.OutlineInputBorder(
-            side=ft.BorderSide(color=ft.Colors.TRANSPARENT)
-        )
-        self.filled = True
-        self.fill_color = ft.Colors.SURFACE_CONTAINER
-        self.text_size = 14
-        self.content_padding = ft.Padding.symmetric(horizontal=16, vertical=12)
-        self.prefix_icon = theme_icons[ThemeMode.SYSTEM]
-        self.value = ThemeMode.SYSTEM.value
-        self.on_select = lambda e: asyncio.create_task(
-            self.apply_theme(ThemeMode(e.data))
-        )
-        asyncio.create_task(self.actualize_self())
-
-        self.options = [
-            ft.dropdown.Option(
-                key=ThemeMode.LIGHT.value,
-                text=theme_names[ThemeMode.LIGHT],
-                content=ft.Row(
-                    [
-                        ft.Icon(theme_icons[ThemeMode.LIGHT], size=20),
-                        ft.Text(theme_names[ThemeMode.LIGHT]),
-                    ]
-                ),
-            ),
-            ft.dropdown.Option(
-                key=ThemeMode.DARK.value,
-                text=theme_names[ThemeMode.DARK],
-                content=ft.Row(
-                    [
-                        ft.Icon(theme_icons[ThemeMode.DARK], size=20),
-                        ft.Text(theme_names[ThemeMode.DARK]),
-                    ]
-                ),
-            ),
-            ft.dropdown.Option(
-                key=ThemeMode.SYSTEM.value,
-                text=theme_names[ThemeMode.SYSTEM],
-                content=ft.Row(
-                    [
-                        ft.Icon(theme_icons[ThemeMode.SYSTEM], size=20),
-                        ft.Text(theme_names[ThemeMode.SYSTEM]),
-                    ]
-                ),
-            ),
+        self.value = "system"
+        self.on_theme_change = on_theme_change
+        self.spacing = 9
+        self.buttons = {}
+        for mode in ThemeMode:
+            self.buttons[mode.value] = ft.OutlinedButton(
+                theme_names[mode],
+                icon=theme_icons[mode],
+                height=44,
+                expand=True,
+                on_click=lambda e, selected=mode.value: self.select(selected),
+            )
+        self.help_text = ft.Text(size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+        self.controls = [
+            ft.Row(list(self.buttons.values()), spacing=10),
+            self.help_text,
         ]
+        self.set_value("system")
 
-    async def actualize_self(self):
-        raw_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
-        mode = ThemeMode(raw_mode)
-        if mode == ThemeMode.LIGHT:
-            self.page.theme_mode = ft.ThemeMode.LIGHT
-        elif mode == ThemeMode.DARK:
-            self.page.theme_mode = ft.ThemeMode.DARK
-        else:  # SYSTEM
-            self.page.theme_mode = ft.ThemeMode.SYSTEM
-        self.prefix_icon = theme_icons[mode]
-        self.value = mode.value
-        self.page.update()
+    def set_value(self, value):
+        self.value = value if value in self.buttons else "system"
+        for key, button in self.buttons.items():
+            selected = key == self.value
+            button.style = ft.ButtonStyle(
+                color=ft.Colors.PRIMARY if selected else ft.Colors.ON_SURFACE_VARIANT,
+                bgcolor=(
+                    ft.Colors.PRIMARY_CONTAINER
+                    if selected
+                    else ft.Colors.SURFACE_CONTAINER_LOWEST
+                ),
+                side=ft.BorderSide(
+                    1, ft.Colors.PRIMARY if selected else ft.Colors.OUTLINE_VARIANT
+                ),
+                shape=ft.RoundedRectangleBorder(radius=9),
+                padding=ft.Padding.symmetric(horizontal=10, vertical=12),
+                text_style=ft.TextStyle(
+                    size=13,
+                    weight=ft.FontWeight.W_500 if selected else ft.FontWeight.W_400,
+                ),
+            )
+        self.help_text.value = (
+            "Follows your system appearance."
+            if self.value == "system"
+            else f"{theme_names[ThemeMode(self.value)]} appearance selected."
+        )
 
-    async def apply_theme(self, mode: ThemeMode):
-        await ft.SharedPreferences().set("current-app-theme", mode.value)
-        await self.actualize_self()
+    def select(self, value):
+        self.set_value(value)
+        if self.on_theme_change:
+            self.on_theme_change(self.value)
+        else:
+            self.update()
