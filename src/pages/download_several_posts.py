@@ -3,272 +3,255 @@ import datetime
 
 import flet as ft
 
-import components
+from components.soft_layout import button_style
 from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from core.utils import parse_author_link
+from pages.post_download_form import PostDownloadForm, author_from_input
 
 logger = setup_logger()
 
 
-class DownloadSeveralPostsPage(ft.View):
+class DownloadSeveralPostsPage(PostDownloadForm):
     def __init__(self, manager: DownloadManager):
-        super().__init__()
-        self.manager = manager
-        self.route = "/download-several-posts"
-        self.text_field = ft.TextField(
-            prefix_icon=ft.IconButton(
-                ft.Icons.ACCOUNT_CIRCLE, on_click=self.parse_clipboard_content
-            ),
-            hint_text="https://boosty.to/author",
-            width=450,
-            value="",
-            border_color=ft.Colors.TRANSPARENT,
-            filled=True,
-            fill_color=ft.Colors.SURFACE_CONTAINER,
-            hint_style=ft.TextStyle(color=ft.Colors.GREY_600),
+        super().__init__(
+            manager,
+            "/download-several-posts",
+            "https://boosty.to/author",
+            self.download_posts,
         )
-        today = datetime.datetime.now()
-        start_range = today - datetime.timedelta(days=2)
-        self.parse_from = datetime.datetime(
-            year=start_range.year,
-            month=start_range.month,
-            day=start_range.day,
-            tzinfo=datetime.timezone.utc,
-        )
-        self.parse_to = datetime.datetime(
-            year=today.year,
-            month=today.month,
-            day=today.day,
-            tzinfo=datetime.timezone.utc,
-        )
+        today = datetime.datetime.now().astimezone().date()
+        self.set_range(today - datetime.timedelta(days=2), today)
         self.date_range_picker = ft.DateRangePicker(
-            start_value=self.parse_from,
-            end_value=self.parse_to,
+            start_value=self.parse_from.date(),
+            end_value=self.parse_to.date(),
             entry_mode=ft.DatePickerEntryMode.CALENDAR_ONLY,
             on_change=self.handle_date_picker_change,
-            first_date=datetime.datetime(
-                today.year - 10, 1, 1, tzinfo=datetime.timezone.utc
-            ),
-            last_date=self.parse_to,
+            first_date=datetime.date(today.year - 10, 1, 1),
+            last_date=today,
         )
-        self.date_from_text = ft.Text("", size=20, weight=ft.FontWeight.BOLD)
-        self.date_to_text = ft.Text("", size=20, weight=ft.FontWeight.BOLD)
-        self.status_text = ft.Text(
-            "Preparing...",
-            size=16,
-            weight=ft.FontWeight.W_600,
+        self.date_from_text = ft.Text(size=13)
+        self.date_to_text = ft.Text(size=13)
+        self.range_note = ft.Text(size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+        self.update_ranges()
+        dates = ft.ResponsiveRow(
+            spacing=16,
+            run_spacing=12,
+            controls=[
+                self.date_field("From", self.date_from_text),
+                self.date_field("To", self.date_to_text),
+            ],
         )
-        self.description_text = ft.Text(
-            "0 posts found",
-            size=12,
-            weight=ft.FontWeight.W_400,
+        self.download_button = ft.Button(
+            "Download posts",
+            icon=ft.Icons.DOWNLOAD_OUTLINED,
+            height=42,
+            style=button_style(primary=True),
+            on_click=self.download_posts,
         )
-        self.progress_container = ft.Container(
-            visible=False,
-            content=ft.Row(
-                controls=[
-                    ft.ProgressRing(
-                        width=40,
-                        height=40,
-                        stroke_width=2,
-                    ),
-                    ft.Column(
-                        spacing=2,
-                        controls=[
-                            self.status_text,
-                            self.description_text,
-                        ],
-                    ),
-                ],
-                spacing=16,
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
-            padding=ft.Padding.all(16),
-            border_radius=ft.BorderRadius.all(12),
-        )
-        self.controls = [
-            components.AppBar(manager),
-            ft.Row(
-                controls=[
-                    ft.IconButton(
-                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
-                    ),
-                    ft.Text(
-                        "Download several posts", size=24, weight=ft.FontWeight.BOLD
-                    ),
-                ]
-            ),
-            ft.Container(
-                alignment=ft.Alignment.CENTER,
-                expand=True,
-                content=ft.Column(
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=15,
+        self.build_form(
+            "Several posts",
+            "Download an author's posts for a selected period.",
+            ft.Icons.FILE_COPY_OUTLINED,
+            "Choose an author and dates",
+            "We'll find available posts published in this period.",
+            [
+                self.link_section(
+                    "Author", "Enter a Boosty page link or the author's nickname."
+                ),
+                self.divider(),
+                ft.Column(
+                    spacing=12,
                     controls=[
-                        self.text_field,
-                        ft.Text("Download posts published at:"),
+                        ft.Text(
+                            "Publication dates", size=13, weight=ft.FontWeight.W_500
+                        ),
+                        dates,
                         ft.Row(
-                            [
-                                self.date_from_text,
-                                ft.Text("—", size=20),
-                                self.date_to_text,
-                                ft.IconButton(
-                                    ft.Icon(ft.Icons.EDIT_CALENDAR, size=20),
-                                    on_click=lambda x: self.page.show_dialog(
-                                        self.date_range_picker
-                                    ),
+                            spacing=8,
+                            controls=[
+                                ft.Icon(
+                                    ft.Icons.DATE_RANGE_OUTLINED,
+                                    size=15,
+                                    color=ft.Colors.ON_SURFACE_VARIANT,
                                 ),
+                                self.range_note,
                             ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
-                        ft.Button(
-                            content=ft.Text("Download", size=17),
-                            icon=ft.Icon(
-                                ft.Icons.DOWNLOAD, color=ft.Colors.PRIMARY, size=16
-                            ),
-                            height=50,
-                            width=150,
-                            color=ft.Colors.ON_SURFACE,
-                            on_click=self.download_posts,
-                        ),
-                        self.progress_container,
                     ],
                 ),
+                self.divider(),
+                self.destination_section(),
+                self.hint("Uses your content and quality settings.", ft.Icons.TUNE),
+                ft.Row(
+                    wrap=True,
+                    spacing=16,
+                    run_spacing=10,
+                    controls=[
+                        self.download_button,
+                        ft.Text(
+                            "Progress appears in Downloads.",
+                            size=12,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+    def date_field(self, label, text):
+        button = ft.OutlinedButton(
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                controls=[
+                    text,
+                    ft.Icon(
+                        ft.Icons.CALENDAR_TODAY_OUTLINED,
+                        size=17,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
+                    ),
+                ],
             ),
-        ]
+            height=44,
+            style=button_style(),
+            on_click=self.open_date_picker,
+            tooltip=f"Choose publication dates: {label}",
+        )
+        self.date_buttons.append(button)
+        return ft.Column(
+            col={"xs": 12, "sm": 6},
+            spacing=8,
+            controls=[
+                ft.Text(label, size=12, color=ft.Colors.ON_SURFACE_VARIANT),
+                button,
+            ],
+        )
 
-    async def parse_clipboard_content(self):
-        clipboard = await ft.Clipboard().get()
-        if clipboard:
-            author_name = parse_author_link(clipboard)
-            if author_name:
-                self.text_field.value = author_name
-                self.page.update()
-
-    def build(self):
-        self.update_ranges()
+    def set_range(self, start, end):
+        # Keep calendar dates in local time; convert to UTC only for API timestamps.
+        self.parse_from = datetime.datetime.combine(start, datetime.time.min)
+        self.parse_to = datetime.datetime.combine(end, datetime.time.max)
 
     def update_ranges(self):
-        self.date_from_text.value = self.parse_from.strftime("%d.%m.%Y")
-        self.date_to_text.value = self.parse_to.strftime("%d.%m.%Y")
-        self.page.update()
+        self.date_from_text.value = self.parse_from.strftime("%d %b %Y")
+        self.date_to_text.value = self.parse_to.strftime("%d %b %Y")
+        days = (self.parse_to.date() - self.parse_from.date()).days + 1
+        self.range_note.value = (
+            f"{days} {'day' if days == 1 else 'days'} · Includes both dates"
+        )
 
-    async def go_to_index(self):
-        await self.page.push_route("/")
+    def open_date_picker(self, e=None):
+        self.page.show_dialog(self.date_range_picker)
 
     def handle_date_picker_change(self, e: ft.Event[ft.DateRangePicker]):
-        self.parse_from = e.control.start_value.astimezone()
-        self.parse_to = e.control.end_value.astimezone().replace(
-            hour=23, minute=59, second=59
+        start, end = e.control.start_value, e.control.end_value
+        if start is None or end is None:
+            return
+        # Flet returns local midnight encoded in UTC; recover the selected local day.
+        start_day = (
+            start.astimezone().date() if isinstance(start, datetime.datetime) else start
         )
-        self.date_range_picker.start_value = e.control.start_value
-        self.date_range_picker.end_value = e.control.end_value
+        end_day = end.astimezone().date() if isinstance(end, datetime.datetime) else end
+        self.set_range(start_day, end_day)
         self.update_ranges()
+        self.clear_feedback()
 
-    async def download_posts(self):
-        if self.text_field.value.strip() == "":
-            self.page.show_dialog(
-                ft.AlertDialog(
-                    title=ft.Text("Empty author"),
-                    content=ft.Text("Type link to author's page or author's nickname"),
-                    actions=[
-                        ft.TextButton(
-                            "Wow, i'll", on_click=lambda e: self.page.pop_dialog()
-                        )
-                    ],
-                    open=True,
-                )
+    async def download_posts(self, e=None):
+        if self.busy:
+            return
+        author = author_from_input(self.text_field.value or "")
+        if not author:
+            self.show_feedback(
+                "Enter a Boosty author to continue.",
+                "Use a Boosty page link or the author's nickname.",
+                error=True,
             )
             return
-        self.progress_container.visible = True
-        self.disabled = True
-        self.page.update()
-        await asyncio.sleep(0.5)
-        author_name = parse_author_link(self.text_field.value)
-        auth_token = await AuthorizationProvider.get_authorization_if_valid()
-        client = BoostyClient(
-            chunk_size=3600,
-            download_timeout=500,
-            auth_token=auth_token,
+        self.operation_task = asyncio.current_task()
+        self.set_busy(True)
+        self.show_feedback(
+            "Searching available posts…",
+            "Checking the selected publication dates.",
+            busy=True,
         )
-        max_int_id = await client.get_max_int_id(author_name)
-        if not max_int_id:
-            self.page.show_dialog(
-                ft.AlertDialog(
-                    title=ft.Text("Empty page"),
-                    content=ft.Text(
-                        "An error has occurred, or author have no posts. Please try again later."
-                    ),
-                    actions=[
-                        ft.TextButton("Ok", on_click=lambda ev: self.page.pop_dialog())
-                    ],
-                    open=True,
-                )
+        created = 0
+        try:
+            auth = await AuthorizationProvider.get_authorization_if_valid()
+            client = BoostyClient(
+                chunk_size=3600, download_timeout=500, auth_token=auth
             )
-            self.progress_container.visible = False
-            self.disabled = False
-            self.page.update()
-            return
-
-        self.status_text.value = "Searching posts by your criteria..."
-        self.page.update()
-        left_border = int(self.parse_from.astimezone(datetime.timezone.utc).timestamp())
-        right_border = int(self.parse_to.astimezone(datetime.timezone.utc).timestamp())
-        offset = f"{right_border}:{max_int_id + 1}"
-        prepared_posts = []
-        run = True
-        while run:
-            try:
-                post_list = await client.get_posts_list(author_name, offset=offset)
-            except Exception as e:
-                logger.error(e)
-                self.page.show_dialog(
-                    ft.AlertDialog(
-                        title=ft.Text("Unexpected error on checking posts"),
-                        content=ft.Text(
-                            "An error has occurred when searching posts. Please, check url correctness or try again later."
-                        ),
-                        actions=[
-                            ft.TextButton(
-                                "Ok", on_click=lambda ev: self.page.pop_dialog()
-                            )
-                        ],
-                        open=True,
-                    )
+            max_id = await client.get_max_int_id(author)
+            if max_id is None:
+                self.show_feedback(
+                    "No posts could be found.",
+                    "Check the author link, or try again later.",
+                    error=True,
                 )
-                self.progress_container.visible = False
-                self.disabled = False
-                self.page.update()
                 return
-            offset = post_list.extra.offset
-            for post in post_list.data:
-                if post.publish_time >= left_border:
-                    if post.has_access:
-                        prepared_posts.append(post)
-                else:
-                    run = False
-
-            if post_list.extra.is_last:
-                run = False
-            self.description_text.value = f"{len(prepared_posts)} posts found"
-            self.page.update()
-            await asyncio.sleep(0.5)
-
-        self.status_text.value = "Creating tasks in the manager"
-        tasks_created = 0
-        for post in prepared_posts:
-            if await self.manager.add_task(author_name, post.id, post):
-                tasks_created += 1
-            await asyncio.sleep(0.1)
-            self.description_text.value = f"{tasks_created} tasks created"
-            self.page.update()
-
-        self.progress_container.visible = False
-        self.disabled = False
-        await asyncio.sleep(0.5)
-        self.page.update()
+            left = int(self.parse_from.timestamp())
+            # Exclusive next midnight also handles a one-day range and DST changes.
+            next_day = self.parse_to.date() + datetime.timedelta(days=1)
+            right = int(
+                datetime.datetime.combine(next_day, datetime.time.min).timestamp()
+            )
+            offset = f"{right}:{max_id + 1}"
+            posts = {}
+            seen_offsets = set()
+            while True:
+                if offset in seen_offsets:
+                    raise RuntimeError("Post pagination did not advance")
+                seen_offsets.add(offset)
+                result = await client.get_posts_list(author, offset=offset)
+                past_start = False
+                for post in result.data:
+                    if post.publish_time < left:
+                        past_start = True
+                    elif post.publish_time < right and post.has_access:
+                        posts[post.id] = post
+                self.show_feedback(
+                    "Searching available posts…", f"{len(posts)} posts found", busy=True
+                )
+                if result.extra.is_last or past_start:
+                    break
+                offset = result.extra.offset
+                if not offset:
+                    raise RuntimeError("Missing post pagination offset")
+            if not posts:
+                self.show_feedback(
+                    "No available posts in this period.",
+                    "Try another date range, or log in to access your subscriptions.",
+                )
+                return
+            self.show_feedback(
+                f"{len(posts)} posts found", "Adding posts to Downloads…", busy=True
+            )
+            for post in posts.values():
+                if await self.manager.add_task(author, post.id, post):
+                    created += 1
+                self.show_feedback(
+                    "Adding posts to Downloads…", f"{created} tasks created", busy=True
+                )
+                await asyncio.sleep(0)
+            skipped = len(posts) - created
+            detail = "You can follow the download progress there."
+            if skipped:
+                detail += f" {skipped} already in Downloads."
+            self.show_feedback(
+                (
+                    f"{created} {'post' if created == 1 else 'posts'} added to Downloads."
+                    if created
+                    else "These posts are already in Downloads."
+                ),
+                detail,
+            )
+        except Exception as error:
+            logger.exception("Could not prepare author's posts", exc_info=error)
+            detail = "Check the author link and your connection, then try again."
+            if created:
+                detail = f"{created} posts were added to Downloads. Try again to add the remaining posts."
+            self.show_feedback("Couldn't finish preparing posts.", detail, error=True)
+        finally:
+            self.set_busy(False)
+            self.operation_task = None
+            self.refresh()

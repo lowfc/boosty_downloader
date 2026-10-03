@@ -50,7 +50,9 @@ class DownloadImageByLinkPage(ft.View):
             hint_text="https://boosty.to/author/blog/media/053713d9-93df-4f4a-ae45-e01ea031cb15/9b981067-9854-4af0-aed4-6b5efe3ad96f",
             width=500,
             value="",
-            border_color=ft.Colors.TRANSPARENT,
+            border=ft.OutlineInputBorder(
+                side=ft.BorderSide(color=ft.Colors.TRANSPARENT)
+            ),
             filled=True,
             fill_color=ft.Colors.SURFACE_CONTAINER,
             hint_style=ft.TextStyle(color=ft.Colors.GREY_600),
