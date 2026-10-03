@@ -53,6 +53,7 @@ class Task:
         self._downloaded_bytes = 0
         self._done = False
         self._pending = False
+        self._running = False
         self._error = False
         self._task = None
         self._finished = False
@@ -76,6 +77,10 @@ class Task:
     @property
     def pending(self) -> bool:
         return self._pending
+
+    @property
+    def running(self) -> bool:
+        return self._running
 
     @property
     def total_weight(self) -> int:
@@ -127,6 +132,7 @@ class Task:
             self._task.cancel()
         self._task = None
         self._pending = False
+        self._running = False
         self._error = True
         self._finished = True
         self.error_description = TaskError.CANCELLED
@@ -182,6 +188,7 @@ class Task:
         self.error_description = err
         self._finished = True
         self._pending = False
+        self._running = False
 
     async def _prepare_download_tasks(
         self,
@@ -260,6 +267,7 @@ class Task:
 
         self._pending = True
         async with self._semaphore:
+            self._running = True
             settings = await get_download_settings()
             if not settings:
                 logger.error(
@@ -383,6 +391,7 @@ class Task:
             self._done = True
             self._percent = 100
             self._pending = False
+            self._running = False
             self._finished = True
 
         return None
