@@ -37,7 +37,9 @@ class SettingsGroup(ft.ListView):
             width=700,
             value="ultra_hd",
             label="Restrict video size",
-            border_color=ft.Colors.TRANSPARENT,
+            border=ft.OutlineInputBorder(
+                side=ft.BorderSide(color=ft.Colors.TRANSPARENT)
+            ),
             filled=True,
             fill_color=ft.Colors.SURFACE_CONTAINER,
             options=[
@@ -52,7 +54,9 @@ class SettingsGroup(ft.ListView):
             width=700,
             value="md",
             label="Post text format",
-            border_color=ft.Colors.TRANSPARENT,
+            border=ft.OutlineInputBorder(
+                side=ft.BorderSide(color=ft.Colors.TRANSPARENT)
+            ),
             filled=True,
             fill_color=ft.Colors.SURFACE_CONTAINER,
             options=[
