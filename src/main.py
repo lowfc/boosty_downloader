@@ -5,6 +5,7 @@ import flet as ft
 import __version__ as app_version
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
+from core.window import configure_window
 from pages.auth_management import AuthManagementPage
 from pages.download_image_by_link import DownloadImageByLinkPage
 from pages.download_post import DownloadPostPage
@@ -14,7 +15,7 @@ from pages.feedback_and_bugs import FeedbackAndBugsPage
 from pages.merge_author_content import MergeAuthorContentPage
 from pages.settings_page import SettingsPage
 from pages.welcome_page import WelcomePage
-from themes import LIGHT_THEME, DARK_THEME
+from themes import DARK_THEME, LIGHT_THEME
 
 
 async def main(page: ft.Page):
@@ -22,10 +23,6 @@ async def main(page: ft.Page):
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
-    page.window.width = 1200
-    page.window.min_width = 1100
-    page.window.height = 750
-    page.window.min_height = 500
 
     manager = DownloadManager()
 
@@ -88,6 +85,8 @@ async def main(page: ft.Page):
     page.window.prevent_close = True
     page.window.on_event = window_event
 
+    await configure_window(page)
+
     asyncio.create_task(manager.mainloop())
     logger.info("Task manager started")
 
@@ -96,6 +95,6 @@ if __name__ == "__main__":
     logger = setup_logger()
     logger.info(f"Starting {app_version.NAME} v{app_version.VERSION}...")
     try:
-        ft.run(main)
+        ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)
     except Exception as err:
         logger.critical("Unhandled exception", exc_info=err)
