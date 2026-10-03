@@ -24,17 +24,18 @@ class WelcomePage(ft.View):
                             width=205,
                             height=64,
                         ),
-                        ft.Row(
+                        ft.ResponsiveRow(
                             alignment=ft.MainAxisAlignment.CENTER,
                             controls=[
                                 ft.Button(
+                                    col={"xs": 12, "md": 6},
                                     content=ft.Container(
                                         content=ft.Row(
-                                            width=450,
                                             height=110,
                                             controls=[
                                                 ft.Icon(ft.Icons.DOWNLOAD, size=30),
                                                 ft.Container(
+                                                    expand=True,
                                                     padding=ft.Padding.all(10),
                                                     content=ft.Column(
                                                         alignment=ft.MainAxisAlignment.CENTER,
@@ -58,13 +59,14 @@ class WelcomePage(ft.View):
                                     on_click=self.go_to_download_post,
                                 ),
                                 ft.Button(
+                                    col={"xs": 12, "md": 6},
                                     content=ft.Container(
                                         content=ft.Row(
-                                            width=450,
                                             height=110,
                                             controls=[
                                                 ft.Icon(ft.Icons.CONTACTS, size=30),
                                                 ft.Container(
+                                                    expand=True,
                                                     padding=ft.Padding.all(10),
                                                     content=ft.Column(
                                                         alignment=ft.MainAxisAlignment.CENTER,

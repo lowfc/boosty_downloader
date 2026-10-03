@@ -12,6 +12,7 @@ dependencies = [
   "aiohttp>=3.13.3",
   "flet>=1.0.0",
   "pyinstaller>=6.18.0",
+  "screeninfo>=0.8.1",
 ]
 
 [dependency-groups]
