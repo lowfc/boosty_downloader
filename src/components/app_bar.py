@@ -91,7 +91,7 @@ class AppBar(ft.Container):
 
     def set_auth_status(self, logged_in: bool):
         self.status_text.value = "Logged in" if logged_in else "Not logged in"
-        self.status_icon.name = (
+        self.status_icon.icon = (
             ft.Icons.CHECK_CIRCLE_OUTLINE if logged_in else ft.Icons.CIRCLE
         )
         self.status_icon.size = 15 if logged_in else 6

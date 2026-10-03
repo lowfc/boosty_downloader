@@ -1,6 +1,24 @@
 import flet as ft
 
+
+def _button_cursor_themes():
+    style = ft.ButtonStyle(
+        mouse_cursor={
+            ft.ControlState.DEFAULT: ft.MouseCursor.CLICK,
+            ft.ControlState.DISABLED: ft.MouseCursor.BASIC,
+        }
+    )
+    return {
+        "button_theme": ft.ButtonTheme(style=style),
+        "text_button_theme": ft.TextButtonTheme(style=style),
+        "outlined_button_theme": ft.OutlinedButtonTheme(style=style),
+        "filled_button_theme": ft.FilledButtonTheme(style=style),
+        "icon_button_theme": ft.IconButtonTheme(style=style),
+    }
+
+
 HOME_LIGHT_THEME = ft.Theme(
+    **_button_cursor_themes(),
     color_scheme=ft.ColorScheme(
         primary="#e97949",
         primary_container="#fff0e8",
@@ -13,6 +31,7 @@ HOME_LIGHT_THEME = ft.Theme(
 )
 
 HOME_DARK_THEME = ft.Theme(
+    **_button_cursor_themes(),
     color_scheme=ft.ColorScheme(
         primary="#f18a5b",
         primary_container="#3c2a23",
@@ -50,6 +69,7 @@ DARK_COLORS = {
 
 
 LIGHT_THEME = ft.Theme(
+    **_button_cursor_themes(),
     color_scheme=ft.ColorScheme(
         primary=LIGHT_COLORS["primary"],
         primary_container=LIGHT_COLORS["primary_variant"],
@@ -75,6 +95,7 @@ LIGHT_THEME = ft.Theme(
 )
 
 DARK_THEME = ft.Theme(
+    **_button_cursor_themes(),
     color_scheme=ft.ColorScheme(
         primary=DARK_COLORS["primary"],
         primary_container=DARK_COLORS["primary_variant"],

@@ -24,6 +24,7 @@ class TaskInfo:
     count_files: int
     total_weight: int
     error: Optional[TaskError] = None
+    running: bool = False
 
 
 TASK_ERROR_STATUS_LINE = {

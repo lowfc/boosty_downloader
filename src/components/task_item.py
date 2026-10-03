@@ -1,167 +1,161 @@
+import asyncio
 import os
-import subprocess
-from typing import Optional, Callable, Awaitable
+from collections.abc import Awaitable, Callable
+from pathlib import Path
 
 import flet as ft
 
-from core.defs.tasks import TaskInfo, TASK_ERROR_STATUS_LINE
+from components.soft_layout import soft_icon
+from core.defs.tasks import TASK_ERROR_STATUS_LINE, TaskError, TaskInfo
 
 
 @ft.control
 class TaskItem(ft.Container):
-
     def __init__(
         self,
-        task_info: Optional[TaskInfo] = None,
+        task_info: TaskInfo | None = None,
         visible=False,
-        on_cancel: Optional[Callable[[Optional[TaskInfo]], Awaitable]] = None,
-        on_retry: Optional[Callable[[Optional[TaskInfo]], Awaitable]] = None,
+        on_cancel: Callable[[TaskInfo | None], Awaitable] | None = None,
+        on_retry: Callable[[TaskInfo | None], Awaitable] | None = None,
     ):
         super().__init__()
-        self.progress_bar = ft.ProgressBar(color=ft.Colors.ORANGE, height=5)
-        self.display_subtitle = ft.Container(
-            self.progress_bar, align=ft.Alignment.CENTER, expand=True
-        )
-        self.folder_open_button = ft.IconButton(
-            ft.Icon(ft.Icons.FOLDER, color=ft.Colors.SURFACE_CONTAINER_LOW),
-            on_click=self.open_task_folder,
-            bgcolor=ft.Colors.PRIMARY,
-        )
-        self.stop_button = ft.IconButton(
-            ft.Icon(ft.Icons.STOP, color=ft.Colors.SURFACE_CONTAINER_LOW),
-            on_click=self.on_cancel,
-            bgcolor=ft.Colors.PRIMARY,
-        )
-        self.retry_button = ft.IconButton(
-            ft.Icon(ft.Icons.REFRESH, color=ft.Colors.SURFACE_CONTAINER_LOW),
-            on_click=self.on_retry,
-            bgcolor=ft.Colors.PRIMARY,
-        )
-        self.task_info = task_info
-        if self.task_info:
-            title = self.task_info.post_id
-            author = self.task_info.author
-        else:
-            title = ""
-            author = ""
-        self.task_name = ft.Text(title, overflow=ft.TextOverflow.ELLIPSIS, expand=True)
-        self.task_prefix = ft.Text(
-            author,
-            color=ft.Colors.SECONDARY,
-            overflow=ft.TextOverflow.ELLIPSIS,
+        self._on_cancel = on_cancel
+        self._on_retry = on_retry
+        self.task_info = None
+        self.path = None
+        self.task_name = ft.Text(
+            size=14,
             weight=ft.FontWeight.W_500,
-        )
-        self.task_weight = ft.Text("", color=ft.Colors.SECONDARY)
-        self.top_row = ft.Row(
-            [
-                self.task_prefix,
-                ft.Text("-"),
-                self.task_name,
-                self.task_weight,
-            ],
-            spacing=5,
+            overflow=ft.TextOverflow.ELLIPSIS,
             expand=True,
         )
+        self.task_metadata = ft.Text(size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+        self.status = ft.Text(size=12)
+        self.detail = ft.Text(size=12, color=ft.Colors.ON_SURFACE_VARIANT, expand=True)
+        self.progress_bar = ft.ProgressBar(
+            height=4,
+            color=ft.Colors.PRIMARY,
+            bgcolor=ft.Colors.PRIMARY_CONTAINER,
+            border_radius=2,
+        )
+        style = ft.ButtonStyle(
+            color=ft.Colors.ON_SURFACE_VARIANT,
+            text_style=ft.TextStyle(size=12),
+            padding=0,
+            visual_density=ft.VisualDensity.COMPACT,
+        )
+        self.stop_button = ft.TextButton(
+            "Cancel",
+            icon=ft.Icons.CLOSE,
+            height=24,
+            style=style,
+            on_click=self.on_cancel,
+        )
+        self.retry_button = ft.TextButton(
+            "Retry",
+            icon=ft.Icons.REFRESH,
+            height=24,
+            style=style,
+            on_click=self.on_retry,
+        )
+        self.folder_open_button = ft.TextButton(
+            "Open folder",
+            height=24,
+            icon=ft.Icons.FOLDER_OPEN_OUTLINED,
+            style=style,
+            on_click=self.open_task_folder,
+        )
         self.trailing_button = ft.Container(self.stop_button)
-        self.display_task = ft.Row(
-            [
-                self.folder_open_button,
+        self.icon = soft_icon(ft.Icons.DOWNLOAD_OUTLINED)
+        self.content = ft.Row(
+            vertical_alignment=ft.CrossAxisAlignment.START,
+            spacing=14,
+            controls=[
+                self.icon,
                 ft.Column(
-                    [self.top_row, self.display_subtitle],
-                    spacing=1,
                     expand=True,
-                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=5,
+                    controls=[
+                        ft.Row([self.task_name, self.status], spacing=12),
+                        self.task_metadata,
+                        self.progress_bar,
+                        ft.Row([self.detail, self.trailing_button], spacing=12),
+                    ],
                 ),
-                self.trailing_button,
             ],
-            spacing=10,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        self.path = None
-        self.visible = visible
-        self.on_cancel = on_cancel
-        self.on_retry = on_retry
-        self.update_view(self.task_info)
+        self.padding = ft.Padding.symmetric(horizontal=18, vertical=14)
+        self.border_radius = 18
+        self.border = ft.Border.all(1, ft.Colors.OUTLINE_VARIANT)
+        self.bgcolor = ft.Colors.SURFACE_CONTAINER_LOWEST
+        self.update_view(task_info, visible)
 
-    def build(self):
-        self.content = ft.Container(
-            content=self.display_task,
-            border_radius=5,
-            bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
-            height=60,
-            padding=10,
-        )
-
-    async def open_task_folder(self):
+    async def open_task_folder(self, e=None):
         if self.path and os.path.isdir(self.path):
             if self.page.platform == ft.PagePlatform.WINDOWS:
-                subprocess.Popen(["explorer", self.path])
+                await asyncio.create_subprocess_exec("explorer", str(self.path))
             elif self.page.platform in (ft.PagePlatform.LINUX, ft.PagePlatform.MACOS):
-                launcher = ft.UrlLauncher()
-                await launcher.launch_url(f"file://{self.path}")
+                await ft.UrlLauncher().launch_url(Path(self.path).resolve().as_uri())
 
-    def update_view(self, task_info: Optional[TaskInfo] = None, visible=False):
+    def update_view(self, task_info: TaskInfo | None = None, visible=False):
         self.visible = visible
         if not task_info:
+            self.task_info = None
             return
         self.task_info = task_info
-        task_title = self.task_info.title or self.task_info.post_id
-        task_prefix = self.task_info.author
-        self.task_name.value = task_title
-        self.task_prefix.value = task_prefix
-        self.path = self.task_info.path
-        if self.task_info.total_weight < 1024**3:
-            weight = f"{self.task_info.total_weight / 1024 ** 2:.1f} MB"
-        else:
-            weight = f"{self.task_info.total_weight / 1024 ** 3:.1f} GB"
-        self.task_weight.value = f"{self.task_info.count_files} files, {weight}"
-        if self.task_info.finished:
-            if self.task_info.error:
-                err_icon, err_descr = TASK_ERROR_STATUS_LINE[self.task_info.error]
-                self.display_subtitle.content = ft.Row(
-                    controls=[
-                        ft.Icon(
-                            err_icon,
-                            color=ft.Colors.RED,
-                            align=ft.Alignment.CENTER_LEFT,
-                            size=15,
-                        ),
-                        ft.Text(
-                            err_descr,
-                            weight=ft.FontWeight.BOLD,
-                            color=ft.Colors.ON_SURFACE_VARIANT,
-                        ),
-                    ]
+        self.task_name.value = task_info.title or task_info.post_id
+        self.path = task_info.path
+        metadata = [task_info.author]
+        if task_info.count_files:
+            metadata.append(f"{task_info.count_files} files")
+        if task_info.total_weight:
+            divisor, unit = (
+                (1024**3, "GB")
+                if task_info.total_weight >= 1024**3
+                else (1024**2, "MB")
+            )
+            metadata.append(f"{task_info.total_weight / divisor:.1f} {unit}")
+        self.task_metadata.value = " · ".join(metadata)
+        self.progress_bar.visible = not task_info.finished and task_info.running
+        self.progress_bar.value = max(0, min(1, task_info.percent))
+        self.status.color = ft.Colors.ON_SURFACE_VARIANT
+        if task_info.finished:
+            if task_info.error:
+                cancelled = task_info.error == TaskError.CANCELLED
+                self.status.value = "Cancelled" if cancelled else "Failed"
+                self.status.color = (
+                    ft.Colors.ON_SURFACE_VARIANT if cancelled else ft.Colors.ERROR
+                )
+                self.detail.value = TASK_ERROR_STATUS_LINE[task_info.error][1]
+                self.icon.content.icon = (
+                    ft.Icons.CLOSE if cancelled else ft.Icons.ERROR_OUTLINE
                 )
                 self.trailing_button.content = self.retry_button
-                self.task_weight.value = ""
             else:
-                self.display_subtitle.content = ft.Row(
-                    controls=[
-                        ft.Icon(
-                            ft.Icons.DONE,
-                            color=ft.Colors.GREEN,
-                            align=ft.Alignment.CENTER_LEFT,
-                            size=15,
-                        ),
-                        ft.Text(
-                            "Complete",
-                            weight=ft.FontWeight.BOLD,
-                            color=ft.Colors.ON_SURFACE_VARIANT,
-                        ),
-                    ]
+                self.status.value = "Complete"
+                self.status.color = ft.Colors.GREEN_600
+                self.detail.value = "Saved to your download folder"
+                self.icon.content.icon = ft.Icons.CHECK
+                self.trailing_button.content = self.folder_open_button
+                self.folder_open_button.disabled = not bool(
+                    self.path and os.path.isdir(self.path)
                 )
-                self.trailing_button.content = None
         else:
-            if self.display_subtitle.content != self.progress_bar:
-                self.display_subtitle.content = self.progress_bar
-                self.trailing_button.content = self.stop_button
-            self.progress_bar.value = self.task_info.percent
+            self.status.value = (
+                f"{self.progress_bar.value:.0%}" if task_info.running else "Queued"
+            )
+            self.detail.value = (
+                "Downloading" if task_info.running else "Waiting to start"
+            )
+            self.icon.content.icon = (
+                ft.Icons.DOWNLOAD_OUTLINED if task_info.running else ft.Icons.SCHEDULE
+            )
+            self.trailing_button.content = self.stop_button
 
-    async def on_cancel(self):
-        if self.on_cancel:
-            await self.on_cancel(self.task_info)
+    async def on_cancel(self, e=None):
+        if self._on_cancel:
+            await self._on_cancel(self.task_info)
 
-    async def on_retry(self):
-        if self.on_retry:
-            await self.on_retry(self.task_info)
+    async def on_retry(self, e=None):
+        if self._on_retry:
+            await self._on_retry(self.task_info)

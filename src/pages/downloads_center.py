@@ -1,123 +1,160 @@
 import asyncio
-from typing import List, Optional
 
 import flet as ft
 
 import components
 from components.paginator import Paginator
+from components.soft_layout import button_style, page_shell, soft_icon
 from components.task_item import TaskItem
 from core.defs.tasks import TaskInfo
 from core.downloads_manager import DownloadManager
+from core.utils import get_destination_folder
 
 
 class DownloadsCenterPage(ft.View):
     def __init__(self, manager: DownloadManager):
         super().__init__()
         self.route = "/downloads-center"
-        self.list_view = ft.Column(spacing=10)
-        self.count_slots = 10
-        self.slots: List[TaskItem] = []
-        self.paginator = Paginator(items_per_page=self.count_slots)
+        self.padding = 0
+        self.spacing = 0
         self.manager = manager
-        self.alive = True
-        for i in range(self.count_slots):
-            self.slots.append(
-                TaskItem(on_cancel=self.on_task_cancel, on_retry=self.on_task_retry)
-            )
-
-        self.list_view.controls = self.slots
-        self.stop_all_button = ft.Button(
+        self.upd_task = None
+        self.count_slots = 10
+        self.slots = [
+            TaskItem(on_cancel=self.on_task_cancel, on_retry=self.on_task_retry)
+            for _ in range(self.count_slots)
+        ]
+        self.list_view = ft.Column(controls=self.slots, spacing=12, visible=False)
+        self.paginator = Paginator(items_per_page=self.count_slots)
+        self.paginator.visible = False
+        self.summary = ft.Text("", size=13, color=ft.Colors.ON_SURFACE_VARIANT)
+        self.stop_all_button = ft.OutlinedButton(
             "Cancel all",
-            color=ft.Colors.SURFACE,
-            icon=ft.Icons.STOP,
-            icon_color=ft.Colors.PRIMARY,
-            bgcolor=ft.Colors.ON_SURFACE_VARIANT,
+            icon=ft.Icons.STOP_OUTLINED,
+            style=button_style(),
             on_click=self.on_all_tasks_cancel,
+            visible=False,
         )
-        self.status_line = ft.ListTile(
-            leading=ft.Icon(ft.Icons.DOWNLOADING),
-            title="In progress: 0 / 0",
-            trailing=self.stop_all_button,
-        )
-
-        self.controls = [
-            components.AppBar(manager),
-            ft.Column(
+        self.empty_view = ft.Container(
+            padding=ft.Padding.symmetric(vertical=60),
+            content=ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=14,
                 controls=[
-                    ft.Row(
-                        [
-                            ft.IconButton(
-                                ft.Icon(ft.Icons.ARROW_BACK),
-                                on_click=lambda e: asyncio.create_task(
-                                    self.go_to_index()
-                                ),
-                            ),
-                            ft.Text(
-                                "Downloads center", size=24, weight=ft.FontWeight.BOLD
-                            ),
-                        ]
+                    soft_icon(ft.Icons.DOWNLOAD_OUTLINED, 60),
+                    ft.Text("No downloads yet", size=20, weight=ft.FontWeight.W_500),
+                    ft.Text(
+                        "Choose a post or an author's collection to get started.",
+                        size=13,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
+                        text_align=ft.TextAlign.CENTER,
                     ),
-                    ft.Card(
-                        shadow_color=ft.Colors.ON_SURFACE_VARIANT,
-                        content=ft.Container(
-                            padding=10,
-                            content=self.status_line,
-                        ),
+                    ft.Container(height=4),
+                    ft.Button(
+                        "Back to home",
+                        on_click=self.go_to_index,
+                        style=button_style(primary=True),
                     ),
-                ]
-            ),
-            ft.ListView(
-                expand=True,
-                spacing=20,
-                controls=[
-                    self.list_view,
-                    self.paginator,
                 ],
             ),
+        )
+        self.folder_note = ft.Text(
+            "Download folder",
+            expand=True,
+            size=11,
+            overflow=ft.TextOverflow.ELLIPSIS,
+            color=ft.Colors.ON_SURFACE_VARIANT,
+        )
+        body = ft.Column(
+            spacing=20,
+            controls=[
+                ft.Row(
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Column(
+                            expand=True,
+                            spacing=5,
+                            controls=[
+                                ft.Text(
+                                    "Downloads", size=24, weight=ft.FontWeight.W_500
+                                ),
+                                self.summary,
+                            ],
+                        ),
+                        self.stop_all_button,
+                    ],
+                ),
+                self.empty_view,
+                self.list_view,
+                self.paginator,
+            ],
+        )
+        self.controls = [
+            page_shell(
+                components.AppBar(manager),
+                body,
+                self.folder_note,
+                ft.Icons.FOLDER_OUTLINED,
+                self.go_to_index,
+                self.go_to_feedback,
+                width=744,
+            )
         ]
+
+    def did_mount(self):
         self.upd_task = asyncio.create_task(self.update_task())
 
-    async def go_to_index(self):
-        self.on_destroy()
+    def will_unmount(self):
+        if self.upd_task:
+            self.upd_task.cancel()
+
+    async def go_to_index(self, e=None):
         await self.page.push_route("/")
 
-    def will_unmount(self):
-        self.on_destroy()
+    async def go_to_feedback(self, e=None):
+        await self.page.push_route("/feedback-and-bugs")
 
-    def on_destroy(self):
-        self.alive = False
-        self.upd_task.cancel()
-
-    async def on_all_tasks_cancel(self):
+    async def on_all_tasks_cancel(self, e=None):
         await self.manager.stop_running_tasks()
 
-    async def on_task_cancel(self, task_info: Optional[TaskInfo]):
+    async def on_task_cancel(self, task_info: TaskInfo | None):
         if task_info:
             await self.manager.stop_task(task_info.post_id)
 
-    async def on_task_retry(self, task_info: Optional[TaskInfo]):
+    async def on_task_retry(self, task_info: TaskInfo | None):
         if task_info:
             await self.manager.retry_task(task_info.post_id)
 
-    async def update_task(self):
-        while self.alive:
-            tasks = await self.manager.get_tasks(
-                self.count_slots,
-                offset=self.paginator.get_current_offset(),
-                reverse=True,
+    async def refresh_tasks(self):
+        self.paginator.set_total_items(self.manager.total_tasks)
+        tasks = await self.manager.get_tasks(
+            self.count_slots, offset=self.paginator.get_current_offset(), reverse=True
+        )
+        running = await self.manager.get_pending_tasks_count()
+        active = await self.manager.get_active_tasks_count()
+        self.summary.value = (
+            f"{running} downloading · {max(0, active - running)} queued"
+            if active
+            else f"{self.manager.total_tasks} downloads"
+        )
+        self.summary.visible = bool(self.manager.total_tasks)
+        self.stop_all_button.visible = active > 0
+        self.empty_view.visible = not self.manager.total_tasks
+        self.list_view.visible = bool(self.manager.total_tasks)
+        for index, slot in enumerate(self.slots):
+            (
+                slot.update_view(tasks[index], visible=True)
+                if index < len(tasks)
+                else slot.update_view(visible=False)
             )
-            self.paginator.set_total_items(self.manager.total_tasks)
-            pending = await self.manager.get_pending_tasks_count()
-            active_total = await self.manager.get_active_tasks_count()
-            self.status_line.title = f"In progress: {pending} / {active_total}"
-            if pending > 0:
-                self.stop_all_button.visible = True
-            else:
-                self.stop_all_button.visible = False
-            for slot_no in range(self.count_slots):
-                if slot_no <= len(tasks) - 1:
-                    self.slots[slot_no].update_view(tasks[slot_no], visible=True)
-                else:
-                    self.slots[slot_no].update_view(visible=False)
+
+    async def update_task(self):
+        folder = await get_destination_folder()
+        self.folder_note.value = (
+            str(folder) if folder else "Download folder unavailable"
+        )
+        self.folder_note.tooltip = self.folder_note.value
+        while True:
+            await self.refresh_tasks()
             self.update()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.3)

@@ -46,7 +46,7 @@ class DownloadManager:
         async with self._lock:
             result = 0
             for post_id in self._tasks.keys():
-                if self._tasks[post_id].pending:
+                if self._tasks[post_id].running:
                     result += 1
             return result
 
@@ -86,6 +86,7 @@ class DownloadManager:
                             error=self._tasks[post_id].error_description,
                             count_files=self._tasks[post_id].count_files,
                             total_weight=self._tasks[post_id].total_weight,
+                            running=self._tasks[post_id].running,
                         )
                     )
                     if len(result) == limit:
@@ -98,9 +99,10 @@ class DownloadManager:
             await self._tasks[post_id].stop()
 
     async def stop_running_tasks(self):
-        for post_id in self._tasks.keys():
-            if self._tasks[post_id].pending:
-                await self._tasks[post_id].stop()
+        async with self._lock:
+            for task in self._tasks.values():
+                if not task.finished:
+                    await task.stop()
 
     async def retry_task(self, post_id: str):
         if post_id in self._tasks.keys():
