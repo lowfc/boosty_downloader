@@ -203,7 +203,6 @@ class AuthManagementPage(ft.View):
                     color=ft.Colors.ON_SURFACE_VARIANT,
                 ),
                 ft.Icons.LOCK_OUTLINE,
-                self.go_to_index,
                 self.go_to_feedback,
                 width=632,
             )

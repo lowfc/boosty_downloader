@@ -95,7 +95,6 @@ class DownloadsCenterPage(ft.View):
                 body,
                 self.folder_note,
                 ft.Icons.FOLDER_OUTLINED,
-                self.go_to_index,
                 self.go_to_feedback,
                 width=744,
             )

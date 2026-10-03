@@ -149,7 +149,6 @@ class PostDownloadForm(ft.View):
                 body,
                 self.folder_note,
                 ft.Icons.FOLDER_OUTLINED,
-                self.go_to_index,
                 self.go_to_feedback,
                 width=664,
             )
@@ -265,9 +264,6 @@ class PostDownloadForm(ft.View):
         self.destination.value = self.folder_note.value = display
         self.destination.tooltip = self.folder_note.tooltip = label
         self.refresh()
-
-    async def go_to_index(self, e=None):
-        await self.page.push_route("/")
 
     async def go_to_feedback(self, e=None):
         await self.page.push_route("/feedback-and-bugs")

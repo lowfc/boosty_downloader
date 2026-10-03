@@ -28,7 +28,6 @@ class SettingsPage(ft.View):
                 color=ft.Colors.ON_SURFACE_VARIANT,
             ),
             ft.Icons.INFO_OUTLINE,
-            self.go_to_index,
             self.go_to_feedback,
             width=744,
         )
@@ -39,9 +38,6 @@ class SettingsPage(ft.View):
         if page:
             page.theme_mode = ft.ThemeMode(value)
             page.update()
-
-    async def go_to_index(self, e=None):
-        await self.page.push_route("/")
 
     async def go_to_feedback(self, e=None):
         await self.page.push_route("/feedback-and-bugs")

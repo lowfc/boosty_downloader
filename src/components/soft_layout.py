@@ -36,7 +36,7 @@ def soft_icon(icon, size=38):
     )
 
 
-def page_shell(toolbar, body, footer_note, footer_icon, on_home, on_feedback, width):
+def page_shell(toolbar, body, footer_note, footer_icon, on_feedback, width):
     return ft.Container(
         expand=True,
         bgcolor=ft.Colors.SURFACE,
@@ -54,23 +54,7 @@ def page_shell(toolbar, body, footer_note, footer_icon, on_home, on_feedback, wi
                         width=width,
                         spacing=10,
                         scroll=ft.ScrollMode.AUTO,
-                        controls=[
-                            ft.TextButton(
-                                "Home",
-                                height=36,
-                                icon=ft.Icons.ARROW_BACK,
-                                on_click=on_home,
-                                style=ft.ButtonStyle(
-                                    color=ft.Colors.ON_SURFACE_VARIANT,
-                                    padding=ft.Padding.symmetric(
-                                        horizontal=12, vertical=8
-                                    ),
-                                    shape=ft.RoundedRectangleBorder(radius=10),
-                                    text_style=ft.TextStyle(size=12),
-                                ),
-                            ),
-                            body,
-                        ],
+                        controls=[body],
                     ),
                 ),
                 ft.Container(
