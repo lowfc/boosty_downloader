@@ -1,5 +1,29 @@
 import flet as ft
 
+HOME_LIGHT_THEME = ft.Theme(
+    color_scheme=ft.ColorScheme(
+        primary="#e97949",
+        primary_container="#fff0e8",
+        surface="#f8f8fc",
+        surface_container_lowest="#ffffff",
+        on_surface="#34353d",
+        on_surface_variant="#72727f",
+        outline_variant="#e7e7ef",
+    ),
+)
+
+HOME_DARK_THEME = ft.Theme(
+    color_scheme=ft.ColorScheme(
+        primary="#f18a5b",
+        primary_container="#3c2a23",
+        surface="#1c1c21",
+        surface_container_lowest="#26262d",
+        on_surface="#f0f0f4",
+        on_surface_variant="#ababba",
+        outline_variant="#383840",
+    ),
+)
+
 LIGHT_COLORS = {
     "background": "#f6f6f6",
     "surface": "#ffffff",
