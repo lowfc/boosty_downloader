@@ -20,6 +20,7 @@ from core.boosty.defs import (
 )
 from core.defs.common import DownloadingSettingsDto
 from core.defs.tasks import TaskError
+from core.download_limiter import DownloadLimiter
 from core.draftjs_converter import DraftJsConverter
 from core.logger import setup_logger
 from core.progress_counter import ProgressCounter
@@ -39,7 +40,7 @@ class Task:
 
     def __init__(
         self,
-        semaphore: asyncio.Semaphore,
+        semaphore: asyncio.Semaphore | DownloadLimiter,
         author: str,
         post_id: str,
         post_info: Optional[BoostyPostDto] = None,
