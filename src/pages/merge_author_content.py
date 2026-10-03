@@ -88,9 +88,6 @@ class MergeAuthorContentPage(ft.View):
             components.AppBar(manager),
             ft.Row(
                 [
-                    ft.IconButton(
-                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
-                    ),
                     ft.Text("Content merger", size=24, weight=ft.FontWeight.BOLD),
                 ]
             ),
@@ -126,9 +123,6 @@ class MergeAuthorContentPage(ft.View):
                 expand=True,
             ),
         ]
-
-    async def go_to_index(self):
-        await self.page.push_route("/")
 
     def build(self):
         asyncio.create_task(self.load_main_options())

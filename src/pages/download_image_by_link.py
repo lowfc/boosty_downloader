@@ -64,9 +64,6 @@ class DownloadImageByLinkPage(ft.View):
             components.AppBar(manager),
             ft.Row(
                 controls=[
-                    ft.IconButton(
-                        ft.Icon(ft.Icons.ARROW_BACK), on_click=self.go_to_index
-                    ),
                     ft.Text(
                         "Download image by link", size=24, weight=ft.FontWeight.BOLD
                     ),
@@ -102,9 +99,6 @@ class DownloadImageByLinkPage(ft.View):
                 expand=True,
             ),
         ]
-
-    async def go_to_index(self):
-        await self.page.push_route("/")
 
     def build(self):
         asyncio.create_task(self.async_build())
