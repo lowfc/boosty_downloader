@@ -9,6 +9,7 @@ from components.theme_picker import ThemePicker
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from core.utils import get_download_settings
+from localization import LANGUAGE_KEY, SUPPORTED_LANGUAGES, Localizer
 
 logger = setup_logger()
 
@@ -19,10 +20,15 @@ class SettingsGroup(ft.Column):
         self,
         manager: DownloadManager | None = None,
         on_theme_preview: Callable[[str], None] | None = None,
+        localizer=None,
+        on_language_change: Callable[[str], None] | None = None,
     ):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.manager = manager
         self.on_theme_preview = on_theme_preview
+        self.on_language_change = on_language_change
         self.spacing = 18
         self.loaded = self.busy = False
         self.active = True
@@ -30,20 +36,26 @@ class SettingsGroup(ft.Column):
         self.host_page = None
         self.saved_values = None
         self.folder = ""
-        self.theme_picker = ThemePicker(self.preview_theme)
+        self.theme_picker = ThemePicker(self.preview_theme, localizer=self.localizer)
+        self.language_dropdown = self.dropdown(
+            self.tr("Language"), list(SUPPORTED_LANGUAGES.items())
+        )
+        self.language_dropdown.value = self.localizer.language
         self.current_download_folder_text = ft.Text(
-            "Loading download folder…", size=13, expand=True
+            self.tr("Loading download folder…"), size=13, expand=True
         )
         self.folder_button = ft.OutlinedButton(
-            "Change",
+            self.tr("Change"),
             height=38,
             style=button_style(),
             on_click=self.pick_download_folder,
         )
-        self.switch_download_photos = self.content_switch("Download photos")
-        self.switch_download_videos = self.content_switch("Download videos")
-        self.switch_download_audios = self.content_switch("Download audio")
-        self.switch_download_files = self.content_switch("Download attached files")
+        self.switch_download_photos = self.content_switch(self.tr("Download photos"))
+        self.switch_download_videos = self.content_switch(self.tr("Download videos"))
+        self.switch_download_audios = self.content_switch(self.tr("Download audio"))
+        self.switch_download_files = self.content_switch(
+            self.tr("Download attached files")
+        )
         self.switches = [
             self.switch_download_photos,
             self.switch_download_videos,
@@ -51,23 +63,26 @@ class SettingsGroup(ft.Column):
             self.switch_download_files,
         ]
         self.video_size_dropdown = self.dropdown(
-            "Video quality limit",
+            self.tr("Video quality limit"),
             [
-                ("low", "Low"),
-                ("medium", "Medium"),
-                ("high", "High"),
-                ("full_hd", "Full HD"),
-                ("ultra_hd", "No limit"),
+                ("low", self.tr("Low")),
+                ("medium", self.tr("Medium")),
+                ("high", self.tr("High")),
+                ("full_hd", self.tr("Full HD")),
+                ("ultra_hd", self.tr("No limit")),
             ],
         )
         self.post_text_format_dropdown = self.dropdown(
-            "Post text format", [("md", "Markdown (.md)"), ("raw", "Plain text (.txt)")]
+            self.tr("Post text format"),
+            [("md", self.tr("Markdown (.md)")), ("raw", self.tr("Plain text (.txt)"))],
         )
-        self.chunk_size_textfield = self.number_field("Chunk size (bytes)")
+        self.chunk_size_textfield = self.number_field(self.tr("Chunk size (bytes)"))
         self.download_timeout_textfield = self.number_field(
-            "Download timeout (seconds)"
+            self.tr("Download timeout (seconds)")
         )
-        self.max_parallelism_textfield = self.number_field("Simultaneous downloads")
+        self.max_parallelism_textfield = self.number_field(
+            self.tr("Simultaneous downloads")
+        )
         self.max_parallelism_textfield.width = 90
         self.numeric_fields = [
             (self.chunk_size_textfield, 1500, 500000),
@@ -82,20 +97,20 @@ class SettingsGroup(ft.Column):
                 run_spacing=18,
                 controls=[
                     self.field_column(
-                        "Chunk size (bytes)",
+                        self.tr("Chunk size (bytes)"),
                         self.chunk_size_textfield,
-                        "Data read in a single chunk.",
+                        self.tr("Data read in a single chunk."),
                     ),
                     self.field_column(
-                        "Download timeout (seconds)",
+                        self.tr("Download timeout (seconds)"),
                         self.download_timeout_textfield,
-                        "How long to wait for a response.",
+                        self.tr("How long to wait for a response."),
                     ),
                 ],
             ),
         )
         self.advanced_button = ft.TextButton(
-            "Advanced settings",
+            self.tr("Advanced settings"),
             icon=ft.Icons.EXPAND_MORE,
             height=38,
             style=ft.ButtonStyle(
@@ -108,13 +123,13 @@ class SettingsGroup(ft.Column):
         )
         self.general_card = self.card(
             ft.Icons.TUNE,
-            "General",
-            "Your download folder and app appearance.",
+            self.tr("General"),
+            self.tr("Your download folder and app appearance."),
             [
                 ft.Column(
                     spacing=9,
                     controls=[
-                        self.label("Download folder"),
+                        self.label(self.tr("Download folder")),
                         ft.Container(
                             bgcolor=ft.Colors.SURFACE,
                             border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
@@ -137,7 +152,17 @@ class SettingsGroup(ft.Column):
                 ),
                 self.divider(),
                 ft.Column(
-                    spacing=9, controls=[self.label("App theme"), self.theme_picker]
+                    spacing=9,
+                    controls=[self.label(self.tr("App theme")), self.theme_picker],
+                ),
+                self.divider(),
+                ft.Column(
+                    spacing=9,
+                    controls=[
+                        self.label(self.tr("Language")),
+                        self.language_dropdown,
+                        self.hint(self.tr("Applies after saving changes.")),
+                    ],
                 ),
             ],
         )
@@ -145,26 +170,26 @@ class SettingsGroup(ft.Column):
         for icon, title, detail, switch in [
             (
                 ft.Icons.IMAGE_OUTLINED,
-                "Photos",
-                "Images and photo collections",
+                self.tr("Photos"),
+                self.tr("Images and photo collections"),
                 self.switch_download_photos,
             ),
             (
                 ft.Icons.VIDEOCAM_OUTLINED,
-                "Videos",
-                "Video posts and clips",
+                self.tr("Videos"),
+                self.tr("Video posts and clips"),
                 self.switch_download_videos,
             ),
             (
                 ft.Icons.MUSIC_NOTE_OUTLINED,
-                "Audio",
-                "Audio tracks and recordings",
+                self.tr("Audio"),
+                self.tr("Audio tracks and recordings"),
                 self.switch_download_audios,
             ),
             (
                 ft.Icons.INSERT_DRIVE_FILE_OUTLINED,
-                "Attached files",
-                "Documents, archives and other files",
+                self.tr("Attached files"),
+                self.tr("Documents, archives and other files"),
                 self.switch_download_files,
             ),
         ]:
@@ -189,8 +214,8 @@ class SettingsGroup(ft.Column):
             )
         self.content_card = self.card(
             ft.Icons.LAYERS_OUTLINED,
-            "Content",
-            "Choose what to download from each post.",
+            self.tr("Content"),
+            self.tr("Choose what to download from each post."),
             [
                 ft.Column(spacing=0, controls=switch_rows),
                 self.divider(),
@@ -199,14 +224,14 @@ class SettingsGroup(ft.Column):
                     run_spacing=18,
                     controls=[
                         self.field_column(
-                            "Video quality limit",
+                            self.tr("Video quality limit"),
                             self.video_size_dropdown,
-                            "Maximum quality to download.",
+                            self.tr("Maximum quality to download."),
                         ),
                         self.field_column(
-                            "Post text format",
+                            self.tr("Post text format"),
                             self.post_text_format_dropdown,
-                            "How the post's text is saved.",
+                            self.tr("How the post's text is saved."),
                         ),
                     ],
                 ),
@@ -214,8 +239,8 @@ class SettingsGroup(ft.Column):
         )
         self.downloads_card = self.card(
             ft.Icons.DOWNLOAD_OUTLINED,
-            "Downloads",
-            "Control how your downloads run.",
+            self.tr("Downloads"),
+            self.tr("Control how your downloads run."),
             [
                 ft.Row(
                     spacing=20,
@@ -225,9 +250,11 @@ class SettingsGroup(ft.Column):
                             expand=True,
                             spacing=4,
                             controls=[
-                                self.label("Simultaneous downloads"),
+                                self.label(self.tr("Simultaneous downloads")),
                                 self.hint(
-                                    "Number of posts downloaded at the same time."
+                                    self.tr(
+                                        "Number of posts downloaded at the same time."
+                                    )
                                 ),
                             ],
                         ),
@@ -241,14 +268,14 @@ class SettingsGroup(ft.Column):
             ],
         )
         self.status_text = ft.Text(
-            "Loading settings…",
+            self.tr("Loading settings…"),
             size=12,
             color=ft.Colors.ON_SURFACE_VARIANT,
             expand=True,
             text_align=ft.TextAlign.RIGHT,
         )
         self.save_button = ft.Button(
-            "Save changes",
+            self.tr("Save changes"),
             icon=ft.Icons.CHECK,
             height=42,
             style=button_style(primary=True),
@@ -364,6 +391,7 @@ class SettingsGroup(ft.Column):
             self.update()
 
     def set_editing_enabled(self, enabled):
+        self.language_dropdown.disabled = not enabled
         self.folder_button.disabled = self.advanced_button.disabled = not enabled
         for button in self.theme_picker.buttons.values():
             button.disabled = not enabled
@@ -380,6 +408,7 @@ class SettingsGroup(ft.Column):
         return {
             "download-folder": self.folder,
             "current-app-theme": self.theme_picker.value,
+            LANGUAGE_KEY: self.language_dropdown.value,
             "need-download-photos": str(self.switch_download_photos.value),
             "need-download-videos": str(self.switch_download_videos.value),
             "need-download-audios": str(self.switch_download_audios.value),
@@ -405,7 +434,11 @@ class SettingsGroup(ft.Column):
         dirty = self.draft_values() != self.saved_values
         self.save_button.disabled = not dirty
         self.video_size_dropdown.disabled = not self.switch_download_videos.value
-        self.status("You have unsaved changes." if dirty else "No unsaved changes.")
+        self.status(
+            self.tr("You have unsaved changes.")
+            if dirty
+            else self.tr("No unsaved changes.")
+        )
         self.refresh()
 
     def preview_theme(self, value):
@@ -444,7 +477,9 @@ class SettingsGroup(ft.Column):
                 self.mark_changed()
         except Exception:
             logger.exception("Could not select download folder")
-            self.status("Couldn't choose a folder. Please try again.", error=True)
+            self.status(
+                self.tr("Couldn't choose a folder. Please try again."), error=True
+            )
             self.refresh()
 
     def did_mount(self):
@@ -472,6 +507,7 @@ class SettingsGroup(ft.Column):
             self.folder = settings.downloads_folder
             self.show_folder()
             self.theme_picker.set_value(mode)
+            self.language_dropdown.value = self.localizer.language
             self.switch_download_photos.value = settings.need_download_photos
             self.switch_download_videos.value = settings.need_download_videos
             self.switch_download_audios.value = settings.need_download_audios
@@ -493,16 +529,19 @@ class SettingsGroup(ft.Column):
             self.saved_values = self.draft_values()
             self.loaded = True
             self.set_editing_enabled(True)
-            self.status("No unsaved changes.")
+            self.status(self.tr("No unsaved changes."))
         except Exception:
             logger.exception("Could not load settings")
             self.status(
-                "Couldn't load settings. Reopen this page to try again.", error=True
+                self.tr("Couldn't load settings. Reopen this page to try again."),
+                error=True,
             )
         self.refresh()
 
     def validate(self):
-        valid = bool(self.folder)
+        valid = (
+            bool(self.folder) and self.language_dropdown.value in SUPPORTED_LANGUAGES
+        )
         for field, minimum, maximum in self.numeric_fields:
             try:
                 number = int(field.value)
@@ -516,7 +555,9 @@ class SettingsGroup(ft.Column):
                     self.advanced_fields.visible = True
                     self.advanced_button.icon = ft.Icons.EXPAND_LESS
         if not valid:
-            self.status("Check the highlighted settings before saving.", error=True)
+            self.status(
+                self.tr("Check the highlighted settings before saving."), error=True
+            )
         return valid
 
     async def apply_settings(self, e=None):
@@ -535,11 +576,12 @@ class SettingsGroup(ft.Column):
         self.busy = True
         self.set_editing_enabled(False)
         self.save_button.disabled = True
-        self.status("Saving changes…")
+        self.status(self.tr("Saving changes…"))
         self.refresh()
         preferences = ft.SharedPreferences()
         previous = {}
         attempted = []
+        language_changed = False
         try:
             for key in values:
                 previous[key] = await preferences.get(key)
@@ -555,7 +597,8 @@ class SettingsGroup(ft.Column):
             self.download_timeout_textfield.value = values["download-timeout"]
             self.max_parallelism_textfield.value = values["download-max-parallelism"]
             self.saved_values = values
-            self.status("Changes saved.")
+            language_changed = values[LANGUAGE_KEY] != self.localizer.language
+            self.status(self.tr("Changes saved."))
         except Exception:
             logger.exception("Could not save settings")
             restored = True
@@ -572,9 +615,11 @@ class SettingsGroup(ft.Column):
                     logger.exception("Could not restore setting %s", key)
             self.status(
                 (
-                    "Couldn't save settings. Please try again."
+                    self.tr("Couldn't save settings. Please try again.")
                     if restored
-                    else "Some settings couldn't be restored. Please save again."
+                    else self.tr(
+                        "Some settings couldn't be restored. Please save again."
+                    )
                 ),
                 error=True,
             )
@@ -590,3 +635,9 @@ class SettingsGroup(ft.Column):
             self.set_editing_enabled(True)
             self.save_button.disabled = self.draft_values() == self.saved_values
             self.refresh()
+        if language_changed:
+            self.localizer.set_language(values[LANGUAGE_KEY])
+            if self.host_page:
+                self.localizer.configure_page(self.host_page)
+            if self.on_language_change:
+                self.on_language_change(values[LANGUAGE_KEY])

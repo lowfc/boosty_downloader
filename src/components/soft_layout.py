@@ -1,5 +1,6 @@
 import flet as ft
 
+from localization import Localizer
 from themes import HOME_DARK_THEME, HOME_LIGHT_THEME
 
 
@@ -58,7 +59,9 @@ def page_shell(
     on_feedback,
     width,
     footer_action_label="Feedback",
+    localizer=None,
 ):
+    tr = (localizer or Localizer()).t
     return ft.Container(
         expand=True,
         bgcolor=ft.Colors.SURFACE,
@@ -92,7 +95,7 @@ def page_shell(
                             ),
                             footer_note,
                             ft.TextButton(
-                                footer_action_label,
+                                tr(footer_action_label),
                                 on_click=on_feedback,
                                 style=ft.ButtonStyle(
                                     color=ft.Colors.ON_SURFACE_VARIANT,

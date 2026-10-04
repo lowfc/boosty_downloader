@@ -62,6 +62,20 @@ To open the app anyway, read official instruction (these steps only need to be p
 
 ## 🐍 Development
 
+### Localization
+
+The interface supports English and Russian. On first launch, the app uses the
+device's primary language, falling back to English if it is not supported.
+Choose a language in **Settings → General → Language** and save changes to apply
+it without restarting. The saved choice takes precedence on later launches.
+
+UI catalogs live in `src/locales/en.json` and `src/locales/ru.json`. English source
+messages are translation keys; use `localizer.t(message, **values)` for named
+placeholders and `localizer.plural(key, count)` for counts. Add a catalog and a
+native language name to `SUPPORTED_LANGUAGES` in `src/localization.py` to add a
+language. Configure Flet's built-in controls through `LocaleConfiguration`; keep
+original post titles, paths, and diagnostic logs intact.
+
 ### Run the app
 
 Run as a desktop app:

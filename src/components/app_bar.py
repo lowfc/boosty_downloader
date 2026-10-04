@@ -6,6 +6,7 @@ import flet as ft
 
 from core.authorization_provider import AuthorizationProvider
 from core.downloads_manager import DownloadManager
+from localization import Localizer
 
 
 @ft.control
@@ -14,8 +15,11 @@ class AppBar(ft.Container):
         self,
         manager: DownloadManager,
         on_auth_change: Callable[[bool], None] | None = None,
+        localizer=None,
     ):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.manager = manager
         self.on_auth_change = on_auth_change
         self.upd_task = None
@@ -29,7 +33,7 @@ class AppBar(ft.Container):
             text_style=ft.TextStyle(size=13, weight=ft.FontWeight.W_500),
         )
         self.home_button = ft.OutlinedButton(
-            "Home",
+            self.tr("Home"),
             icon=ft.Icon(ft.Icons.HOME_OUTLINED, size=16),
             height=32,
             on_click=self.go_to_home,
@@ -39,16 +43,16 @@ class AppBar(ft.Container):
             ft.Icons.CIRCLE, size=6, color=ft.Colors.ON_SURFACE_VARIANT
         )
         self.status_text = ft.Text(
-            "Not logged in", size=13, color=ft.Colors.ON_SURFACE_VARIANT
+            self.tr("Not logged in"), size=13, color=ft.Colors.ON_SURFACE_VARIANT
         )
         self.login_button = ft.OutlinedButton(
-            "Log in",
+            self.tr("Log in"),
             height=32,
             on_click=self.go_to_auth_management,
             style=navigation_button_style,
         )
         self.downloads_button = ft.TextButton(
-            "Downloads",
+            self.tr("Downloads"),
             icon=ft.Icons.DOWNLOAD_OUTLINED,
             on_click=self.go_to_downloads_center,
             style=ft.ButtonStyle(
@@ -56,7 +60,7 @@ class AppBar(ft.Container):
             ),
         )
         self.settings_button = ft.TextButton(
-            "Settings",
+            self.tr("Settings"),
             icon=ft.Icons.TUNE,
             on_click=self.go_to_settings,
             style=ft.ButtonStyle(
@@ -72,21 +76,25 @@ class AppBar(ft.Container):
             run_spacing=0,
             controls=[
                 ft.Row(
-                    col={"xs": 12, "sm": 7, "md": 7, "lg": 6},
+                    col={"xs": 12, "md": 7, "lg": 6},
                     spacing=12,
+                    wrap=True,
+                    run_spacing=8,
                     controls=[
                         self.home_button,
                         ft.Container(
                             width=1, height=24, bgcolor=ft.Colors.OUTLINE_VARIANT
                         ),
                         ft.Row(
-                            controls=[self.status_icon, self.status_text], spacing=8
+                            controls=[self.status_icon, self.status_text],
+                            spacing=8,
+                            tight=True,
                         ),
                         self.login_button,
                     ],
                 ),
                 ft.Row(
-                    col={"xs": 12, "sm": 5, "md": 5, "lg": 6},
+                    col={"xs": 12, "md": 5, "lg": 6},
                     alignment=ft.MainAxisAlignment.END,
                     spacing=6,
                     controls=[
@@ -105,7 +113,9 @@ class AppBar(ft.Container):
             self.upd_task.cancel()
 
     def set_auth_status(self, logged_in: bool):
-        self.status_text.value = "Logged in" if logged_in else "Not logged in"
+        self.status_text.value = (
+            self.tr("Logged in") if logged_in else self.tr("Not logged in")
+        )
         self.status_icon.icon = (
             ft.Icons.CHECK_CIRCLE_OUTLINE if logged_in else ft.Icons.CIRCLE
         )
@@ -113,7 +123,9 @@ class AppBar(ft.Container):
         self.status_icon.color = (
             ft.Colors.PRIMARY if logged_in else ft.Colors.ON_SURFACE_VARIANT
         )
-        self.login_button.content = "Account" if logged_in else "Log in"
+        self.login_button.content = (
+            self.tr("Account") if logged_in else self.tr("Log in")
+        )
         if self.logged_in != logged_in:
             self.logged_in = logged_in
             if self.on_auth_change:

@@ -9,11 +9,14 @@ from components.task_item import TaskItem
 from core.defs.tasks import TaskInfo
 from core.downloads_manager import DownloadManager
 from core.utils import get_destination_folder
+from localization import Localizer
 
 
 class DownloadsCenterPage(ft.View):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.route = "/downloads-center"
         self.padding = 0
         self.spacing = 0
@@ -21,15 +24,21 @@ class DownloadsCenterPage(ft.View):
         self.upd_task = None
         self.count_slots = 10
         self.slots = [
-            TaskItem(on_cancel=self.on_task_cancel, on_retry=self.on_task_retry)
+            TaskItem(
+                on_cancel=self.on_task_cancel,
+                on_retry=self.on_task_retry,
+                localizer=self.localizer,
+            )
             for _ in range(self.count_slots)
         ]
         self.list_view = ft.Column(controls=self.slots, spacing=12, visible=False)
-        self.paginator = Paginator(items_per_page=self.count_slots)
+        self.paginator = Paginator(
+            items_per_page=self.count_slots, localizer=self.localizer
+        )
         self.paginator.visible = False
         self.summary = ft.Text("", size=13, color=ft.Colors.ON_SURFACE_VARIANT)
         self.stop_all_button = ft.OutlinedButton(
-            "Cancel all",
+            self.tr("Cancel all"),
             icon=ft.Icons.STOP_OUTLINED,
             style=button_style(),
             on_click=self.on_all_tasks_cancel,
@@ -42,16 +51,20 @@ class DownloadsCenterPage(ft.View):
                 spacing=14,
                 controls=[
                     soft_icon(ft.Icons.DOWNLOAD_OUTLINED, 60),
-                    ft.Text("No downloads yet", size=20, weight=ft.FontWeight.W_500),
                     ft.Text(
-                        "Choose a post or an author's collection to get started.",
+                        self.tr("No downloads yet"), size=20, weight=ft.FontWeight.W_500
+                    ),
+                    ft.Text(
+                        self.tr(
+                            "Choose a post or an author's collection to get started."
+                        ),
                         size=13,
                         color=ft.Colors.ON_SURFACE_VARIANT,
                         text_align=ft.TextAlign.CENTER,
                     ),
                     ft.Container(height=4),
                     ft.Button(
-                        "Back to home",
+                        self.tr("Back to home"),
                         on_click=self.go_to_index,
                         style=button_style(primary=True),
                     ),
@@ -59,7 +72,7 @@ class DownloadsCenterPage(ft.View):
             ),
         )
         self.folder_note = ft.Text(
-            "Download folder",
+            self.tr("Download folder"),
             expand=True,
             size=11,
             overflow=ft.TextOverflow.ELLIPSIS,
@@ -76,7 +89,9 @@ class DownloadsCenterPage(ft.View):
                             spacing=5,
                             controls=[
                                 ft.Text(
-                                    "Downloads", size=24, weight=ft.FontWeight.W_500
+                                    self.tr("Downloads"),
+                                    size=24,
+                                    weight=ft.FontWeight.W_500,
                                 ),
                                 self.summary,
                             ],
@@ -91,12 +106,13 @@ class DownloadsCenterPage(ft.View):
         )
         self.controls = [
             page_shell(
-                components.AppBar(manager),
+                components.AppBar(manager, localizer=self.localizer),
                 body,
                 self.folder_note,
                 ft.Icons.FOLDER_OUTLINED,
                 self.go_to_feedback,
                 width=744,
+                localizer=self.localizer,
             )
         ]
 
@@ -132,9 +148,13 @@ class DownloadsCenterPage(ft.View):
         running = await self.manager.get_pending_tasks_count()
         active = await self.manager.get_active_tasks_count()
         self.summary.value = (
-            f"{running} downloading · {max(0, active - running)} queued"
+            self.tr(
+                "{running} downloading · {queued} queued",
+                running=running,
+                queued=max(0, active - running),
+            )
             if active
-            else f"{self.manager.total_tasks} downloads"
+            else self.localizer.plural("count.downloads", self.manager.total_tasks)
         )
         self.summary.visible = bool(self.manager.total_tasks)
         self.stop_all_button.visible = active > 0
@@ -150,7 +170,7 @@ class DownloadsCenterPage(ft.View):
     async def update_task(self):
         folder = await get_destination_folder()
         self.folder_note.value = (
-            str(folder) if folder else "Download folder unavailable"
+            str(folder) if folder else self.tr("Download folder unavailable")
         )
         self.folder_note.tooltip = self.folder_note.value
         while True:

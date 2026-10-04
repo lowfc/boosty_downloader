@@ -7,6 +7,7 @@ from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from core.utils import get_download_settings
 from core.window import configure_window
+from localization import initialize_localization
 from pages.auth_management import AuthManagementPage
 from pages.download_image_by_link import DownloadImageByLinkPage
 from pages.download_post import DownloadPostPage
@@ -26,6 +27,8 @@ async def main(page: ft.Page):
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
+    localizer = await initialize_localization(page)
+    tr = localizer.t
 
     try:
         settings = await get_download_settings()
@@ -42,25 +45,37 @@ async def main(page: ft.Page):
 
         match page.route:
             case "/":
-                page.views.append(WelcomePage(manager))
+                page.views.append(WelcomePage(manager, localizer=localizer))
             case "/settings":
-                page.views.append(SettingsPage(manager))
+                page.views.append(
+                    SettingsPage(
+                        manager, localizer=localizer, on_language_change=language_change
+                    )
+                )
             case "/download-post":
-                page.views.append(DownloadPostPage(manager))
+                page.views.append(DownloadPostPage(manager, localizer=localizer))
             case "/downloads-center":
-                page.views.append(DownloadsCenterPage(manager))
+                page.views.append(DownloadsCenterPage(manager, localizer=localizer))
             case "/auth-management":
-                page.views.append(AuthManagementPage(manager))
+                page.views.append(AuthManagementPage(manager, localizer=localizer))
             case "/merge-author-content":
-                page.views.append(MergeAuthorContentPage(manager))
+                page.views.append(MergeAuthorContentPage(manager, localizer=localizer))
             case "/download-several-posts":
-                page.views.append(DownloadSeveralPostsPage(manager))
+                page.views.append(
+                    DownloadSeveralPostsPage(manager, localizer=localizer)
+                )
             case "/download-media-by-link":
-                page.views.append(DownloadImageByLinkPage(manager))
+                page.views.append(DownloadImageByLinkPage(manager, localizer=localizer))
             case "/feedback-and-bugs":
-                page.views.append(FeedbackAndBugsPage(manager))
+                page.views.append(FeedbackAndBugsPage(manager, localizer=localizer))
 
         page.update()
+
+    def language_change(language):
+        localizer.set_language(language)
+        localizer.configure_page(page)
+        route_change(None)
+        page.show_dialog(ft.SnackBar(ft.Text(tr("Changes saved."))))
 
     page.on_route_change = route_change
     route_change(page)
@@ -71,12 +86,12 @@ async def main(page: ft.Page):
         if await manager.get_active_tasks_count() > 0:
             page.show_dialog(
                 ft.AlertDialog(
-                    title=ft.Text("Some downloads are incomplete"),
-                    content=ft.Text("Are you sure you want to exit the app?"),
+                    title=ft.Text(tr("Some downloads are incomplete")),
+                    content=ft.Text(tr("Are you sure you want to exit the app?")),
                     actions=[
-                        ft.TextButton("No", on_click=lambda e: page.pop_dialog()),
+                        ft.TextButton(tr("No"), on_click=lambda e: page.pop_dialog()),
                         ft.TextButton(
-                            "Yes",
+                            tr("Yes"),
                             on_click=lambda e: asyncio.create_task(
                                 page.window.destroy()
                             ),

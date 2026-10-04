@@ -14,12 +14,13 @@ logger = setup_logger()
 
 
 class DownloadSeveralPostsPage(PostDownloadForm):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__(
             manager,
             "/download-several-posts",
             "https://boosty.to/author",
             self.download_posts,
+            localizer=localizer,
         )
         today = datetime.datetime.now().astimezone().date()
         self.set_range(today - datetime.timedelta(days=2), today)
@@ -39,33 +40,36 @@ class DownloadSeveralPostsPage(PostDownloadForm):
             spacing=16,
             run_spacing=12,
             controls=[
-                self.date_field("From", self.date_from_text),
-                self.date_field("To", self.date_to_text),
+                self.date_field(self.tr("From"), self.date_from_text),
+                self.date_field(self.tr("To"), self.date_to_text),
             ],
         )
         self.download_button = ft.Button(
-            "Download posts",
+            self.tr("Download posts"),
             icon=ft.Icons.DOWNLOAD_OUTLINED,
             height=42,
             style=button_style(primary=True),
             on_click=self.download_posts,
         )
         self.build_form(
-            "Several posts",
-            "Download an author's posts for a selected period.",
+            self.tr("Several posts"),
+            self.tr("Download an author's posts for a selected period."),
             ft.Icons.FILE_COPY_OUTLINED,
-            "Choose an author and dates",
-            "We'll find available posts published in this period.",
+            self.tr("Choose an author and dates"),
+            self.tr("We'll find available posts published in this period."),
             [
                 self.link_section(
-                    "Author", "Enter a Boosty page link or the author's nickname."
+                    self.tr("Author"),
+                    self.tr("Enter a Boosty page link or the author's nickname."),
                 ),
                 self.divider(),
                 ft.Column(
                     spacing=12,
                     controls=[
                         ft.Text(
-                            "Publication dates", size=13, weight=ft.FontWeight.W_500
+                            self.tr("Publication dates"),
+                            size=13,
+                            weight=ft.FontWeight.W_500,
                         ),
                         dates,
                         ft.Row(
@@ -83,7 +87,9 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                 ),
                 self.divider(),
                 self.destination_section(),
-                self.hint("Uses your content and quality settings.", ft.Icons.TUNE),
+                self.hint(
+                    self.tr("Uses your content and quality settings."), ft.Icons.TUNE
+                ),
                 ft.Row(
                     wrap=True,
                     spacing=16,
@@ -91,7 +97,7 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                     controls=[
                         self.download_button,
                         ft.Text(
-                            "Progress appears in Downloads.",
+                            self.tr("Progress appears in Downloads."),
                             size=12,
                             color=ft.Colors.ON_SURFACE_VARIANT,
                         ),
@@ -116,7 +122,7 @@ class DownloadSeveralPostsPage(PostDownloadForm):
             height=44,
             style=button_style(),
             on_click=self.open_date_picker,
-            tooltip=f"Choose publication dates: {label}",
+            tooltip=self.tr("Choose publication dates: {label}", label=label),
         )
         self.date_buttons.append(button)
         return ft.Column(
@@ -134,11 +140,12 @@ class DownloadSeveralPostsPage(PostDownloadForm):
         self.parse_to = datetime.datetime.combine(end, datetime.time.max)
 
     def update_ranges(self):
-        self.date_from_text.value = self.parse_from.strftime("%d %b %Y")
-        self.date_to_text.value = self.parse_to.strftime("%d %b %Y")
+        self.date_from_text.value = self.localizer.format_date(self.parse_from)
+        self.date_to_text.value = self.localizer.format_date(self.parse_to)
         days = (self.parse_to.date() - self.parse_from.date()).days + 1
-        self.range_note.value = (
-            f"{days} {'day' if days == 1 else 'days'} · Includes both dates"
+        self.range_note.value = self.tr(
+            "{days} · Includes both dates",
+            days=self.localizer.plural("count.days", days),
         )
 
     def open_date_picker(self, e=None):
@@ -163,16 +170,16 @@ class DownloadSeveralPostsPage(PostDownloadForm):
         author = author_from_input(self.text_field.value or "")
         if not author:
             self.show_feedback(
-                "Enter a Boosty author to continue.",
-                "Use a Boosty page link or the author's nickname.",
+                self.tr("Enter a Boosty author to continue."),
+                self.tr("Use a Boosty page link or the author's nickname."),
                 error=True,
             )
             return
         self.operation_task = asyncio.current_task()
         self.set_busy(True)
         self.show_feedback(
-            "Searching available posts…",
-            "Checking the selected publication dates.",
+            self.tr("Searching available posts…"),
+            self.tr("Checking the selected publication dates."),
             busy=True,
         )
         created = 0
@@ -184,8 +191,8 @@ class DownloadSeveralPostsPage(PostDownloadForm):
             max_id = await client.get_max_int_id(author)
             if max_id is None:
                 self.show_feedback(
-                    "No posts could be found.",
-                    "Check the author link, or try again later.",
+                    self.tr("No posts could be found."),
+                    self.tr("Check the author link, or try again later."),
                     error=True,
                 )
                 return
@@ -210,7 +217,9 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                     elif post.publish_time < right and post.has_access:
                         posts[post.id] = post
                 self.show_feedback(
-                    "Searching available posts…", f"{len(posts)} posts found", busy=True
+                    self.tr("Searching available posts…"),
+                    self.localizer.plural("posts.found", len(posts)),
+                    busy=True,
                 )
                 if result.extra.is_last or past_start:
                     break
@@ -219,38 +228,51 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                     raise RuntimeError("Missing post pagination offset")
             if not posts:
                 self.show_feedback(
-                    "No available posts in this period.",
-                    "Try another date range, or log in to access your subscriptions.",
+                    self.tr("No available posts in this period."),
+                    self.tr(
+                        "Try another date range, or log in to access your subscriptions."
+                    ),
                 )
                 return
             self.show_feedback(
-                f"{len(posts)} posts found", "Adding posts to Downloads…", busy=True
+                self.localizer.plural("posts.found", len(posts)),
+                self.tr("Adding posts to Downloads…"),
+                busy=True,
             )
             for post in posts.values():
                 if await self.manager.add_task(author, post.id, post):
                     created += 1
                 self.show_feedback(
-                    "Adding posts to Downloads…", f"{created} tasks created", busy=True
+                    self.tr("Adding posts to Downloads…"),
+                    self.tr("{count} tasks created", count=created),
+                    busy=True,
                 )
                 await asyncio.sleep(0)
             skipped = len(posts) - created
-            detail = "You can follow the download progress there."
+            detail = self.tr("You can follow the download progress there.")
             if skipped:
-                detail += f" {skipped} already in Downloads."
+                detail += self.tr(" {count} already in Downloads.", count=skipped)
             self.show_feedback(
                 (
-                    f"{created} {'post' if created == 1 else 'posts'} added to Downloads."
+                    self.localizer.plural("posts.added", created)
                     if created
-                    else "These posts are already in Downloads."
+                    else self.tr("These posts are already in Downloads.")
                 ),
                 detail,
             )
         except Exception as error:
             logger.exception("Could not prepare author's posts", exc_info=error)
-            detail = "Check the author link and your connection, then try again."
+            detail = self.tr(
+                "Check the author link and your connection, then try again."
+            )
             if created:
-                detail = f"{created} posts were added to Downloads. Try again to add the remaining posts."
-            self.show_feedback("Couldn't finish preparing posts.", detail, error=True)
+                detail = self.tr(
+                    "{count} posts were added to Downloads. Try again to add the remaining posts.",
+                    count=created,
+                )
+            self.show_feedback(
+                self.tr("Couldn't finish preparing posts."), detail, error=True
+            )
         finally:
             self.set_busy(False)
             self.operation_task = None

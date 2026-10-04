@@ -13,33 +13,37 @@ logger = setup_logger()
 
 
 class DownloadPostPage(PostDownloadForm):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__(
             manager,
             "/download-post",
             "https://boosty.to/author/posts/…",
             self.download_post,
+            localizer=localizer,
         )
         self.download_button = ft.Button(
-            "Download post",
+            self.tr("Download post"),
             icon=ft.Icons.DOWNLOAD_OUTLINED,
             height=42,
             style=button_style(primary=True),
             on_click=self.download_post,
         )
         self.build_form(
-            "One post",
-            "Download a specific post by its direct link.",
+            self.tr("One post"),
+            self.tr("Download a specific post by its direct link."),
             ft.Icons.LINK,
-            "Choose a post",
-            "Copy the post link from Boosty.",
+            self.tr("Choose a post"),
+            self.tr("Copy the post link from Boosty."),
             [
                 self.link_section(
-                    "Post link", "Use a direct post link, rather than an author's page."
+                    self.tr("Post link"),
+                    self.tr("Use a direct post link, rather than an author's page."),
                 ),
                 self.divider(),
                 self.destination_section(),
-                self.hint("Uses your content and quality settings.", ft.Icons.TUNE),
+                self.hint(
+                    self.tr("Uses your content and quality settings."), ft.Icons.TUNE
+                ),
                 ft.Row(
                     wrap=True,
                     spacing=16,
@@ -47,14 +51,14 @@ class DownloadPostPage(PostDownloadForm):
                     controls=[
                         self.download_button,
                         ft.Text(
-                            "Progress appears in Downloads.",
+                            self.tr("Progress appears in Downloads."),
                             size=12,
                             color=ft.Colors.ON_SURFACE_VARIANT,
                         ),
                     ],
                 ),
             ],
-            note="Only content you have access to can be downloaded.",
+            note=self.tr("Only content you have access to can be downloaded."),
         )
 
     async def download_post(self, e=None):
@@ -75,36 +79,38 @@ class DownloadPostPage(PostDownloadForm):
         ):
             self.show_feedback(
                 (
-                    "Paste a post link to continue."
+                    self.tr("Paste a post link to continue.")
                     if not value
-                    else "This link doesn't lead to a Boosty post."
+                    else self.tr("This link doesn't lead to a Boosty post.")
                 ),
-                "Copy a direct post link from Boosty and try again.",
+                self.tr("Copy a direct post link from Boosty and try again."),
                 error=True,
             )
             return
         self.operation_task = asyncio.current_task()
         self.set_busy(True)
         self.show_feedback(
-            "Adding post to Downloads…",
-            "Your download will appear in the queue.",
+            self.tr("Adding post to Downloads…"),
+            self.tr("Your download will appear in the queue."),
             busy=True,
         )
         try:
             if await self.manager.add_task(link.author, link.id):
                 self.show_feedback(
-                    "Post added to Downloads.",
-                    "You can follow the download progress there.",
+                    self.tr("Post added to Downloads."),
+                    self.tr("You can follow the download progress there."),
                 )
             else:
                 self.show_feedback(
-                    "This post is already in Downloads.",
-                    "Follow its progress or retry it from Downloads.",
+                    self.tr("This post is already in Downloads."),
+                    self.tr("Follow its progress or retry it from Downloads."),
                 )
         except Exception as error:
             logger.exception("Could not queue post", exc_info=error)
             self.show_feedback(
-                "Couldn't add this post.", "Please try again.", error=True
+                self.tr("Couldn't add this post."),
+                self.tr("Please try again."),
+                error=True,
             )
         finally:
             self.set_busy(False)

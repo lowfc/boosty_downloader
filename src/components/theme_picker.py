@@ -3,6 +3,8 @@ from enum import Enum
 
 import flet as ft
 
+from localization import Localizer
+
 
 class ThemeMode(Enum):
     LIGHT = "light"
@@ -26,15 +28,19 @@ theme_names = {
 class ThemePicker(ft.Column):
     """Choose a draft theme; the settings form owns preview and persistence."""
 
-    def __init__(self, on_theme_change: Callable[[str], None] | None = None):
+    def __init__(
+        self, on_theme_change: Callable[[str], None] | None = None, localizer=None
+    ):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.value = "system"
         self.on_theme_change = on_theme_change
         self.spacing = 9
         self.buttons = {}
         for mode in ThemeMode:
             self.buttons[mode.value] = ft.OutlinedButton(
-                theme_names[mode],
+                self.tr(theme_names[mode]),
                 icon=theme_icons[mode],
                 height=44,
                 expand=True,
@@ -69,9 +75,16 @@ class ThemePicker(ft.Column):
                 ),
             )
         self.help_text.value = (
-            "Follows your system appearance."
+            self.tr("Follows your system appearance.")
             if self.value == "system"
-            else f"{theme_names[ThemeMode(self.value)]} appearance selected."
+            else self.tr(
+                "{theme} appearance selected.",
+                theme=(
+                    self.tr(theme_names[ThemeMode(self.value)]).lower()
+                    if self.localizer.language == "ru"
+                    else theme_names[ThemeMode(self.value)]
+                ),
+            )
         )
 
     def select(self, value):

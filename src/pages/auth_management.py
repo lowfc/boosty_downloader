@@ -9,24 +9,27 @@ import components
 from components.soft_layout import button_style, page_shell, soft_card, soft_icon
 from core.authorization_provider import AuthorizationProvider
 from core.downloads_manager import DownloadManager
+from localization import Localizer
 
 
 class AuthManagementPage(ft.View):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.route = "/auth-management"
         self.padding = 0
         self.spacing = 0
         self.refresh_task = None
         self.copy_task = None
-        self.title = ft.Text("Log in", size=24, weight=ft.FontWeight.W_500)
+        self.title = ft.Text(self.tr("Log in"), size=24, weight=ft.FontWeight.W_500)
         self.subtitle = ft.Text(
-            "Connect your Boosty account to access your subscriptions.",
+            self.tr("Connect your Boosty account to access your subscriptions."),
             size=13,
             color=ft.Colors.ON_SURFACE_VARIANT,
         )
         self.copy_script_button = ft.OutlinedButton(
-            "Copy script",
+            self.tr("Copy script"),
             icon=ft.Icons.CONTENT_COPY,
             style=button_style(),
             height=40,
@@ -41,16 +44,24 @@ class AuthManagementPage(ft.View):
                 controls=[
                     ft.Text(text, size=12, color=ft.Colors.ON_SURFACE_VARIANT)
                     for text in [
-                        "1. Open boosty.to in your browser and log in to your existing account.",
-                        "2. Open Developer Tools and select Console (⌥⌘J on Chrome for Mac, Ctrl+Shift+J on Windows).",
-                        "3. Paste the copied script and run it. If the browser asks you to allow pasting, follow its instructions.",
-                        "4. Copy the token returned by the script and paste it below.",
+                        self.tr(
+                            "1. Open boosty.to in your browser and log in to your existing account."
+                        ),
+                        self.tr(
+                            "2. Open Developer Tools and select Console (⌥⌘J on Chrome for Mac, Ctrl+Shift+J on Windows)."
+                        ),
+                        self.tr(
+                            "3. Paste the copied script and run it. If the browser asks you to allow pasting, follow its instructions."
+                        ),
+                        self.tr(
+                            "4. Copy the token returned by the script and paste it below."
+                        ),
                     ]
                 ],
             ),
         )
         self.instructions_button = ft.TextButton(
-            "Show browser instructions",
+            self.tr("Show browser instructions"),
             height=36,
             icon=ft.Icons.KEYBOARD_ARROW_DOWN,
             on_click=self.toggle_instructions,
@@ -63,7 +74,7 @@ class AuthManagementPage(ft.View):
         )
         self.token_text_field = ft.TextField(
             value="",
-            hint_text="Paste your Boosty token",
+            hint_text=self.tr("Paste your Boosty token"),
             password=True,
             can_reveal_password=True,
             text_size=13,
@@ -80,7 +91,7 @@ class AuthManagementPage(ft.View):
         )
         self.token_error = ft.Text("", size=12, color=ft.Colors.ERROR, visible=False)
         self.login_button = ft.Button(
-            "Log in",
+            self.tr("Log in"),
             height=40,
             style=button_style(primary=True),
             on_click=self.save_new_token,
@@ -91,25 +102,29 @@ class AuthManagementPage(ft.View):
                 controls=[
                     self.step(
                         1,
-                        "Copy the login script",
-                        "You'll use it on Boosty in your browser.",
+                        self.tr("Copy the login script"),
+                        self.tr("You'll use it on Boosty in your browser."),
                         [self.copy_script_button, self.script_error],
                     ),
                     ft.Divider(height=1, color=ft.Colors.OUTLINE_VARIANT),
                     self.step(
                         2,
-                        "Get your token on Boosty",
-                        "Run the script while logged in to Boosty, then copy the token it returns.",
+                        self.tr("Get your token on Boosty"),
+                        self.tr(
+                            "Run the script while logged in to Boosty, then copy the token it returns."
+                        ),
                         [self.instructions_button, self.instructions],
                     ),
                     ft.Divider(height=1, color=ft.Colors.OUTLINE_VARIANT),
                     self.step(
                         3,
-                        "Connect your account",
+                        self.tr("Connect your account"),
                         None,
                         [
                             ft.Text(
-                                "Boosty token", size=12, weight=ft.FontWeight.W_500
+                                self.tr("Boosty token"),
+                                size=12,
+                                weight=ft.FontWeight.W_500,
                             ),
                             ft.Row(
                                 spacing=8,
@@ -117,7 +132,7 @@ class AuthManagementPage(ft.View):
                                     ft.Container(self.token_text_field, expand=True),
                                     ft.IconButton(
                                         ft.Icons.CONTENT_PASTE,
-                                        tooltip="Paste token",
+                                        tooltip=self.tr("Paste token"),
                                         icon_size=19,
                                         on_click=self.paste_token,
                                     ),
@@ -125,7 +140,9 @@ class AuthManagementPage(ft.View):
                             ),
                             self.token_error,
                             ft.Text(
-                                "Use a token from the account you want to download from.",
+                                self.tr(
+                                    "Use a token from the account you want to download from."
+                                ),
                                 size=11,
                                 color=ft.Colors.ON_SURFACE_VARIANT,
                             ),
@@ -145,9 +162,11 @@ class AuthManagementPage(ft.View):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     soft_icon(ft.Icons.CHECK, 60),
-                    ft.Text("Logged in", size=22, weight=ft.FontWeight.W_500),
+                    ft.Text(self.tr("Logged in"), size=22, weight=ft.FontWeight.W_500),
                     ft.Text(
-                        "Your Boosty account is connected.\nYou can download content included in your subscriptions.",
+                        self.tr(
+                            "Your Boosty account is connected.\nYou can download content included in your subscriptions."
+                        ),
                         size=13,
                         color=ft.Colors.ON_SURFACE_VARIANT,
                         text_align=ft.TextAlign.CENTER,
@@ -158,12 +177,14 @@ class AuthManagementPage(ft.View):
                         spacing=10,
                         controls=[
                             ft.Button(
-                                "Back to home",
+                                self.tr("Back to home"),
                                 style=button_style(primary=True),
                                 on_click=self.go_to_index,
                             ),
                             ft.OutlinedButton(
-                                "Log out", style=button_style(), on_click=self.logout
+                                self.tr("Log out"),
+                                style=button_style(),
+                                on_click=self.logout,
                             ),
                         ],
                     ),
@@ -171,7 +192,7 @@ class AuthManagementPage(ft.View):
                     ft.Row(
                         controls=[
                             ft.Text(
-                                "Token validity",
+                                self.tr("Token validity"),
                                 expand=True,
                                 size=12,
                                 color=ft.Colors.ON_SURFACE_VARIANT,
@@ -184,7 +205,9 @@ class AuthManagementPage(ft.View):
             padding=30,
         )
         self.deauth_view.visible = False
-        self.toolbar = components.AppBar(manager, on_auth_change=self.on_auth_change)
+        self.toolbar = components.AppBar(
+            manager, localizer=self.localizer, on_auth_change=self.on_auth_change
+        )
         self.controls = [
             page_shell(
                 self.toolbar,
@@ -197,7 +220,7 @@ class AuthManagementPage(ft.View):
                     ],
                 ),
                 ft.Text(
-                    "Access is limited to your Boosty subscriptions.",
+                    self.tr("Access is limited to your Boosty subscriptions."),
                     expand=True,
                     size=11,
                     color=ft.Colors.ON_SURFACE_VARIANT,
@@ -205,6 +228,7 @@ class AuthManagementPage(ft.View):
                 ft.Icons.LOCK_OUTLINE,
                 self.go_to_feedback,
                 width=632,
+                localizer=self.localizer,
             )
         ]
 
@@ -257,11 +281,11 @@ class AuthManagementPage(ft.View):
             self.refresh_task = asyncio.create_task(self.render_page())
 
     def set_logged_in(self, logged_in):
-        self.title.value = "Account" if logged_in else "Log in"
+        self.title.value = self.tr("Account") if logged_in else self.tr("Log in")
         self.subtitle.value = (
-            "Manage your connection to Boosty."
+            self.tr("Manage your connection to Boosty.")
             if logged_in
-            else "Connect your Boosty account to access your subscriptions."
+            else self.tr("Connect your Boosty account to access your subscriptions.")
         )
         self.auth_view.visible = not logged_in
         self.deauth_view.visible = logged_in
@@ -274,9 +298,19 @@ class AuthManagementPage(ft.View):
         if logged_in:
             delta = expires_at - now
             self.auth_expires_info.value = (
-                f"{delta.days} days, {delta.seconds // 3600} hours"
+                self.tr(
+                    "{days}, {hours}",
+                    days=self.localizer.plural("count.days", delta.days),
+                    hours=self.localizer.plural("count.hours", delta.seconds // 3600),
+                )
                 if delta.days
-                else f"{delta.seconds // 3600} hours, {(delta.seconds // 60) % 60} minutes"
+                else self.tr(
+                    "{hours}, {minutes}",
+                    hours=self.localizer.plural("count.hours", delta.seconds // 3600),
+                    minutes=self.localizer.plural(
+                        "count.minutes", (delta.seconds // 60) % 60
+                    ),
+                )
             )
         self.toolbar.set_auth_status(logged_in)
         self.update()
@@ -290,9 +324,9 @@ class AuthManagementPage(ft.View):
     def toggle_instructions(self, e=None):
         self.instructions.visible = not self.instructions.visible
         self.instructions_button.content = (
-            "Hide browser instructions"
+            self.tr("Hide browser instructions")
             if self.instructions.visible
-            else "Show browser instructions"
+            else self.tr("Show browser instructions")
         )
         self.instructions_button.icon = (
             ft.Icons.KEYBOARD_ARROW_UP
@@ -317,12 +351,14 @@ class AuthManagementPage(ft.View):
             async with aiofiles.open(script_path, mode="r", encoding="utf-8") as script:
                 await ft.Clipboard().set(await script.read())
         except (OSError, RuntimeError):
-            self.script_error.value = "Couldn't copy the script. Please try again."
+            self.script_error.value = self.tr(
+                "Couldn't copy the script. Please try again."
+            )
             self.script_error.visible = True
             self.update()
             return
         self.script_error.visible = False
-        self.copy_script_button.content = "Copied"
+        self.copy_script_button.content = self.tr("Copied")
         self.copy_script_button.icon = ft.Icons.CHECK
         self.update()
         if self.copy_task:
@@ -331,7 +367,7 @@ class AuthManagementPage(ft.View):
 
     async def reset_copy_button(self):
         await asyncio.sleep(2)
-        self.copy_script_button.content = "Copy script"
+        self.copy_script_button.content = self.tr("Copy script")
         self.copy_script_button.icon = ft.Icons.CONTENT_COPY
         self.update()
 
@@ -340,12 +376,14 @@ class AuthManagementPage(ft.View):
         token = AuthorizationProvider.validate_login(value) if value else None
         if not token:
             self.token_error.value = (
-                "Paste your Boosty token to continue."
+                self.tr("Paste your Boosty token to continue.")
                 if not value
-                else "This token isn't valid. Check that you copied it completely."
+                else self.tr(
+                    "This token isn't valid. Check that you copied it completely."
+                )
             )
         elif token.expires_in <= datetime.datetime.now(datetime.UTC).timestamp():
-            self.token_error.value = (
+            self.token_error.value = self.tr(
                 "This token has expired. Get a new token on Boosty."
             )
         else:

@@ -1,10 +1,16 @@
 import flet as ft
 
+from localization import Localizer
+
 
 @ft.control
 class Paginator(ft.Row):
-    def __init__(self, total_items=0, items_per_page=10, on_page_change=None):
+    def __init__(
+        self, total_items=0, items_per_page=10, on_page_change=None, localizer=None
+    ):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.total_items = total_items
         self.items_per_page = items_per_page
         self.current_page = 1
@@ -16,11 +22,15 @@ class Paginator(ft.Row):
         self.spacing = 10
 
         self.btn_prev = ft.IconButton(
-            icon=ft.Icons.ARROW_BACK, on_click=self.prev_page, disabled=True
+            icon=ft.Icons.ARROW_BACK,
+            tooltip=self.tr(self.tr("Previous page")),
+            on_click=self.prev_page,
+            disabled=True,
         )
 
         self.btn_next = ft.IconButton(
             icon=ft.Icons.ARROW_FORWARD,
+            tooltip=self.tr(self.tr("Next page")),
             on_click=self.next_page,
             disabled=self.page_count <= 1,
         )
@@ -91,10 +101,9 @@ class Paginator(ft.Row):
         old_page_count = self.page_count
         self.page_count = self._calculate_page_count()
 
-        if self.page_count != old_page_count:
-            if self.current_page > self.page_count:
-                self.current_page = self.page_count
-                self._trigger_callback()
+        if self.page_count != old_page_count and self.current_page > self.page_count:
+            self.current_page = self.page_count
+            self._trigger_callback()
 
         self._update_state()
 

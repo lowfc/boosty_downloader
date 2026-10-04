@@ -10,6 +10,7 @@ from components.soft_layout import button_style, page_shell, soft_card, soft_ico
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from core.utils import get_download_settings
+from localization import Localizer
 
 logger = setup_logger()
 
@@ -40,8 +41,10 @@ AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".a
 
 
 class MergeAuthorContentPage(ft.View):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.route = "/merge-author-content"
         self.padding = self.spacing = 0
         self.active = True
@@ -56,7 +59,7 @@ class MergeAuthorContentPage(ft.View):
             dense=True,
             filled=True,
             fill_color=ft.Colors.SURFACE,
-            hint_text="Choose an author",
+            hint_text=self.tr("Choose an author"),
             disabled=True,
             border=ft.OutlineInputBorder(
                 side=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT), border_radius=9
@@ -64,23 +67,25 @@ class MergeAuthorContentPage(ft.View):
             on_select=self.update_state,
         )
         self.source_help = ft.Text(
-            "Loading author folders…", size=12, color=ft.Colors.ON_SURFACE_VARIANT
+            self.tr("Loading author folders…"),
+            size=12,
+            color=ft.Colors.ON_SURFACE_VARIANT,
         )
         self.action_help = ft.Text(
-            "Keep files in their original post folders.",
+            self.tr("Keep files in their original post folders."),
             size=12,
             color=ft.Colors.ON_SURFACE_VARIANT,
         )
         self.action_buttons = {
             "copy": ft.OutlinedButton(
-                "Copy",
+                self.tr("Copy"),
                 icon=ft.Icon(ft.Icons.COPY_OUTLINED, size=16),
                 expand=True,
                 height=36,
                 on_click=lambda e: self.select_action("copy"),
             ),
             "move": ft.OutlinedButton(
-                "Move",
+                self.tr("Move"),
                 icon=ft.Icon(ft.Icons.DRIVE_FILE_MOVE_OUTLINED, size=16),
                 expand=True,
                 height=36,
@@ -94,24 +99,28 @@ class MergeAuthorContentPage(ft.View):
             bgcolor=ft.Colors.SURFACE,
             content=ft.Row(list(self.action_buttons.values()), spacing=0),
         )
-        self.current_merge_folder_text = ft.Text("Choose a destination folder", size=13)
+        self.current_merge_folder_text = ft.Text(
+            self.tr("Choose a destination folder"), size=13
+        )
         self.destination_folder_picker = ft.OutlinedButton(
-            "Change", style=button_style(), on_click=self.pick_destination_folder
+            self.tr("Change"),
+            style=button_style(),
+            on_click=self.pick_destination_folder,
         )
         self.merge_photos_check = ft.Checkbox(
-            label="Photos",
+            label=self.tr("Photos"),
             value=True,
             label_style=ft.TextStyle(size=13),
             on_change=self.update_state,
         )
         self.merge_videos_check = ft.Checkbox(
-            label="Videos",
+            label=self.tr("Videos"),
             value=True,
             label_style=ft.TextStyle(size=13),
             on_change=self.update_state,
         )
         self.merge_audios_check = ft.Checkbox(
-            label="Audio",
+            label=self.tr("Audio"),
             value=False,
             label_style=ft.TextStyle(size=13),
             on_change=self.update_state,
@@ -122,13 +131,13 @@ class MergeAuthorContentPage(ft.View):
             self.content_tile(self.merge_audios_check, ft.Icons.MUSIC_NOTE_OUTLINED),
         ]
         self.add_post_title_to_filename = ft.Checkbox(
-            label="Add post title to filenames",
+            label=self.tr("Add post title to filenames"),
             value=False,
             label_style=ft.TextStyle(size=13),
             on_change=self.update_state,
         )
         self.proceed_button = ft.Button(
-            "Copy content",
+            self.tr("Copy content"),
             icon=ft.Icons.DRIVE_FILE_MOVE_OUTLINED,
             height=42,
             style=button_style(primary=True),
@@ -172,12 +181,14 @@ class MergeAuthorContentPage(ft.View):
                                 spacing=5,
                                 controls=[
                                     ft.Text(
-                                        "Organize your files",
+                                        self.tr("Organize your files"),
                                         size=15,
                                         weight=ft.FontWeight.W_500,
                                     ),
                                     ft.Text(
-                                        "Choose a source, a destination and the content to include.",
+                                        self.tr(
+                                            "Choose a source, a destination and the content to include."
+                                        ),
                                         size=12,
                                         color=ft.Colors.ON_SURFACE_VARIANT,
                                     ),
@@ -193,7 +204,7 @@ class MergeAuthorContentPage(ft.View):
                                 col={"xs": 12, "sm": 6},
                                 spacing=10,
                                 controls=[
-                                    self.label("Author folder"),
+                                    self.label(self.tr("Author folder")),
                                     ft.Row([self.authors_dropdown]),
                                     self.source_help,
                                 ],
@@ -202,7 +213,7 @@ class MergeAuthorContentPage(ft.View):
                                 col={"xs": 12, "sm": 6},
                                 spacing=10,
                                 controls=[
-                                    self.label("Action"),
+                                    self.label(self.tr("Action")),
                                     self.action_selector,
                                     self.action_help,
                                 ],
@@ -223,7 +234,7 @@ class MergeAuthorContentPage(ft.View):
                                 spacing=5,
                                 controls=[
                                     ft.Text(
-                                        "Destination folder",
+                                        self.tr("Destination folder"),
                                         size=12,
                                         color=ft.Colors.ON_SURFACE_VARIANT,
                                     ),
@@ -237,13 +248,15 @@ class MergeAuthorContentPage(ft.View):
                     ft.Column(
                         spacing=14,
                         controls=[
-                            self.label("Content to include"),
+                            self.label(self.tr("Content to include")),
                             ft.ResponsiveRow(
                                 self.content_tiles, spacing=10, run_spacing=10
                             ),
                             self.add_post_title_to_filename,
                             ft.Text(
-                                "Existing files in the destination folder are skipped.",
+                                self.tr(
+                                    "Existing files in the destination folder are skipped."
+                                ),
                                 size=12,
                                 color=ft.Colors.ON_SURFACE_VARIANT,
                             ),
@@ -256,7 +269,7 @@ class MergeAuthorContentPage(ft.View):
                         controls=[
                             self.proceed_button,
                             ft.Text(
-                                "Works with files already downloaded.",
+                                self.tr("Works with files already downloaded."),
                                 size=12,
                                 color=ft.Colors.ON_SURFACE_VARIANT,
                             ),
@@ -267,7 +280,7 @@ class MergeAuthorContentPage(ft.View):
             ),
             padding=28,
         )
-        self.toolbar = components.AppBar(manager)
+        self.toolbar = components.AppBar(manager, localizer=self.localizer)
         self.controls = [
             page_shell(
                 self.toolbar,
@@ -278,10 +291,14 @@ class MergeAuthorContentPage(ft.View):
                             spacing=6,
                             controls=[
                                 ft.Text(
-                                    "Merge content", size=24, weight=ft.FontWeight.W_500
+                                    self.tr("Merge content"),
+                                    size=24,
+                                    weight=ft.FontWeight.W_500,
                                 ),
                                 ft.Text(
-                                    "Collect an author's downloaded files in one folder.",
+                                    self.tr(
+                                        "Collect an author's downloaded files in one folder."
+                                    ),
                                     size=13,
                                     color=ft.Colors.ON_SURFACE_VARIANT,
                                 ),
@@ -299,6 +316,7 @@ class MergeAuthorContentPage(ft.View):
                 ft.Icons.INFO_OUTLINE,
                 self.go_to_feedback,
                 width=688,
+                localizer=self.localizer,
             )
         ]
         self.update_state(refresh=False)
@@ -339,7 +357,7 @@ class MergeAuthorContentPage(ft.View):
         try:
             self.settings = await get_download_settings()
             if not self.settings:
-                raise ValueError("Download folder unavailable")
+                raise ValueError(self.tr("Download folder unavailable"))
             folder = Path(self.settings.downloads_folder)
             folders = await asyncio.to_thread(
                 lambda: (
@@ -357,10 +375,12 @@ class MergeAuthorContentPage(ft.View):
             self.update_state()
         except Exception:
             logger.exception("Could not load author folders")
-            self.source_help.value = "Author folders unavailable."
+            self.source_help.value = self.tr("Author folders unavailable.")
             self.show_feedback(
-                "Couldn't load author folders.",
-                "Check your download folder in Settings, then reopen this page.",
+                self.tr("Couldn't load author folders."),
+                self.tr(
+                    "Check your download folder in Settings, then reopen this page."
+                ),
                 error=True,
             )
 
@@ -378,31 +398,35 @@ class MergeAuthorContentPage(ft.View):
             self.source_help.tooltip = str(path)
         elif self.settings:
             self.source_help.value = (
-                "Choose an author's downloaded folder."
+                self.tr("Choose an author's downloaded folder.")
                 if self.authors_dropdown.options
-                else "No downloaded authors found. Download a post first."
+                else self.tr("No downloaded authors found. Download a post first.")
             )
         for key, button in self.action_buttons.items():
             selected = key == self.action_type
             button.style = ft.ButtonStyle(
-                color=ft.Colors.ON_SURFACE
-                if selected
-                else ft.Colors.ON_SURFACE_VARIANT,
-                bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST
-                if selected
-                else ft.Colors.TRANSPARENT,
+                color=(
+                    ft.Colors.ON_SURFACE if selected else ft.Colors.ON_SURFACE_VARIANT
+                ),
+                bgcolor=(
+                    ft.Colors.SURFACE_CONTAINER_LOWEST
+                    if selected
+                    else ft.Colors.TRANSPARENT
+                ),
                 side=ft.BorderSide(1 if selected else 0, ft.Colors.OUTLINE_VARIANT),
                 shape=ft.RoundedRectangleBorder(radius=7),
                 padding=ft.Padding.symmetric(horizontal=10, vertical=6),
                 text_style=ft.TextStyle(size=13, weight=ft.FontWeight.W_500),
             )
         self.action_help.value = (
-            "Keep files in their original post folders."
+            self.tr("Keep files in their original post folders.")
             if self.action_type == "copy"
-            else "Transfer files out of their original post folders."
+            else self.tr("Transfer files out of their original post folders.")
         )
         self.proceed_button.content = (
-            "Copy content" if self.action_type == "copy" else "Move content"
+            self.tr("Copy content")
+            if self.action_type == "copy"
+            else self.tr("Move content")
         )
         self.proceed_button.disabled = self.busy or not (
             self.settings
@@ -449,8 +473,10 @@ class MergeAuthorContentPage(ft.View):
                 == Path(self.settings.downloads_folder).resolve()
             ):
                 self.show_feedback(
-                    "Choose a different destination folder.",
-                    "Select an existing folder other than the main download folder.",
+                    self.tr("Choose a different destination folder."),
+                    self.tr(
+                        "Select an existing folder other than the main download folder."
+                    ),
                     error=True,
                 )
                 return
@@ -461,7 +487,9 @@ class MergeAuthorContentPage(ft.View):
         except Exception:
             logger.exception("Could not choose merge destination")
             self.show_feedback(
-                "Couldn't open the folder picker.", "Please try again.", error=True
+                self.tr("Couldn't open the folder picker."),
+                self.tr("Please try again."),
+                error=True,
             )
 
     def show_feedback(self, title, detail, error=False, busy=False):
@@ -491,8 +519,10 @@ class MergeAuthorContentPage(ft.View):
         author = self.authors_dropdown.value
         if not self.settings or not author or not selected or not self.destination_path:
             self.show_feedback(
-                "Choose a source, destination and content.",
-                "Select an author folder, a destination and at least one content type.",
+                self.tr("Choose a source, destination and content."),
+                self.tr(
+                    "Select an author folder, a destination and at least one content type."
+                ),
                 error=True,
             )
             return
@@ -500,8 +530,8 @@ class MergeAuthorContentPage(ft.View):
         destination = self.destination_path
         if not source.is_dir() or not destination.is_dir():
             self.show_feedback(
-                "A selected folder is unavailable.",
-                "Check the source and destination folders, then try again.",
+                self.tr("A selected folder is unavailable."),
+                self.tr("Check the source and destination folders, then try again."),
                 error=True,
             )
             return
@@ -518,7 +548,7 @@ class MergeAuthorContentPage(ft.View):
         self.operation_task = asyncio.current_task()
         self.busy = self.form.disabled = True
         self.show_feedback(
-            "Copying files…" if action == "copy" else "Moving files…",
+            self.tr("Copying files…") if action == "copy" else self.tr("Moving files…"),
             str(destination),
             busy=True,
         )
@@ -564,24 +594,42 @@ class MergeAuthorContentPage(ft.View):
                     except OSError:
                         stats["failed"] += 1
                         logger.exception("Could not transfer file: %s", file)
-            verb = "Copied" if action == "copy" else "Moved"
-            detail = f"{verb} {stats['photos']} photos, {stats['videos']} videos and {stats['audios']} audio files from {stats['posts']} post folders."
+            detail = self.tr(
+                (
+                    "Copied {photos} photos, {videos} videos and {audios} audio files from {posts} post folders."
+                    if action == "copy"
+                    else "Moved {photos} photos, {videos} videos and {audios} audio files from {posts} post folders."
+                ),
+                **stats,
+            )
             if stats["skipped"]:
-                detail += f" Skipped {stats['skipped']} existing files."
+                detail += self.tr(
+                    " Skipped {count} existing files.", count=stats["skipped"]
+                )
             if stats["failed"]:
-                detail += f" {stats['failed']} files could not be transferred."
+                detail += self.tr(
+                    " {count} files could not be transferred.", count=stats["failed"]
+                )
             self.show_feedback(
-                "Some files couldn't be transferred."
-                if stats["failed"]
-                else ("Content copied." if action == "copy" else "Content moved."),
+                (
+                    self.tr("Some files couldn't be transferred.")
+                    if stats["failed"]
+                    else (
+                        self.tr("Content copied.")
+                        if action == "copy"
+                        else self.tr("Content moved.")
+                    )
+                ),
                 detail,
                 error=bool(stats["failed"]),
             )
         except Exception:
             logger.exception("Could not merge content")
             self.show_feedback(
-                "Couldn't finish merging content.",
-                "Check the folders and their permissions, then try again. Files already transferred are preserved.",
+                self.tr("Couldn't finish merging content."),
+                self.tr(
+                    "Check the folders and their permissions, then try again. Files already transferred are preserved."
+                ),
                 error=True,
             )
         finally:
