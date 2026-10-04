@@ -55,6 +55,14 @@ class AppBar(ft.Container):
                 color=ft.Colors.ON_SURFACE_VARIANT, text_style=ft.TextStyle(size=13)
             ),
         )
+        self.settings_button = ft.TextButton(
+            "Settings",
+            icon=ft.Icons.TUNE,
+            on_click=self.go_to_settings,
+            style=ft.ButtonStyle(
+                color=ft.Colors.ON_SURFACE_VARIANT, text_style=ft.TextStyle(size=13)
+            ),
+        )
         self.bgcolor = ft.Colors.SURFACE
         self.padding = ft.Padding.symmetric(horizontal=24, vertical=12)
         self.border = ft.Border.only(bottom=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT))
@@ -64,7 +72,7 @@ class AppBar(ft.Container):
             run_spacing=0,
             controls=[
                 ft.Row(
-                    col={"xs": 12, "sm": 8, "md": 7, "lg": 6},
+                    col={"xs": 12, "sm": 7, "md": 7, "lg": 6},
                     spacing=12,
                     controls=[
                         self.home_button,
@@ -78,18 +86,12 @@ class AppBar(ft.Container):
                     ],
                 ),
                 ft.Row(
-                    col={"xs": 12, "sm": 4, "md": 5, "lg": 6},
+                    col={"xs": 12, "sm": 5, "md": 5, "lg": 6},
                     alignment=ft.MainAxisAlignment.END,
                     spacing=6,
                     controls=[
                         self.downloads_button,
-                        ft.IconButton(
-                            ft.Icons.TUNE,
-                            icon_size=19,
-                            icon_color=ft.Colors.ON_SURFACE_VARIANT,
-                            tooltip="Settings",
-                            on_click=self.go_to_settings,
-                        ),
+                        self.settings_button,
                     ],
                 ),
             ],
