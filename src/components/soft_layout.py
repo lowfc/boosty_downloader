@@ -5,18 +5,22 @@ from themes import HOME_DARK_THEME, HOME_LIGHT_THEME
 
 def button_style(primary=False):
     return ft.ButtonStyle(
-        color={
-            ft.ControlState.DEFAULT: "#ffffff",
-            ft.ControlState.DISABLED: ft.Colors.ON_SURFACE_VARIANT,
-        }
-        if primary
-        else ft.Colors.ON_SURFACE,
-        bgcolor={
-            ft.ControlState.DEFAULT: "#bb5727",
-            ft.ControlState.DISABLED: ft.Colors.SURFACE_CONTAINER_HIGHEST,
-        }
-        if primary
-        else ft.Colors.SURFACE_CONTAINER_LOWEST,
+        color=(
+            {
+                ft.ControlState.DEFAULT: "#ffffff",
+                ft.ControlState.DISABLED: ft.Colors.ON_SURFACE_VARIANT,
+            }
+            if primary
+            else ft.Colors.ON_SURFACE
+        ),
+        bgcolor=(
+            {
+                ft.ControlState.DEFAULT: "#bb5727",
+                ft.ControlState.DISABLED: ft.Colors.SURFACE_CONTAINER_HIGHEST,
+            }
+            if primary
+            else ft.Colors.SURFACE_CONTAINER_LOWEST
+        ),
         side=ft.BorderSide(0 if primary else 1, ft.Colors.OUTLINE_VARIANT),
         shape=ft.RoundedRectangleBorder(radius=9),
         elevation=0,
@@ -46,7 +50,15 @@ def soft_icon(icon, size=38):
     )
 
 
-def page_shell(toolbar, body, footer_note, footer_icon, on_feedback, width):
+def page_shell(
+    toolbar,
+    body,
+    footer_note,
+    footer_icon,
+    on_feedback,
+    width,
+    footer_action_label="Feedback",
+):
     return ft.Container(
         expand=True,
         bgcolor=ft.Colors.SURFACE,
@@ -80,7 +92,7 @@ def page_shell(toolbar, body, footer_note, footer_icon, on_feedback, width):
                             ),
                             footer_note,
                             ft.TextButton(
-                                "Feedback",
+                                footer_action_label,
                                 on_click=on_feedback,
                                 style=ft.ButtonStyle(
                                     color=ft.Colors.ON_SURFACE_VARIANT,
