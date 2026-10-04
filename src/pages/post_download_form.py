@@ -27,7 +27,7 @@ def author_from_input(value):
 
 
 class PostDownloadForm(ft.View):
-    """Shared form chrome and lifecycle for the two download entry points."""
+    """Shared form chrome and lifecycle for download entry points."""
 
     def __init__(self, manager, route, placeholder, on_submit):
         super().__init__()
@@ -95,7 +95,15 @@ class PostDownloadForm(ft.View):
         )
 
     def build_form(
-        self, title, subtitle, icon, card_title, card_subtitle, sections, note=None
+        self,
+        title,
+        subtitle,
+        icon,
+        card_title,
+        card_subtitle,
+        sections,
+        note=None,
+        note_icon=ft.Icons.LOCK_OUTLINE,
     ):
         self.form = soft_card(
             ft.Column(
@@ -141,7 +149,7 @@ class PostDownloadForm(ft.View):
             ],
         )
         if note:
-            body.controls.append(self.hint(note, ft.Icons.LOCK_OUTLINE))
+            body.controls.append(self.hint(note, note_icon))
         self.toolbar = components.AppBar(self.manager)
         self.controls = [
             page_shell(

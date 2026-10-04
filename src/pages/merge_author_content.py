@@ -1,271 +1,594 @@
 import asyncio
-import os
 import shutil
 from pathlib import Path
 
 import flet as ft
 
+import __version__ as app_version
 import components
+from components.soft_layout import button_style, page_shell, soft_card, soft_icon
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
 from core.utils import get_download_settings
 
 logger = setup_logger()
 
+PHOTO_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".bmp",
+    ".tiff",
+    ".webp",
+    ".heic",
+    ".raw",
+}
+VIDEO_EXTENSIONS = {
+    ".mp4",
+    ".avi",
+    ".mov",
+    ".mkv",
+    ".wmv",
+    ".flv",
+    ".webm",
+    ".m4v",
+    ".mpg",
+    ".mpeg",
+}
+AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".aiff"}
+
 
 class MergeAuthorContentPage(ft.View):
     def __init__(self, manager: DownloadManager):
         super().__init__()
         self.route = "/merge-author-content"
+        self.padding = self.spacing = 0
+        self.active = True
+        self.busy = False
         self.settings = None
-        self.destination_folder_valid = False
-        self.action_type = ft.Dropdown(
-            width=500,
-            border=ft.OutlineInputBorder(
-                side=ft.BorderSide(color=ft.Colors.TRANSPARENT)
-            ),
-            filled=True,
-            fill_color=ft.Colors.SURFACE_CONTAINER,
-            label="Action",
-            value="copy",
-            options=[
-                ft.DropdownOption(key="copy", text="Copy"),
-                ft.DropdownOption(key="move", text="Move"),
-            ],
-        )
+        self.load_task = self.operation_task = None
+        self.destination_path = None
+        self.action_type = "copy"
         self.authors_dropdown = ft.Dropdown(
-            width=500,
-            label="Choose author's folder",
-            border=ft.OutlineInputBorder(
-                side=ft.BorderSide(color=ft.Colors.TRANSPARENT)
-            ),
+            expand=True,
+            text_size=13,
+            dense=True,
             filled=True,
-            fill_color=ft.Colors.SURFACE_CONTAINER,
+            fill_color=ft.Colors.SURFACE,
+            hint_text="Choose an author",
+            disabled=True,
+            border=ft.OutlineInputBorder(
+                side=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT), border_radius=9
+            ),
             on_select=self.update_state,
         )
-        self.current_merge_folder_text = ft.Text(
-            value="Choose destination folder",
-            size=20,
-            color=ft.Colors.ON_SURFACE_VARIANT,
-            width=430,
-            overflow=ft.TextOverflow.ELLIPSIS,
-            max_lines=1,
+        self.source_help = ft.Text(
+            "Loading author folders…", size=12, color=ft.Colors.ON_SURFACE_VARIANT
         )
-        self.destination_folder_picker = ft.Button(
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=5)),
-            width=500,
-            content=ft.Container(
-                height=50,
-                padding=ft.Padding.all(5),
-                content=ft.Row(
-                    spacing=10,
-                    controls=[
-                        ft.Icon(
-                            ft.Icons.FOLDER, size=20, color=ft.Colors.ON_SURFACE_VARIANT
-                        ),
-                        self.current_merge_folder_text,
-                    ],
-                ),
+        self.action_help = ft.Text(
+            "Keep files in their original post folders.",
+            size=12,
+            color=ft.Colors.ON_SURFACE_VARIANT,
+        )
+        self.action_buttons = {
+            "copy": ft.OutlinedButton(
+                "Copy",
+                icon=ft.Icon(ft.Icons.COPY_OUTLINED, size=16),
+                expand=True,
+                height=36,
+                on_click=lambda e: self.select_action("copy"),
             ),
-            on_click=self.pick_destination_folder,
+            "move": ft.OutlinedButton(
+                "Move",
+                icon=ft.Icon(ft.Icons.DRIVE_FILE_MOVE_OUTLINED, size=16),
+                expand=True,
+                height=36,
+                on_click=lambda e: self.select_action("move"),
+            ),
+        }
+        self.action_selector = ft.Container(
+            padding=3,
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=9,
+            bgcolor=ft.Colors.SURFACE,
+            content=ft.Row(list(self.action_buttons.values()), spacing=0),
+        )
+        self.current_merge_folder_text = ft.Text("Choose a destination folder", size=13)
+        self.destination_folder_picker = ft.OutlinedButton(
+            "Change", style=button_style(), on_click=self.pick_destination_folder
         )
         self.merge_photos_check = ft.Checkbox(
-            label="Photos", value=False, on_change=self.update_state
+            label="Photos",
+            value=True,
+            label_style=ft.TextStyle(size=13),
+            on_change=self.update_state,
         )
         self.merge_videos_check = ft.Checkbox(
-            label="Videos", value=False, on_change=self.update_state
+            label="Videos",
+            value=True,
+            label_style=ft.TextStyle(size=13),
+            on_change=self.update_state,
         )
         self.merge_audios_check = ft.Checkbox(
-            label="Audios", value=False, on_change=self.update_state
+            label="Audio",
+            value=False,
+            label_style=ft.TextStyle(size=13),
+            on_change=self.update_state,
         )
+        self.content_tiles = [
+            self.content_tile(self.merge_photos_check, ft.Icons.IMAGE_OUTLINED),
+            self.content_tile(self.merge_videos_check, ft.Icons.VIDEOCAM_OUTLINED),
+            self.content_tile(self.merge_audios_check, ft.Icons.MUSIC_NOTE_OUTLINED),
+        ]
         self.add_post_title_to_filename = ft.Checkbox(
-            label="Add post title to filename", value=False, width=200
+            label="Add post title to filenames",
+            value=False,
+            label_style=ft.TextStyle(size=13),
+            on_change=self.update_state,
         )
         self.proceed_button = ft.Button(
-            "Proceed", width=200, height=50, disabled=True, on_click=self.do_merge
+            "Copy content",
+            icon=ft.Icons.DRIVE_FILE_MOVE_OUTLINED,
+            height=42,
+            style=button_style(primary=True),
+            disabled=True,
+            on_click=self.do_merge,
         )
-        self.controls = [
-            components.AppBar(manager),
-            ft.Row(
-                [
-                    ft.Text("Content merger", size=24, weight=ft.FontWeight.BOLD),
-                ]
-            ),
-            ft.Row(
-                [
+        self.status_text = ft.Text("", size=13, weight=ft.FontWeight.W_500)
+        self.description_text = ft.Text("", size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+        self.status_icon = ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE, size=19)
+        self.progress_ring = ft.ProgressRing(
+            width=19, height=19, stroke_width=2, visible=False
+        )
+        self.feedback = ft.Container(
+            visible=False,
+            padding=ft.Padding.only(top=20),
+            border=ft.Border.only(top=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT)),
+            content=ft.Row(
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                controls=[
+                    self.status_icon,
+                    self.progress_ring,
                     ft.Column(
-                        [
-                            ft.Text(
-                                "Transfer content from the author's post folders to one folder"
-                            ),
-                            self.action_type,
-                            self.authors_dropdown,
-                            ft.Icon(ft.Icons.ARROW_DOWNWARD),
-                            self.destination_folder_picker,
-                            ft.Row(
-                                [
-                                    self.merge_photos_check,
-                                    self.merge_videos_check,
-                                    self.merge_audios_check,
+                        [self.status_text, self.description_text],
+                        spacing=5,
+                        expand=True,
+                    ),
+                ],
+            ),
+        )
+        self.form = soft_card(
+            ft.Column(
+                spacing=24,
+                controls=[
+                    ft.Row(
+                        spacing=14,
+                        controls=[
+                            soft_icon(ft.Icons.DRIVE_FILE_MOVE_OUTLINED, 40),
+                            ft.Column(
+                                expand=True,
+                                spacing=5,
+                                controls=[
+                                    ft.Text(
+                                        "Organize your files",
+                                        size=15,
+                                        weight=ft.FontWeight.W_500,
+                                    ),
+                                    ft.Text(
+                                        "Choose a source, a destination and the content to include.",
+                                        size=12,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
                                 ],
-                                spacing=15,
-                                alignment=ft.MainAxisAlignment.CENTER,
+                            ),
+                        ],
+                    ),
+                    ft.ResponsiveRow(
+                        spacing=22,
+                        run_spacing=22,
+                        controls=[
+                            ft.Column(
+                                col={"xs": 12, "sm": 6},
+                                spacing=10,
+                                controls=[
+                                    self.label("Author folder"),
+                                    ft.Row([self.authors_dropdown]),
+                                    self.source_help,
+                                ],
+                            ),
+                            ft.Column(
+                                col={"xs": 12, "sm": 6},
+                                spacing=10,
+                                controls=[
+                                    self.label("Action"),
+                                    self.action_selector,
+                                    self.action_help,
+                                ],
+                            ),
+                        ],
+                    ),
+                    self.divider(),
+                    ft.Row(
+                        spacing=14,
+                        controls=[
+                            ft.Icon(
+                                ft.Icons.FOLDER_OUTLINED,
+                                size=20,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            ft.Column(
+                                expand=True,
+                                spacing=5,
+                                controls=[
+                                    ft.Text(
+                                        "Destination folder",
+                                        size=12,
+                                        color=ft.Colors.ON_SURFACE_VARIANT,
+                                    ),
+                                    self.current_merge_folder_text,
+                                ],
+                            ),
+                            self.destination_folder_picker,
+                        ],
+                    ),
+                    self.divider(),
+                    ft.Column(
+                        spacing=14,
+                        controls=[
+                            self.label("Content to include"),
+                            ft.ResponsiveRow(
+                                self.content_tiles, spacing=10, run_spacing=10
                             ),
                             self.add_post_title_to_filename,
-                            self.proceed_button,
+                            ft.Text(
+                                "Existing files in the destination folder are skipped.",
+                                size=12,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
                         ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        expand=True,
-                        spacing=20,
-                    )
+                    ),
+                    ft.Row(
+                        spacing=16,
+                        run_spacing=10,
+                        wrap=True,
+                        controls=[
+                            self.proceed_button,
+                            ft.Text(
+                                "Works with files already downloaded.",
+                                size=12,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                        ],
+                    ),
+                    self.feedback,
                 ],
-                expand=True,
             ),
+            padding=28,
+        )
+        self.toolbar = components.AppBar(manager)
+        self.controls = [
+            page_shell(
+                self.toolbar,
+                ft.Column(
+                    spacing=20,
+                    controls=[
+                        ft.Column(
+                            spacing=6,
+                            controls=[
+                                ft.Text(
+                                    "Merge content", size=24, weight=ft.FontWeight.W_500
+                                ),
+                                ft.Text(
+                                    "Collect an author's downloaded files in one folder.",
+                                    size=13,
+                                    color=ft.Colors.ON_SURFACE_VARIANT,
+                                ),
+                            ],
+                        ),
+                        self.form,
+                    ],
+                ),
+                ft.Text(
+                    f"{app_version.NAME} · {app_version.VERSION}",
+                    size=11,
+                    expand=True,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
+                ),
+                ft.Icons.INFO_OUTLINE,
+                self.go_to_feedback,
+                width=688,
+            )
         ]
+        self.update_state(refresh=False)
 
-    def build(self):
-        asyncio.create_task(self.load_main_options())
+    @staticmethod
+    def label(text):
+        return ft.Text(text, size=13, weight=ft.FontWeight.W_500)
+
+    @staticmethod
+    def divider():
+        return ft.Divider(height=1, color=ft.Colors.OUTLINE_VARIANT)
+
+    @staticmethod
+    def content_tile(checkbox, icon):
+        checkbox.expand = True
+        return ft.Container(
+            col={"xs": 12, "sm": 4},
+            padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+            border_radius=10,
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+            content=ft.Row([ft.Icon(icon, size=17), checkbox], spacing=2),
+        )
+
+    def refresh(self):
+        if self.active:
+            self.update()
+
+    def did_mount(self):
+        self.load_task = asyncio.create_task(self.load_main_options())
+
+    def will_unmount(self):
+        self.active = False
+        if self.load_task and not self.load_task.done():
+            self.load_task.cancel()
+        # An in-flight file transfer finishes; no new transfers start after leaving.
 
     async def load_main_options(self):
-        self.settings = await get_download_settings()
-        folders = []
-        folder = Path(self.settings.downloads_folder)
-        if folder.exists():
-            folders = [d.name for d in folder.iterdir() if d.is_dir()]
-        self.authors_dropdown.options = [
-            ft.DropdownOption(key=str(i), text=str(i)) for i in folders
-        ]
-        self.page.update()
+        try:
+            self.settings = await get_download_settings()
+            if not self.settings:
+                raise ValueError("Download folder unavailable")
+            folder = Path(self.settings.downloads_folder)
+            folders = await asyncio.to_thread(
+                lambda: (
+                    sorted(d.name for d in folder.iterdir() if d.is_dir())
+                    if folder.is_dir()
+                    else []
+                )
+            )
+            if not self.active:
+                return
+            self.authors_dropdown.options = [
+                ft.DropdownOption(key=name, text=name) for name in folders
+            ]
+            self.authors_dropdown.disabled = not folders
+            self.update_state()
+        except Exception:
+            logger.exception("Could not load author folders")
+            self.source_help.value = "Author folders unavailable."
+            self.show_feedback(
+                "Couldn't load author folders.",
+                "Check your download folder in Settings, then reopen this page.",
+                error=True,
+            )
 
-    async def update_state(self):
-        self.proceed_button.disabled = not (
-            self.destination_folder_valid
-            and self.authors_dropdown.value
+    def select_action(self, action):
+        if not self.busy and action in self.action_buttons:
+            self.action_type = action
+            self.update_state()
+
+    def update_state(self, e=None, refresh=True):
+        self.feedback.visible = False
+        selected_author = self.authors_dropdown.value
+        if self.settings and selected_author:
+            path = Path(self.settings.downloads_folder) / selected_author
+            self.source_help.value = self.display_path(path)
+            self.source_help.tooltip = str(path)
+        elif self.settings:
+            self.source_help.value = (
+                "Choose an author's downloaded folder."
+                if self.authors_dropdown.options
+                else "No downloaded authors found. Download a post first."
+            )
+        for key, button in self.action_buttons.items():
+            selected = key == self.action_type
+            button.style = ft.ButtonStyle(
+                color=ft.Colors.ON_SURFACE
+                if selected
+                else ft.Colors.ON_SURFACE_VARIANT,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST
+                if selected
+                else ft.Colors.TRANSPARENT,
+                side=ft.BorderSide(1 if selected else 0, ft.Colors.OUTLINE_VARIANT),
+                shape=ft.RoundedRectangleBorder(radius=7),
+                padding=ft.Padding.symmetric(horizontal=10, vertical=6),
+                text_style=ft.TextStyle(size=13, weight=ft.FontWeight.W_500),
+            )
+        self.action_help.value = (
+            "Keep files in their original post folders."
+            if self.action_type == "copy"
+            else "Transfer files out of their original post folders."
+        )
+        self.proceed_button.content = (
+            "Copy content" if self.action_type == "copy" else "Move content"
+        )
+        self.proceed_button.disabled = self.busy or not (
+            self.settings
+            and selected_author
+            and self.destination_path
             and any(
-                (
-                    self.merge_photos_check.value,
-                    self.merge_videos_check.value,
-                    self.merge_audios_check.value,
+                check.value
+                for check in (
+                    self.merge_photos_check,
+                    self.merge_videos_check,
+                    self.merge_audios_check,
                 )
             )
         )
-        self.page.update()
+        for tile, checkbox in zip(
+            self.content_tiles,
+            (self.merge_photos_check, self.merge_videos_check, self.merge_audios_check),
+        ):
+            tile.bgcolor = (
+                ft.Colors.PRIMARY_CONTAINER if checkbox.value else ft.Colors.SURFACE
+            )
+            tile.content.controls[0].color = (
+                ft.Colors.PRIMARY if checkbox.value else ft.Colors.ON_SURFACE_VARIANT
+            )
+        if refresh:
+            self.refresh()
 
-    async def pick_destination_folder(self):
-        path = await ft.FilePicker().get_directory_path()
-        if path and self.settings and self.settings.downloads_folder != path:
-            self.current_merge_folder_text.value = path
-            self.destination_folder_valid = True
-            await self.update_state()
+    @staticmethod
+    def display_path(path):
+        label, home = str(path), str(Path.home())
+        return "~" + label[len(home) :] if label.startswith(home + "/") else label
 
-    async def do_merge(self):
-        source_folder = (
-            Path(self.settings.downloads_folder) / self.authors_dropdown.value
-        )
-        destination_folder = Path(self.current_merge_folder_text.value)
-        if not source_folder.exists() or not destination_folder.exists():
+    async def pick_destination_folder(self, e=None):
+        if self.busy:
             return
-        self.disabled = True
-        self.proceed_button.text = "Working..."
-        self.page.update()
-        await asyncio.sleep(2)
-        posts = os.listdir(source_folder)
+        try:
+            path = await ft.FilePicker().get_directory_path()
+            if not path or not self.active:
+                return
+            destination = Path(path)
+            if not destination.is_dir() or (
+                self.settings
+                and destination.resolve()
+                == Path(self.settings.downloads_folder).resolve()
+            ):
+                self.show_feedback(
+                    "Choose a different destination folder.",
+                    "Select an existing folder other than the main download folder.",
+                    error=True,
+                )
+                return
+            self.destination_path = destination
+            self.current_merge_folder_text.value = self.display_path(destination)
+            self.current_merge_folder_text.tooltip = str(destination)
+            self.update_state()
+        except Exception:
+            logger.exception("Could not choose merge destination")
+            self.show_feedback(
+                "Couldn't open the folder picker.", "Please try again.", error=True
+            )
+
+    def show_feedback(self, title, detail, error=False, busy=False):
+        self.feedback.visible = True
+        self.status_text.value = title
+        self.description_text.value = detail
+        self.status_icon.icon = (
+            ft.Icons.ERROR_OUTLINE if error else ft.Icons.CHECK_CIRCLE_OUTLINE
+        )
+        self.status_icon.color = ft.Colors.ERROR if error else ft.Colors.PRIMARY
+        self.status_icon.visible = not busy
+        self.progress_ring.visible = busy
+        self.refresh()
+
+    async def do_merge(self, e=None):
+        if self.busy:
+            return
+        selected = {
+            key: extensions
+            for key, extensions, checkbox in (
+                ("photos", PHOTO_EXTENSIONS, self.merge_photos_check),
+                ("videos", VIDEO_EXTENSIONS, self.merge_videos_check),
+                ("audios", AUDIO_EXTENSIONS, self.merge_audios_check),
+            )
+            if checkbox.value
+        }
+        author = self.authors_dropdown.value
+        if not self.settings or not author or not selected or not self.destination_path:
+            self.show_feedback(
+                "Choose a source, destination and content.",
+                "Select an author folder, a destination and at least one content type.",
+                error=True,
+            )
+            return
+        source = Path(self.settings.downloads_folder) / author
+        destination = self.destination_path
+        if not source.is_dir() or not destination.is_dir():
+            self.show_feedback(
+                "A selected folder is unavailable.",
+                "Check the source and destination folders, then try again.",
+                error=True,
+            )
+            return
+        action = self.action_type
+        add_title = self.add_post_title_to_filename.value
         stats = {
             "posts": 0,
             "photos": 0,
             "videos": 0,
             "audios": 0,
+            "skipped": 0,
+            "failed": 0,
         }
-        need_photos = self.merge_photos_check.value
-        need_videos = self.merge_videos_check.value
-        need_audios = self.merge_audios_check.value
-        photo_extensions = {
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".tiff",
-            ".webp",
-            ".heic",
-            ".raw",
-        }
-        video_extensions = {
-            ".mp4",
-            ".avi",
-            ".mov",
-            ".mkv",
-            ".wmv",
-            ".flv",
-            ".webm",
-            ".m4v",
-            ".mpg",
-            ".mpeg",
-        }
-        audio_extensions = {
-            ".mp3",
-            ".wav",
-            ".flac",
-            ".aac",
-            ".ogg",
-            ".wma",
-            ".m4a",
-            ".aiff",
-        }
-        action = self.action_type.value
-        add_post_filename = self.add_post_title_to_filename.value
-        for post in posts:
-            if post == ".DS_Store":
-                continue
-            post_directory = source_folder / post
-            if not os.path.isdir(post_directory):
-                continue
-            stats["posts"] += 1
-            for filename in os.listdir(post_directory):
-                source_path = source_folder / post / filename
-                if not os.path.isfile(source_path):
-                    continue
-                file_ext = source_path.suffix.lower()
-
-                file_type = None
-                if need_photos and file_ext in photo_extensions:
-                    file_type = "photos"
-                elif need_videos and file_ext in video_extensions:
-                    file_type = "videos"
-                elif need_audios and file_ext in audio_extensions:
-                    file_type = "audios"
-
-                if not file_type:
-                    continue
-
-                if add_post_filename:
-                    target_path = destination_folder / (post + "_" + filename)
-                else:
-                    target_path = destination_folder / filename
-                if target_path.exists():
-                    continue
-
-                try:
-                    if action == "copy":
-                        logger.info(f"Copying {source_path} to {target_path}")
-                        shutil.copy(source_path, target_path)
-                    else:
-                        logger.info(f"Moving {source_path} to {target_path}")
-                        shutil.move(source_path, target_path)
-                    stats[file_type] += 1
-                except Exception as e:
-                    logger.error("Error on moving file", exc_info=e)
-        text_result = "Copied" if action == "copy" else "Moved"
-        text_result += f" {stats['photos']} photos, {stats['videos']} videos, {stats['audios']} audios from {stats['posts']} posts."
-        self.page.show_dialog(
-            ft.AlertDialog(
-                title=ft.Text("Done"),
-                content=ft.Text(text_result),
-                actions=[ft.TextButton("Ok", on_click=self.page.pop_dialog)],
-                open=True,
-            )
+        self.operation_task = asyncio.current_task()
+        self.busy = self.form.disabled = True
+        self.show_feedback(
+            "Copying files…" if action == "copy" else "Moving files…",
+            str(destination),
+            busy=True,
         )
-        self.disabled = False
-        self.proceed_button.text = "Proceed"
-        self.page.update()
+        try:
+            posts = await asyncio.to_thread(lambda: sorted(source.iterdir()))
+            for post in posts:
+                if not self.active:
+                    break
+                if not post.is_dir():
+                    continue
+                stats["posts"] += 1
+                files = await asyncio.to_thread(
+                    lambda post=post: sorted(post.iterdir())
+                )
+                for file in files:
+                    if not self.active:
+                        break
+                    if not file.is_file():
+                        continue
+                    kind = next(
+                        (
+                            key
+                            for key, extensions in selected.items()
+                            if file.suffix.lower() in extensions
+                        ),
+                        None,
+                    )
+                    if not kind:
+                        continue
+                    target = destination / (
+                        f"{post.name}_{file.name}" if add_title else file.name
+                    )
+                    if target.exists():
+                        stats["skipped"] += 1
+                        continue
+                    try:
+                        await asyncio.to_thread(
+                            shutil.copy if action == "copy" else shutil.move,
+                            file,
+                            target,
+                        )
+                        stats[kind] += 1
+                    except OSError:
+                        stats["failed"] += 1
+                        logger.exception("Could not transfer file: %s", file)
+            verb = "Copied" if action == "copy" else "Moved"
+            detail = f"{verb} {stats['photos']} photos, {stats['videos']} videos and {stats['audios']} audio files from {stats['posts']} post folders."
+            if stats["skipped"]:
+                detail += f" Skipped {stats['skipped']} existing files."
+            if stats["failed"]:
+                detail += f" {stats['failed']} files could not be transferred."
+            self.show_feedback(
+                "Some files couldn't be transferred."
+                if stats["failed"]
+                else ("Content copied." if action == "copy" else "Content moved."),
+                detail,
+                error=bool(stats["failed"]),
+            )
+        except Exception:
+            logger.exception("Could not merge content")
+            self.show_feedback(
+                "Couldn't finish merging content.",
+                "Check the folders and their permissions, then try again. Files already transferred are preserved.",
+                error=True,
+            )
+        finally:
+            self.busy = self.form.disabled = False
+            self.progress_ring.visible = False
+            self.operation_task = None
+            self.refresh()
+
+    async def go_to_feedback(self, e=None):
+        await self.page.push_route("/feedback-and-bugs")
