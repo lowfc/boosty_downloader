@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from enum import Enum
 
 import flet as ft
@@ -26,10 +26,12 @@ theme_names = {
 
 @ft.control
 class ThemePicker(ft.Column):
-    """Choose a draft theme; the settings form owns preview and persistence."""
+    """Choose an appearance; the settings form owns persistence."""
 
     def __init__(
-        self, on_theme_change: Callable[[str], None] | None = None, localizer=None
+        self,
+        on_theme_change: Callable[[str], Awaitable[None]] | None = None,
+        localizer=None,
     ):
         super().__init__()
         self.localizer = localizer or Localizer()
@@ -44,7 +46,8 @@ class ThemePicker(ft.Column):
                 icon=theme_icons[mode],
                 height=44,
                 expand=True,
-                on_click=lambda e, selected=mode.value: self.select(selected),
+                on_click=self.choose_theme,
+                data=mode.value,
             )
         self.help_text = ft.Text(size=12, color=ft.Colors.ON_SURFACE_VARIANT)
         self.controls = [
@@ -87,9 +90,12 @@ class ThemePicker(ft.Column):
             )
         )
 
-    def select(self, value):
+    async def choose_theme(self, e):
+        await self.select(e.control.data)
+
+    async def select(self, value):
         self.set_value(value)
         if self.on_theme_change:
-            self.on_theme_change(self.value)
+            await self.on_theme_change(self.value)
         else:
             self.update()

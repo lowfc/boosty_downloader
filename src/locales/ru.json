@@ -211,7 +211,6 @@
   "Follows your system appearance.": "Используется тема системы.",
   "{theme} appearance selected.": "Выбрана {theme} тема.",
   "Language": "Язык",
-  "Applies after saving changes.": "Применяется после сохранения изменений.",
   "Content": "Контент",
   "Choose what to download from each post.": "Выберите, что скачивать из каждого поста.",
   "Download photos": "Скачивать фото",
@@ -242,16 +241,11 @@
   "Download timeout (seconds)": "Тайм-аут загрузки (секунды)",
   "How long to wait for a response.": "Время ожидания ответа.",
   "Loading settings…": "Загрузка настроек…",
-  "Save changes": "Сохранить изменения",
-  "You have unsaved changes.": "Есть несохранённые изменения.",
-  "No unsaved changes.": "Нет несохранённых изменений.",
   "Couldn't choose a folder. Please try again.": "Не удалось выбрать папку. Попробуйте ещё раз.",
   "Couldn't load settings. Reopen this page to try again.": "Не удалось загрузить настройки. Откройте страницу заново.",
-  "Check the highlighted settings before saving.": "Перед сохранением проверьте выделенные настройки.",
   "Saving changes…": "Сохранение изменений…",
   "Changes saved.": "Изменения сохранены.",
   "Couldn't save settings. Please try again.": "Не удалось сохранить настройки. Попробуйте ещё раз.",
-  "Some settings couldn't be restored. Please save again.": "Не удалось восстановить некоторые настройки. Сохраните их ещё раз.",
   "Some downloads are incomplete": "Некоторые загрузки не завершены",
   "Are you sure you want to exit the app?": "Вы уверены, что хотите выйти из приложения?",
   "No": "Нет",
@@ -318,5 +312,8 @@
     "few": "{count} поста добавлены в загрузки.",
     "many": "{count} постов добавлены в загрузки."
   },
-  "Action": "Действие"
+  "Action": "Действие",
+  "Changes are saved automatically.": "Изменения сохраняются автоматически.",
+  "Waiting to save…": "Ожидание сохранения…",
+  "Check the highlighted settings.": "Проверьте выделенные настройки."
 }

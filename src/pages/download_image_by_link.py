@@ -24,10 +24,6 @@ class DownloadImageByLinkPage(PostDownloadForm):
             localizer=localizer,
         )
         self.destination_path = None
-        self.text_field.height = 44
-        self.text_field.content_padding = ft.Padding.symmetric(
-            horizontal=14, vertical=14
-        )
         self.destination_folder_picker = ft.OutlinedButton(
             self.tr("Change"),
             style=button_style(),

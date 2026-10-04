@@ -12,7 +12,7 @@ from pathlib import Path
 import flet as ft
 
 LANGUAGE_KEY = "current-app-language"
-SUPPORTED_LANGUAGES = {"en": "English", "ru": "Русский"}
+SUPPORTED_LANGUAGES = {"en": "🇬🇧 English", "ru": "🇷🇺 Русский"}
 logger = logging.getLogger(__name__)
 
 

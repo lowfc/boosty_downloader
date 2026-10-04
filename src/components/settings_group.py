@@ -1,5 +1,6 @@
 import asyncio
-from collections.abc import Callable
+import inspect
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 import flet as ft
@@ -19,28 +20,40 @@ class SettingsGroup(ft.Column):
     def __init__(
         self,
         manager: DownloadManager | None = None,
-        on_theme_preview: Callable[[str], None] | None = None,
         localizer=None,
-        on_language_change: Callable[[str], None] | None = None,
+        on_language_change: Callable[[str], Awaitable[None] | None] | None = None,
     ):
         super().__init__()
         self.localizer = localizer or Localizer()
         self.tr = self.localizer.t
         self.manager = manager
-        self.on_theme_preview = on_theme_preview
         self.on_language_change = on_language_change
         self.spacing = 18
         self.loaded = self.busy = False
         self.active = True
         self.load_task = None
+        self.save_lock = asyncio.Lock()
+        self.pending_values = {}
+        self.failed_keys = set()
+        self.debounce_tasks = {}
+        self.closing = False
+        self.save_delay = 2
         self.host_page = None
         self.saved_values = None
         self.folder = ""
-        self.theme_picker = ThemePicker(self.preview_theme, localizer=self.localizer)
+        self.theme_picker = ThemePicker(self.change_theme, localizer=self.localizer)
         self.language_dropdown = self.dropdown(
             self.tr("Language"), list(SUPPORTED_LANGUAGES.items())
         )
         self.language_dropdown.value = self.localizer.language
+        self.language_dropdown.expand = True
+        self.language_dropdown.text_style = ft.TextStyle(
+            size=13, font_family_fallback=["LanguageFlags"]
+        )
+        for option in self.language_dropdown.options:
+            option.content = ft.Text(
+                option.text, size=13, font_family_fallback=["LanguageFlags"]
+            )
         self.current_download_folder_text = ft.Text(
             self.tr("Loading download folder…"), size=13, expand=True
         )
@@ -160,8 +173,15 @@ class SettingsGroup(ft.Column):
                     spacing=9,
                     controls=[
                         self.label(self.tr("Language")),
-                        self.language_dropdown,
-                        self.hint(self.tr("Applies after saving changes.")),
+                        ft.Row(
+                            spacing=10,
+                            controls=[
+                                self.language_dropdown,
+                                ft.Container(expand=True),
+                                ft.Container(expand=True),
+                            ],
+                        ),
+                        self.hint(self.tr("Changes are saved automatically.")),
                     ],
                 ),
             ],
@@ -274,13 +294,11 @@ class SettingsGroup(ft.Column):
             expand=True,
             text_align=ft.TextAlign.RIGHT,
         )
-        self.save_button = ft.Button(
-            self.tr("Save changes"),
-            icon=ft.Icons.CHECK,
-            height=42,
-            style=button_style(primary=True),
-            on_click=self.apply_settings,
-            disabled=True,
+        self.retry_button = ft.TextButton(
+            self.tr("Retry"),
+            icon=ft.Icons.REFRESH,
+            on_click=self.flush_pending_saves,
+            visible=False,
         )
         self.controls = [
             self.general_card,
@@ -289,10 +307,24 @@ class SettingsGroup(ft.Column):
             ft.Container(
                 padding=ft.Padding.only(top=6),
                 content=ft.Row(
-                    spacing=16, controls=[self.status_text, self.save_button]
+                    spacing=16, controls=[self.status_text, self.retry_button]
                 ),
             ),
         ]
+        self.setting_controls = {
+            "download-folder": self.folder_button,
+            "current-app-theme": self.theme_picker,
+            LANGUAGE_KEY: self.language_dropdown,
+            "need-download-photos": self.switch_download_photos,
+            "need-download-videos": self.switch_download_videos,
+            "need-download-audios": self.switch_download_audios,
+            "need-download-files": self.switch_download_files,
+            "download-chunk-size": self.chunk_size_textfield,
+            "download-timeout": self.download_timeout_textfield,
+            "download-max-parallelism": self.max_parallelism_textfield,
+            "post-text-format": self.post_text_format_dropdown,
+            "preferred-video-size": self.video_size_dropdown,
+        }
         self.set_editing_enabled(False)
 
     @staticmethod
@@ -344,7 +376,7 @@ class SettingsGroup(ft.Column):
         return ft.Switch(
             value=True,
             tooltip=label,
-            on_change=self.mark_changed,
+            on_change=self.save_control,
             active_color=ft.Colors.ON_PRIMARY,
             active_track_color=ft.Colors.PRIMARY,
             track_outline_width=0,
@@ -364,7 +396,7 @@ class SettingsGroup(ft.Column):
                 side=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT), border_radius=9
             ),
             options=[ft.DropdownOption(key=key, text=text) for key, text in options],
-            on_select=self.mark_changed,
+            on_select=self.save_control,
         )
 
     def number_field(self, label):
@@ -382,8 +414,7 @@ class SettingsGroup(ft.Column):
             ),
             input_filter=ft.NumbersOnlyInputFilter(),
             keyboard_type=ft.KeyboardType.NUMBER,
-            on_change=self.mark_changed,
-            on_submit=self.apply_settings,
+            on_change=self.schedule_text_save,
         )
 
     def refresh(self):
@@ -426,25 +457,74 @@ class SettingsGroup(ft.Column):
             ft.Colors.ERROR if error else ft.Colors.ON_SURFACE_VARIANT
         )
 
-    def mark_changed(self, e=None):
-        if not self.loaded or self.busy:
-            return
-        if e and hasattr(e.control, "error"):
-            e.control.error = None
-        dirty = self.draft_values() != self.saved_values
-        self.save_button.disabled = not dirty
+    def queue_change(self, key):
+        if not self.loaded or not self.active or self.closing:
+            return False
+        value = self.draft_values()[key]
+        # Keep even a reverted value while a write is in progress: it must follow
+        # the in-flight write rather than disappear against the old saved value.
+        if value == self.saved_values[key] and not self.busy:
+            self.pending_values.pop(key, None)
+            self.failed_keys.discard(key)
+        else:
+            self.pending_values[key] = value
         self.video_size_dropdown.disabled = not self.switch_download_videos.value
+        self.retry_button.visible = bool(self.failed_keys)
         self.status(
-            self.tr("You have unsaved changes.")
-            if dirty
-            else self.tr("No unsaved changes.")
+            (
+                self.tr("Couldn't save settings. Please try again.")
+                if self.failed_keys
+                else (
+                    self.tr("Waiting to save…")
+                    if self.pending_values
+                    else self.tr("Changes saved.")
+                )
+            ),
+            error=bool(self.failed_keys),
         )
         self.refresh()
+        return True
 
-    def preview_theme(self, value):
-        if self.on_theme_preview:
-            self.on_theme_preview(value)
-        self.mark_changed()
+    def key_for_control(self, control):
+        return next(
+            key for key, item in self.setting_controls.items() if item is control
+        )
+
+    async def save_control(self, e):
+        key = self.key_for_control(e.control)
+        if self.queue_change(key):
+            await self.save_pending([key])
+
+    async def change_theme(self, value):
+        if self.queue_change("current-app-theme"):
+            await self.save_pending(["current-app-theme"])
+
+    def schedule_text_save(self, e):
+        key = self.key_for_control(e.control)
+        e.control.error = None
+        if not self.queue_change(key):
+            return
+        task = self.debounce_tasks.pop(key, None)
+        if task:
+            task.cancel()
+        if key in self.pending_values:
+            self.debounce_tasks[key] = asyncio.create_task(self.delayed_save(key))
+
+    async def delayed_save(self, key):
+        await asyncio.sleep(self.save_delay)
+        # Once persistence starts, typing may schedule another timer but must
+        # never cancel a partially completed write.
+        self.debounce_tasks.pop(key, None)
+        await self.save_pending([key])
+
+    async def flush_pending_saves(self, e=None):
+        tasks = list(self.debounce_tasks.values())
+        self.debounce_tasks.clear()
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        await self.save_pending(list(self.pending_values))
 
     def toggle_advanced(self, e=None):
         self.advanced_fields.visible = not self.advanced_fields.visible
@@ -465,7 +545,7 @@ class SettingsGroup(ft.Column):
         self.current_download_folder_text.tooltip = self.folder
 
     async def pick_download_folder(self, e=None):
-        if not self.loaded or self.busy:
+        if not self.loaded or self.closing:
             return
         try:
             path = await ft.FilePicker().get_directory_path(
@@ -474,7 +554,8 @@ class SettingsGroup(ft.Column):
             if path and self.active:
                 self.folder = path
                 self.show_folder()
-                self.mark_changed()
+                if self.queue_change("download-folder"):
+                    await self.save_pending(["download-folder"])
         except Exception:
             logger.exception("Could not select download folder")
             self.status(
@@ -490,13 +571,8 @@ class SettingsGroup(ft.Column):
         self.active = False
         if self.load_task and not self.load_task.done():
             self.load_task.cancel()
-
-    def discard_theme_preview(self):
-        # Restore appearance before the router builds the next view.
-        if self.host_page and self.saved_values:
-            self.host_page.theme_mode = ft.ThemeMode(
-                self.saved_values["current-app-theme"]
-            )
+        if self.pending_values or self.debounce_tasks:
+            asyncio.create_task(self.flush_pending_saves())
 
     async def set_initial_values(self):
         try:
@@ -529,7 +605,7 @@ class SettingsGroup(ft.Column):
             self.saved_values = self.draft_values()
             self.loaded = True
             self.set_editing_enabled(True)
-            self.status(self.tr("No unsaved changes."))
+            self.status(self.tr("Changes are saved automatically."))
         except Exception:
             logger.exception("Could not load settings")
             self.status(
@@ -538,106 +614,115 @@ class SettingsGroup(ft.Column):
             )
         self.refresh()
 
-    def validate(self):
-        valid = (
-            bool(self.folder) and self.language_dropdown.value in SUPPORTED_LANGUAGES
-        )
+    def validated_value(self, key, value):
+        control = self.setting_controls[key]
         for field, minimum, maximum in self.numeric_fields:
+            if control is not field:
+                continue
             try:
-                number = int(field.value)
-                within_range = minimum <= number <= maximum
+                number = int(value)
+                valid = minimum <= number <= maximum
             except (TypeError, ValueError):
-                within_range = False
-            field.error = None if within_range else f"{minimum:,}–{maximum:,}"
-            if not within_range:
                 valid = False
-                if field is not self.max_parallelism_textfield:
-                    self.advanced_fields.visible = True
-                    self.advanced_button.icon = ft.Icons.EXPAND_LESS
-        if not valid:
-            self.status(
-                self.tr("Check the highlighted settings before saving."), error=True
-            )
-        return valid
+            field.error = None if valid else f"{minimum:,}–{maximum:,}"
+            if valid:
+                return str(number)
+            if field is not self.max_parallelism_textfield:
+                self.advanced_fields.visible = True
+                self.advanced_button.icon = ft.Icons.EXPAND_LESS
+            return None
+        if key == LANGUAGE_KEY and value not in SUPPORTED_LANGUAGES:
+            return None
+        if key == "download-folder" and not value:
+            return None
+        return value
 
-    async def apply_settings(self, e=None):
-        if not self.loaded or self.busy or self.draft_values() == self.saved_values:
-            return
-        if not self.validate():
-            self.refresh()
-            return
-        values = self.draft_values()
-        for key in (
-            "download-chunk-size",
-            "download-timeout",
-            "download-max-parallelism",
-        ):
-            values[key] = str(int(values[key]))
-        self.busy = True
-        self.set_editing_enabled(False)
-        self.save_button.disabled = True
-        self.status(self.tr("Saving changes…"))
-        self.refresh()
-        preferences = ft.SharedPreferences()
-        previous = {}
-        attempted = []
+    async def save_pending(self, keys):
         language_changed = False
-        try:
-            for key in values:
-                previous[key] = await preferences.get(key)
-            for key, value in values.items():
-                attempted.append(key)
-                if await preferences.set(key, value) is False:
-                    raise OSError(f"Could not save setting {key}")
-            if self.manager:
-                await self.manager.set_maximum_concurrency(
-                    int(values["download-max-parallelism"])
-                )
-            self.chunk_size_textfield.value = values["download-chunk-size"]
-            self.download_timeout_textfield.value = values["download-timeout"]
-            self.max_parallelism_textfield.value = values["download-max-parallelism"]
-            self.saved_values = values
-            language_changed = values[LANGUAGE_KEY] != self.localizer.language
-            self.status(self.tr("Changes saved."))
-        except Exception:
-            logger.exception("Could not save settings")
-            restored = True
-            for key in reversed(attempted):
-                try:
-                    if previous[key] is None:
-                        result = await preferences.remove(key)
-                    else:
-                        result = await preferences.set(key, previous[key])
-                    if result is False:
-                        raise OSError(f"Could not restore setting {key}")
-                except Exception:
-                    restored = False
-                    logger.exception("Could not restore setting %s", key)
-            self.status(
-                (
-                    self.tr("Couldn't save settings. Please try again.")
-                    if restored
-                    else self.tr(
-                        "Some settings couldn't be restored. Please save again."
+        invalid = False
+        async with self.save_lock:
+            self.busy = True
+            try:
+                preferences = ft.SharedPreferences()
+                for key in keys:
+                    if key not in self.pending_values:
+                        continue
+                    draft = self.pending_values[key]
+                    value = self.validated_value(key, draft)
+                    if value is None:
+                        invalid = True
+                        continue
+                    if value != self.saved_values[key]:
+                        self.status(self.tr("Saving changes…"))
+                        self.refresh()
+                        previous = None
+                        attempted = False
+                        try:
+                            previous = await preferences.get(key)
+                            attempted = True
+                            if await preferences.set(key, value) is False:
+                                raise OSError(f"Could not save setting {key}")
+                            if key == "download-max-parallelism" and self.manager:
+                                await self.manager.set_maximum_concurrency(int(value))
+                        except Exception:
+                            logger.exception("Could not save setting %s", key)
+                            self.failed_keys.add(key)
+                            if attempted:
+                                try:
+                                    restored = (
+                                        await preferences.remove(key)
+                                        if previous is None
+                                        else await preferences.set(key, previous)
+                                    )
+                                    if restored is False:
+                                        raise OSError(
+                                            f"Could not restore setting {key}"
+                                        )
+                                except Exception:
+                                    logger.exception(
+                                        "Could not restore setting %s", key
+                                    )
+                            continue
+                        self.saved_values[key] = value
+                    self.failed_keys.discard(key)
+                    if self.pending_values.get(key) == draft:
+                        self.pending_values.pop(key, None)
+                        control = self.setting_controls[key]
+                        if isinstance(control, ft.TextField):
+                            control.value = value
+                    if key == "current-app-theme" and self.host_page:
+                        self.host_page.theme_mode = ft.ThemeMode(value)
+                        try:
+                            self.host_page.update()
+                        except Exception:
+                            logger.exception("Could not refresh the saved theme")
+                    if key == LANGUAGE_KEY:
+                        language_changed = value != self.localizer.language
+                        self.localizer.set_language(value)
+                        if self.host_page:
+                            self.localizer.configure_page(self.host_page)
+            finally:
+                self.busy = False
+                self.retry_button.visible = bool(self.failed_keys)
+                if self.failed_keys:
+                    self.status(
+                        self.tr("Couldn't save settings. Please try again."), error=True
                     )
-                ),
-                error=True,
-            )
-        else:
-            if self.host_page:
-                self.host_page.theme_mode = ft.ThemeMode(values["current-app-theme"])
-                try:
-                    self.host_page.update()
-                except Exception:
-                    logger.exception("Could not refresh the saved theme")
-        finally:
-            self.busy = False
-            self.set_editing_enabled(True)
-            self.save_button.disabled = self.draft_values() == self.saved_values
-            self.refresh()
-        if language_changed:
-            self.localizer.set_language(values[LANGUAGE_KEY])
-            if self.host_page:
-                self.localizer.configure_page(self.host_page)
-            if self.on_language_change:
-                self.on_language_change(values[LANGUAGE_KEY])
+                elif invalid or any(field.error for field, _, _ in self.numeric_fields):
+                    self.status(self.tr("Check the highlighted settings."), error=True)
+                else:
+                    self.status(
+                        self.tr("Waiting to save…")
+                        if self.pending_values
+                        else self.tr("Changes saved.")
+                    )
+                self.refresh()
+        if (
+            language_changed
+            and self.active
+            and not self.closing
+            and self.on_language_change
+        ):
+            result = self.on_language_change(self.localizer.language)
+            if inspect.isawaitable(result):
+                await result

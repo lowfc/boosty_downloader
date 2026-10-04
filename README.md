@@ -66,8 +66,13 @@ To open the app anyway, read official instruction (these steps only need to be p
 
 The interface supports English and Russian. On first launch, the app uses the
 device's primary language, falling back to English if it is not supported.
-Choose a language in **Settings → General → Language** and save changes to apply
-it without restarting. The saved choice takes precedence on later launches.
+Choose a language in **Settings → General → Language** to apply it immediately
+without restarting. The saved choice takes precedence on later launches.
+
+Settings save automatically: switches, lists, themes, and folder selections save
+immediately; text fields save two seconds after the last edit. Valid pending
+values are also saved before leaving Settings. Invalid numbers remain highlighted
+and do not block other settings. A failed save can be retried from the status row.
 
 UI catalogs live in `src/locales/en.json` and `src/locales/ru.json`. English source
 messages are translation keys; use `localizer.t(message, **values)` for named

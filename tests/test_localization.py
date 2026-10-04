@@ -150,7 +150,8 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual(AppBar(manager, localizer=ru).home_button.content, "Главная")
         settings = SettingsGroup(localizer=ru)
         self.assertEqual(settings.language_dropdown.value, "ru")
-        self.assertEqual(settings.save_button.content, "Сохранить изменения")
+        self.assertEqual(settings.retry_button.content, "Повторить")
+        self.assertFalse(hasattr(settings, "save_button"))
         self.assertEqual(
             [option.key for option in settings.language_dropdown.options],
             list(SUPPORTED_LANGUAGES),
