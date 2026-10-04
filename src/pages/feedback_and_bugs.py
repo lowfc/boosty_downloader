@@ -9,13 +9,16 @@ import components
 from components.soft_layout import button_style, page_shell, soft_card, soft_icon
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
+from localization import Localizer
 
 logger = setup_logger()
 
 
 class FeedbackAndBugsPage(ft.View):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.route = "/feedback-and-bugs"
         self.padding = self.spacing = 0
         self.active = True
@@ -31,7 +34,7 @@ class FeedbackAndBugsPage(ft.View):
             visible=False,
         )
         self.details_button = ft.TextButton(
-            "View diagnostic details",
+            self.tr("View diagnostic details"),
             icon=ft.Icons.KEYBOARD_ARROW_DOWN,
             on_click=self.toggle_details,
             style=ft.ButtonStyle(
@@ -42,13 +45,13 @@ class FeedbackAndBugsPage(ft.View):
             ),
         )
         self.device_text = ft.Text(
-            "Loading device information…",
+            self.tr("Loading device information…"),
             size=12,
             color=ft.Colors.ON_SURFACE_VARIANT,
             expand=True,
         )
         self.copy_button = ft.Button(
-            "Copy diagnostics",
+            self.tr("Copy diagnostics"),
             icon=ft.Icons.CONTENT_COPY,
             height=42,
             style=button_style(primary=True),
@@ -56,22 +59,26 @@ class FeedbackAndBugsPage(ft.View):
             disabled=True,
         )
         self.copy_help = ft.Text(
-            "Then paste them into your GitHub issue.",
+            self.tr("Then paste them into your GitHub issue."),
             size=12,
             color=ft.Colors.ON_SURFACE_VARIANT,
         )
         self.copy_error = ft.Text("", size=12, color=ft.Colors.ERROR, visible=False)
         self.discussion_card = self.contact_card(
-            "Share an idea",
-            "Suggest a feature, ask a question, or tell us what could be better.",
-            "Start a discussion",
+            self.tr("Share an idea"),
+            self.tr(
+                "Suggest a feature, ask a question, or tell us what could be better."
+            ),
+            self.tr("Start a discussion"),
             ft.Icons.CHAT_BUBBLE_OUTLINE,
             "/discussions/new/choose",
         )
         self.issue_card = self.contact_card(
-            "Report a bug",
-            "Describe what happened and the steps to reproduce it. Include diagnostics below.",
-            "Create an issue",
+            self.tr("Report a bug"),
+            self.tr(
+                "Describe what happened and the steps to reproduce it. Include diagnostics below."
+            ),
+            self.tr("Create an issue"),
             ft.Icons.BUG_REPORT_OUTLINED,
             "/issues/new",
         )
@@ -93,12 +100,14 @@ class FeedbackAndBugsPage(ft.View):
                                 spacing=4,
                                 controls=[
                                     ft.Text(
-                                        "Diagnostic information",
+                                        self.tr("Diagnostic information"),
                                         size=15,
                                         weight=ft.FontWeight.W_500,
                                     ),
                                     ft.Text(
-                                        "Attach this to your bug report to help us find the cause.",
+                                        self.tr(
+                                            "Attach this to your bug report to help us find the cause."
+                                        ),
                                         size=13,
                                         color=ft.Colors.ON_SURFACE_VARIANT,
                                     ),
@@ -112,7 +121,11 @@ class FeedbackAndBugsPage(ft.View):
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         controls=[
                             ft.Text(
-                                f"Version {app_version.VERSION} · build {app_version.BUILD}",
+                                self.tr(
+                                    "Version {version} · build {build}",
+                                    version=app_version.VERSION,
+                                    build=app_version.BUILD,
+                                ),
                                 size=12,
                                 col={"xs": 12, "md": 3},
                             ),
@@ -148,7 +161,7 @@ class FeedbackAndBugsPage(ft.View):
             ),
             padding=24,
         )
-        self.toolbar = components.AppBar(manager)
+        self.toolbar = components.AppBar(manager, localizer=self.localizer)
         self.controls = [
             page_shell(
                 self.toolbar,
@@ -159,12 +172,14 @@ class FeedbackAndBugsPage(ft.View):
                             spacing=6,
                             controls=[
                                 ft.Text(
-                                    "Feedback and bugs",
+                                    self.tr("Feedback and bugs"),
                                     size=24,
                                     weight=ft.FontWeight.W_500,
                                 ),
                                 ft.Text(
-                                    "Share an idea or help us fix something that isn't working.",
+                                    self.tr(
+                                        "Share an idea or help us fix something that isn't working."
+                                    ),
                                     size=13,
                                     color=ft.Colors.ON_SURFACE_VARIANT,
                                 ),
@@ -186,7 +201,7 @@ class FeedbackAndBugsPage(ft.View):
                                     color=ft.Colors.ON_SURFACE_VARIANT,
                                 ),
                                 ft.Text(
-                                    "Discussions and issues open on GitHub.",
+                                    self.tr("Discussions and issues open on GitHub."),
                                     size=12,
                                     color=ft.Colors.ON_SURFACE_VARIANT,
                                 ),
@@ -203,7 +218,8 @@ class FeedbackAndBugsPage(ft.View):
                 ft.Icons.INFO_OUTLINE,
                 self.open_project,
                 width=744,
-                footer_action_label="Project on GitHub",
+                localizer=self.localizer,
+                footer_action_label=self.tr("Project on GitHub"),
             )
         ]
 
@@ -259,9 +275,9 @@ class FeedbackAndBugsPage(ft.View):
     def toggle_details(self, e=None):
         self.logs_field.visible = not self.logs_field.visible
         self.details_button.content = (
-            "Hide diagnostic details"
+            self.tr("Hide diagnostic details")
             if self.logs_field.visible
-            else "View diagnostic details"
+            else self.tr("View diagnostic details")
         )
         self.details_button.icon = (
             ft.Icons.KEYBOARD_ARROW_UP
@@ -275,7 +291,7 @@ class FeedbackAndBugsPage(ft.View):
             device_info = await self.page.get_device_info()
         except Exception:
             logger.exception("Could not load diagnostic device information")
-            return "Device information unavailable"
+            return self.tr("Device information unavailable")
         if isinstance(device_info, ft.MacOsDeviceInfo):
             return (
                 f"macOS {device_info.major_version}.{device_info.minor_version}."
@@ -285,7 +301,7 @@ class FeedbackAndBugsPage(ft.View):
             return f"{device_info.product_name} {device_info.edition_id}"
         if isinstance(device_info, ft.LinuxDeviceInfo):
             return device_info.pretty_name
-        return "Unknown device"
+        return self.tr("Unknown device")
 
     async def get_app_info(self):
         device_info = await self.get_device_info()
@@ -295,10 +311,10 @@ class FeedbackAndBugsPage(ft.View):
             ) as log:
                 current_log = await log.read()
         except FileNotFoundError:
-            current_log = "No run log available."
+            current_log = self.tr("No run log available.")
         except OSError:
             logger.exception("Could not read diagnostic log")
-            current_log = "Run log unavailable."
+            current_log = self.tr("Run log unavailable.")
         if not self.active:
             return
         self.device_text.value = device_info
@@ -321,17 +337,19 @@ class FeedbackAndBugsPage(ft.View):
             await ft.Clipboard().set(self.log_text.value)
         except Exception:
             logger.exception("Could not copy diagnostics")
-            self.copy_button.content = "Copy diagnostics"
+            self.copy_button.content = self.tr("Copy diagnostics")
             self.copy_button.icon = ft.Icons.CONTENT_COPY
-            self.copy_help.value = "Then paste them into your GitHub issue."
-            self.copy_error.value = "Couldn't copy diagnostics. Please try again."
+            self.copy_help.value = self.tr("Then paste them into your GitHub issue.")
+            self.copy_error.value = self.tr(
+                "Couldn't copy diagnostics. Please try again."
+            )
             self.copy_error.visible = True
         else:
             if not self.active:
                 return
-            self.copy_button.content = "Copied"
+            self.copy_button.content = self.tr("Copied")
             self.copy_button.icon = ft.Icons.CHECK
-            self.copy_help.value = "Ready to paste into your GitHub issue."
+            self.copy_help.value = self.tr("Ready to paste into your GitHub issue.")
             self.copy_task = asyncio.create_task(self.reset_copy_button())
         finally:
             self.copy_button.disabled = False
@@ -341,9 +359,9 @@ class FeedbackAndBugsPage(ft.View):
         await asyncio.sleep(2)
         if not self.active:
             return
-        self.copy_button.content = "Copy diagnostics"
+        self.copy_button.content = self.tr("Copy diagnostics")
         self.copy_button.icon = ft.Icons.CONTENT_COPY
-        self.copy_help.value = "Then paste them into your GitHub issue."
+        self.copy_help.value = self.tr("Then paste them into your GitHub issue.")
         self.refresh()
 
     async def open_project(self, e=None):

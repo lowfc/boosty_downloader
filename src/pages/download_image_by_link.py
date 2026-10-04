@@ -15,12 +15,13 @@ logger = setup_logger()
 
 
 class DownloadImageByLinkPage(PostDownloadForm):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__(
             manager,
             "/download-media-by-link",
             "https://boosty.to/author/blog/media/…",
             self.download_image,
+            localizer=localizer,
         )
         self.destination_path = None
         self.text_field.height = 44
@@ -28,10 +29,12 @@ class DownloadImageByLinkPage(PostDownloadForm):
             horizontal=14, vertical=14
         )
         self.destination_folder_picker = ft.OutlinedButton(
-            "Change", style=button_style(), on_click=self.pick_destination_folder
+            self.tr("Change"),
+            style=button_style(),
+            on_click=self.pick_destination_folder,
         )
         self.download_button = ft.Button(
-            "Download image",
+            self.tr("Download image"),
             icon=ft.Icons.DOWNLOAD_OUTLINED,
             height=42,
             style=button_style(primary=True),
@@ -44,15 +47,17 @@ class DownloadImageByLinkPage(PostDownloadForm):
         destination_section = self.destination_section()
         destination_section.controls.append(self.destination_folder_picker)
         self.build_form(
-            "Image by link",
-            "Download an image from your feed or private messages.",
+            self.tr("Image by link"),
+            self.tr("Download an image from your feed or private messages."),
             ft.Icons.IMAGE_OUTLINED,
-            "Choose an image",
-            "Copy its direct link from Boosty.",
+            self.tr("Choose an image"),
+            self.tr("Copy its direct link from Boosty."),
             [
                 self.link_section(
-                    "Image link",
-                    "Open the image on Boosty and copy the link from your browser.",
+                    self.tr("Image link"),
+                    self.tr(
+                        "Open the image on Boosty and copy the link from your browser."
+                    ),
                 ),
                 self.divider(),
                 destination_section,
@@ -63,20 +68,20 @@ class DownloadImageByLinkPage(PostDownloadForm):
                     controls=[
                         self.download_button,
                         ft.Text(
-                            "Saved as a JPG file.",
+                            self.tr("Saved as a JPG file."),
                             size=12,
                             color=ft.Colors.ON_SURFACE_VARIANT,
                         ),
                     ],
                 ),
             ],
-            note="For a full post with multiple images, use One post.",
+            note=self.tr("For a full post with multiple images, use One post."),
             note_icon=ft.Icons.LINK,
         )
 
     def set_destination(self, folder):
         self.destination_path = Path(folder) if folder else None
-        label = str(folder) if folder else "Choose a download folder"
+        label = str(folder) if folder else self.tr("Choose a download folder")
         home = str(Path.home())
         display = "~" + label[len(home) :] if label.startswith(home + "/") else label
         self.destination.value = self.folder_note.value = display
@@ -93,8 +98,8 @@ class DownloadImageByLinkPage(PostDownloadForm):
             logger.exception("Could not load image download folder")
             self.set_destination(None)
             self.show_feedback(
-                "Choose a download folder.",
-                "Use Change to select an existing folder.",
+                self.tr("Choose a download folder."),
+                self.tr("Use Change to select an existing folder."),
                 error=True,
             )
 
@@ -109,8 +114,8 @@ class DownloadImageByLinkPage(PostDownloadForm):
         except Exception:
             logger.exception("Could not choose image download folder")
             self.show_feedback(
-                "Couldn't open the folder picker.",
-                "Please try again.",
+                self.tr("Couldn't open the folder picker."),
+                self.tr("Please try again."),
                 error=True,
             )
 
@@ -125,29 +130,33 @@ class DownloadImageByLinkPage(PostDownloadForm):
         link_uuid = parse_image_link(link)
         if not link_uuid:
             self.show_feedback(
-                "Check the image link.",
-                "Use a direct Boosty image link from your feed or messages.",
+                self.tr("Check the image link."),
+                self.tr("Use a direct Boosty image link from your feed or messages."),
                 error=True,
             )
             return
         if not self.destination_path or not self.destination_path.is_dir():
             self.show_feedback(
-                "Choose an existing download folder.",
-                "Use Change to select the folder where the image will be saved.",
+                self.tr("Choose an existing download folder."),
+                self.tr(
+                    "Use Change to select the folder where the image will be saved."
+                ),
                 error=True,
             )
             return
         download_path = self.destination_path / f"{link_uuid}.jpg"
         if download_path.exists():
             self.show_feedback(
-                "This image is already saved.", str(download_path), error=True
+                self.tr("This image is already saved."), str(download_path), error=True
             )
             return
         self.operation_task = asyncio.current_task()
         self.set_busy(True)
         self.progress.visible = True
         self.progress.value = None
-        self.show_feedback("Downloading image…", str(download_path.parent), busy=True)
+        self.show_feedback(
+            self.tr("Downloading image…"), str(download_path.parent), busy=True
+        )
         created_file = completed = False
         try:
             settings = await get_download_settings()
@@ -176,16 +185,18 @@ class DownloadImageByLinkPage(PostDownloadForm):
                         )
                         self.refresh()
             completed = True
-            self.show_feedback("Image saved.", str(download_path))
+            self.show_feedback(self.tr("Image saved."), str(download_path))
         except FileExistsError:
             self.show_feedback(
-                "This image is already saved.", str(download_path), error=True
+                self.tr("This image is already saved."), str(download_path), error=True
             )
         except Exception:
             logger.exception("Failed to download image")
             self.show_feedback(
-                "Couldn't download the image.",
-                "Check your connection and folder permissions, then try again.",
+                self.tr("Couldn't download the image."),
+                self.tr(
+                    "Check your connection and folder permissions, then try again."
+                ),
                 error=True,
             )
         finally:

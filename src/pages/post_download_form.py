@@ -9,6 +9,7 @@ import components
 from components.soft_layout import button_style, page_shell, soft_card, soft_icon
 from core.logger import setup_logger
 from core.utils import get_destination_folder
+from localization import Localizer
 
 logger = setup_logger()
 
@@ -29,8 +30,10 @@ def author_from_input(value):
 class PostDownloadForm(ft.View):
     """Shared form chrome and lifecycle for download entry points."""
 
-    def __init__(self, manager, route, placeholder, on_submit):
+    def __init__(self, manager, route, placeholder, on_submit, localizer=None):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.manager = manager
         self.route = route
         self.padding = self.spacing = 0
@@ -55,15 +58,15 @@ class PostDownloadForm(ft.View):
             expand=True,
         )
         self.paste_button = ft.OutlinedButton(
-            "Paste",
+            self.tr("Paste"),
             icon=ft.Icons.CONTENT_PASTE,
             height=44,
             style=button_style(),
             on_click=self.paste_link,
         )
-        self.destination = ft.Text("Loading download folder…", size=12)
+        self.destination = ft.Text(self.tr("Loading download folder…"), size=12)
         self.folder_note = ft.Text(
-            "Download folder",
+            self.tr("Download folder"),
             size=11,
             expand=True,
             color=ft.Colors.ON_SURFACE_VARIANT,
@@ -150,7 +153,7 @@ class PostDownloadForm(ft.View):
         )
         if note:
             body.controls.append(self.hint(note, note_icon))
-        self.toolbar = components.AppBar(self.manager)
+        self.toolbar = components.AppBar(self.manager, localizer=self.localizer)
         self.controls = [
             page_shell(
                 self.toolbar,
@@ -159,6 +162,7 @@ class PostDownloadForm(ft.View):
                 ft.Icons.FOLDER_OUTLINED,
                 self.go_to_feedback,
                 width=664,
+                localizer=self.localizer,
             )
         ]
 
@@ -186,7 +190,7 @@ class PostDownloadForm(ft.View):
                     spacing=5,
                     controls=[
                         ft.Text(
-                            "Will be downloaded to",
+                            self.tr("Will be downloaded to"),
                             size=12,
                             color=ft.Colors.ON_SURFACE_VARIANT,
                         ),
@@ -246,8 +250,8 @@ class PostDownloadForm(ft.View):
         except Exception as error:
             logger.exception("Could not read clipboard", exc_info=error)
             self.show_feedback(
-                "Couldn't read the clipboard.",
-                "Paste the link directly into the field.",
+                self.tr("Couldn't read the clipboard."),
+                self.tr("Paste the link directly into the field."),
                 error=True,
             )
 
@@ -266,7 +270,9 @@ class PostDownloadForm(ft.View):
         except Exception:
             logger.exception("Could not load download folder")
             folder = None
-        label = str(folder) if folder else "Choose a download folder in Settings"
+        label = (
+            str(folder) if folder else self.tr("Choose a download folder in Settings")
+        )
         home = str(Path.home())
         display = "~" + label[len(home) :] if label.startswith(home + "/") else label
         self.destination.value = self.folder_note.value = display

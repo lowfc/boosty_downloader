@@ -7,6 +7,7 @@ import flet as ft
 
 from components.soft_layout import soft_icon
 from core.defs.tasks import TASK_ERROR_STATUS_LINE, TaskError, TaskInfo
+from localization import Localizer
 
 
 @ft.control
@@ -17,8 +18,11 @@ class TaskItem(ft.Container):
         visible=False,
         on_cancel: Callable[[TaskInfo | None], Awaitable] | None = None,
         on_retry: Callable[[TaskInfo | None], Awaitable] | None = None,
+        localizer=None,
     ):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self._on_cancel = on_cancel
         self._on_retry = on_retry
         self.task_info = None
@@ -45,21 +49,21 @@ class TaskItem(ft.Container):
             visual_density=ft.VisualDensity.COMPACT,
         )
         self.stop_button = ft.TextButton(
-            "Cancel",
+            self.tr("Cancel"),
             icon=ft.Icons.CLOSE,
             height=24,
             style=style,
             on_click=self.on_cancel,
         )
         self.retry_button = ft.TextButton(
-            "Retry",
+            self.tr("Retry"),
             icon=ft.Icons.REFRESH,
             height=24,
             style=style,
             on_click=self.on_retry,
         )
         self.folder_open_button = ft.TextButton(
-            "Open folder",
+            self.tr("Open folder"),
             height=24,
             icon=ft.Icons.FOLDER_OPEN_OUTLINED,
             style=style,
@@ -107,14 +111,14 @@ class TaskItem(ft.Container):
         self.path = task_info.path
         metadata = [task_info.author]
         if task_info.count_files:
-            metadata.append(f"{task_info.count_files} files")
+            metadata.append(self.localizer.plural("count.files", task_info.count_files))
         if task_info.total_weight:
             divisor, unit = (
-                (1024**3, "GB")
+                (1024**3, self.tr("GB"))
                 if task_info.total_weight >= 1024**3
-                else (1024**2, "MB")
+                else (1024**2, self.tr("MB"))
             )
-            metadata.append(f"{task_info.total_weight / divisor:.1f} {unit}")
+            metadata.append(f"{task_info.total_weight / divisor:.1f} {self.tr(unit)}")
         self.task_metadata.value = " · ".join(metadata)
         self.progress_bar.visible = not task_info.finished and task_info.running
         self.progress_bar.value = max(0, min(1, task_info.percent))
@@ -122,19 +126,21 @@ class TaskItem(ft.Container):
         if task_info.finished:
             if task_info.error:
                 cancelled = task_info.error == TaskError.CANCELLED
-                self.status.value = "Cancelled" if cancelled else "Failed"
+                self.status.value = (
+                    self.tr("Cancelled") if cancelled else self.tr("Failed")
+                )
                 self.status.color = (
                     ft.Colors.ON_SURFACE_VARIANT if cancelled else ft.Colors.ERROR
                 )
-                self.detail.value = TASK_ERROR_STATUS_LINE[task_info.error][1]
+                self.detail.value = self.tr(TASK_ERROR_STATUS_LINE[task_info.error][1])
                 self.icon.content.icon = (
                     ft.Icons.CLOSE if cancelled else ft.Icons.ERROR_OUTLINE
                 )
                 self.trailing_button.content = self.retry_button
             else:
-                self.status.value = "Complete"
+                self.status.value = self.tr("Complete")
                 self.status.color = ft.Colors.GREEN_600
-                self.detail.value = "Saved to your download folder"
+                self.detail.value = self.tr("Saved to your download folder")
                 self.icon.content.icon = ft.Icons.CHECK
                 self.trailing_button.content = self.folder_open_button
                 self.folder_open_button.disabled = not bool(
@@ -142,10 +148,14 @@ class TaskItem(ft.Container):
                 )
         else:
             self.status.value = (
-                f"{self.progress_bar.value:.0%}" if task_info.running else "Queued"
+                f"{self.progress_bar.value:.0%}"
+                if task_info.running
+                else self.tr("Queued")
             )
             self.detail.value = (
-                "Downloading" if task_info.running else "Waiting to start"
+                self.tr("Downloading")
+                if task_info.running
+                else self.tr("Waiting to start")
             )
             self.icon.content.icon = (
                 ft.Icons.DOWNLOAD_OUTLINED if task_info.running else ft.Icons.SCHEDULE

@@ -92,7 +92,8 @@ class SettingsTests(unittest.IsolatedAsyncioTestCase):
         self.form.mark_changed()
         self.assertTrue(self.form.video_size_dropdown.disabled)
         await self.form.apply_settings()
-        self.assertEqual(len(self.storage), 11)
+        self.assertEqual(len(self.storage), 12)
+        self.assertEqual(self.storage["current-app-language"], "en")
         self.assertEqual(self.storage["download-folder"], "/custom/new-folder")
         self.assertEqual(self.storage["download-max-parallelism"], "3")
         self.assertEqual(self.storage["current-app-theme"], "dark")
@@ -120,6 +121,49 @@ class SettingsTests(unittest.IsolatedAsyncioTestCase):
             field.value = original
         self.assertTrue(self.form.advanced_fields.visible)
         self.preferences.set.assert_not_awaited()
+
+    async def test_language_is_a_draft_until_saved_and_applies_without_restart(self):
+        self.form.on_language_change = Mock()
+        self.form.language_dropdown.value = "ru"
+        self.form.mark_changed()
+        self.assertFalse(self.form.save_button.disabled)
+        self.assertEqual(self.form.localizer.language, "en")
+        self.form.on_language_change.assert_not_called()
+        self.preferences.set.assert_not_awaited()
+        await self.form.apply_settings()
+        self.assertEqual(self.storage["current-app-language"], "ru")
+        self.assertEqual(self.form.localizer.language, "ru")
+        self.assertEqual(
+            self.form.host_page.locale_configuration.current_locale.language_code,
+            "ru",
+        )
+        self.form.on_language_change.assert_called_once_with("ru")
+        self.assertTrue(self.form.save_button.disabled)
+
+    async def test_failed_language_save_preserves_active_language_and_draft(self):
+        self.form.on_language_change = Mock()
+        self.form.language_dropdown.value = "ru"
+        old = dict(self.storage)
+        store = self.preferences.set.side_effect
+
+        async def fail_language(key, value):
+            if key == "current-app-language":
+                return False
+            return await store(key, value)
+
+        self.preferences.set.side_effect = fail_language
+        await self.form.apply_settings()
+        self.assertEqual(self.storage, old)
+        self.assertEqual(self.form.localizer.language, "en")
+        self.assertEqual(self.form.language_dropdown.value, "ru")
+        self.form.on_language_change.assert_not_called()
+        self.assertFalse(self.form.save_button.disabled)
+
+    async def test_invalid_language_cannot_be_saved(self):
+        self.form.language_dropdown.value = "not-supported"
+        await self.form.apply_settings()
+        self.preferences.set.assert_not_awaited()
+        self.assertFalse(self.form.busy)
 
     async def test_storage_failure_restores_old_settings_and_keeps_draft(self):
         old = dict(self.storage)

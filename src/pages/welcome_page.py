@@ -2,22 +2,27 @@ import flet as ft
 
 import components
 from core.downloads_manager import DownloadManager
+from localization import Localizer
 from themes import HOME_DARK_THEME, HOME_LIGHT_THEME
 
 
 class WelcomePage(ft.View):
-    def __init__(self, manager: DownloadManager):
+    def __init__(self, manager: DownloadManager, localizer=None):
         super().__init__()
+        self.localizer = localizer or Localizer()
+        self.tr = self.localizer.t
         self.route = "/"
         self.padding = 0
         self.spacing = 0
         self.auth_note = ft.Text(
-            "Log in to download subscriber-only content.",
+            self.tr("Log in to download subscriber-only content."),
             size=11,
             color=ft.Colors.ON_SURFACE_VARIANT,
             expand=True,
         )
-        self.toolbar = components.AppBar(manager, on_auth_change=self.update_auth_note)
+        self.toolbar = components.AppBar(
+            manager, localizer=self.localizer, on_auth_change=self.update_auth_note
+        )
         self.controls = [
             ft.Container(
                 expand=True,
@@ -44,7 +49,7 @@ class WelcomePage(ft.View):
                                     ),
                                     ft.Container(height=24),
                                     ft.Text(
-                                        "What would you like to download?",
+                                        self.tr("What would you like to download?"),
                                         size=23,
                                         weight=ft.FontWeight.W_500,
                                         color=ft.Colors.ON_SURFACE,
@@ -52,7 +57,9 @@ class WelcomePage(ft.View):
                                     ),
                                     ft.Container(height=8),
                                     ft.Text(
-                                        "Choose a single post or an author's collection.",
+                                        self.tr(
+                                            "Choose a single post or an author's collection."
+                                        ),
                                         size=13,
                                         color=ft.Colors.ON_SURFACE_VARIANT,
                                         text_align=ft.TextAlign.CENTER,
@@ -63,16 +70,20 @@ class WelcomePage(ft.View):
                                         run_spacing=16,
                                         controls=[
                                             self.download_card(
-                                                "One post",
-                                                "Download a specific post\nby its direct link.",
-                                                "Paste a link",
+                                                self.tr("One post"),
+                                                self.tr(
+                                                    "Download a specific post\nby its direct link."
+                                                ),
+                                                self.tr("Paste a link"),
                                                 ft.Icons.DOWNLOAD_OUTLINED,
                                                 self.go_to_download_post,
                                             ),
                                             self.download_card(
-                                                "Several posts",
-                                                "Download an author's posts\nfor a selected period.",
-                                                "Choose an author",
+                                                self.tr("Several posts"),
+                                                self.tr(
+                                                    "Download an author's posts\nfor a selected period."
+                                                ),
+                                                self.tr("Choose an author"),
                                                 ft.Icons.FILE_COPY_OUTLINED,
                                                 self.go_to_mass_downloader,
                                             ),
@@ -85,12 +96,12 @@ class WelcomePage(ft.View):
                                         wrap=True,
                                         controls=[
                                             self.secondary_button(
-                                                "Image by link",
+                                                self.tr("Image by link"),
                                                 ft.Icons.IMAGE_OUTLINED,
                                                 self.go_to_media_downloader,
                                             ),
                                             self.secondary_button(
-                                                "Merge content",
+                                                self.tr("Merge content"),
                                                 ft.Icons.MERGE,
                                                 self.go_to_content_merger,
                                             ),
@@ -120,7 +131,7 @@ class WelcomePage(ft.View):
                                         ],
                                     ),
                                     self.secondary_button(
-                                        "Feedback", None, self.go_to_feedback
+                                        self.tr("Feedback"), None, self.go_to_feedback
                                     ),
                                 ],
                             ),
@@ -212,9 +223,11 @@ class WelcomePage(ft.View):
 
     def update_auth_note(self, logged_in):
         self.auth_note.value = (
-            "Subscriber-only content is available according to your subscriptions."
+            self.tr(
+                "Subscriber-only content is available according to your subscriptions."
+            )
             if logged_in
-            else "Log in to download subscriber-only content."
+            else self.tr("Log in to download subscriber-only content.")
         )
         self.auth_note.update()
 
