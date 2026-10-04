@@ -18,7 +18,6 @@ class SettingsPage(ft.View):
         self.padding = self.spacing = 0
         self.settings_group = components.SettingsGroup(
             manager,
-            self.preview_theme,
             localizer=self.localizer,
             on_language_change=on_language_change,
         )
@@ -43,12 +42,6 @@ class SettingsPage(ft.View):
             localizer=self.localizer,
         )
         self.controls = [self.shell]
-
-    def preview_theme(self, value):
-        page = self.settings_group.host_page
-        if page:
-            page.theme_mode = ft.ThemeMode(value)
-            page.update()
 
     async def go_to_feedback(self, e=None):
         await self.page.push_route("/feedback-and-bugs")

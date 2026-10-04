@@ -175,7 +175,7 @@ wheels = [
 
 [[package]]
 name = "boosty-downloader"
-version = "3.0.3"
+version = "3.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },

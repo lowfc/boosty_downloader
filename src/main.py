@@ -26,6 +26,7 @@ async def main(page: ft.Page):
     page.title = f"{app_version.NAME} {app_version.VERSION}"
     page.theme = LIGHT_THEME
     page.dark_theme = DARK_THEME
+    page.fonts = {"LanguageFlags": "fonts/language-flags.ttf"}
     page.theme_mode = await ft.SharedPreferences().get("current-app-theme") or "system"
     localizer = await initialize_localization(page)
     tr = localizer.t
@@ -37,50 +38,67 @@ async def main(page: ft.Page):
         settings = None
     manager = DownloadManager(settings.max_parallelism if settings else 5)
 
-    def route_change(e):
-        for view in page.views:
-            if isinstance(view, SettingsPage):
-                view.settings_group.discard_theme_preview()
-        page.views.clear()
+    route_lock = asyncio.Lock()
 
-        match page.route:
-            case "/":
-                page.views.append(WelcomePage(manager, localizer=localizer))
-            case "/settings":
-                page.views.append(
-                    SettingsPage(
-                        manager, localizer=localizer, on_language_change=language_change
+    async def route_change(e):
+        async with route_lock:
+            for view in page.views:
+                if isinstance(view, SettingsPage):
+                    view.settings_group.closing = True
+                    view.settings_group.set_editing_enabled(False)
+                    await view.settings_group.flush_pending_saves()
+            page.views.clear()
+
+            match page.route:
+                case "/":
+                    page.views.append(WelcomePage(manager, localizer=localizer))
+                case "/settings":
+                    page.views.append(
+                        SettingsPage(
+                            manager,
+                            localizer=localizer,
+                            on_language_change=language_change,
+                        )
                     )
-                )
-            case "/download-post":
-                page.views.append(DownloadPostPage(manager, localizer=localizer))
-            case "/downloads-center":
-                page.views.append(DownloadsCenterPage(manager, localizer=localizer))
-            case "/auth-management":
-                page.views.append(AuthManagementPage(manager, localizer=localizer))
-            case "/merge-author-content":
-                page.views.append(MergeAuthorContentPage(manager, localizer=localizer))
-            case "/download-several-posts":
-                page.views.append(
-                    DownloadSeveralPostsPage(manager, localizer=localizer)
-                )
-            case "/download-media-by-link":
-                page.views.append(DownloadImageByLinkPage(manager, localizer=localizer))
-            case "/feedback-and-bugs":
-                page.views.append(FeedbackAndBugsPage(manager, localizer=localizer))
+                case "/download-post":
+                    page.views.append(DownloadPostPage(manager, localizer=localizer))
+                case "/downloads-center":
+                    page.views.append(DownloadsCenterPage(manager, localizer=localizer))
+                case "/auth-management":
+                    page.views.append(AuthManagementPage(manager, localizer=localizer))
+                case "/merge-author-content":
+                    page.views.append(
+                        MergeAuthorContentPage(manager, localizer=localizer)
+                    )
+                case "/download-several-posts":
+                    page.views.append(
+                        DownloadSeveralPostsPage(manager, localizer=localizer)
+                    )
+                case "/download-media-by-link":
+                    page.views.append(
+                        DownloadImageByLinkPage(manager, localizer=localizer)
+                    )
+                case "/feedback-and-bugs":
+                    page.views.append(FeedbackAndBugsPage(manager, localizer=localizer))
 
-        page.update()
+            page.update()
 
-    def language_change(language):
+    async def language_change(language):
         localizer.set_language(language)
         localizer.configure_page(page)
-        route_change(None)
-        page.show_dialog(ft.SnackBar(ft.Text(tr("Changes saved."))))
+        await route_change(None)
 
     page.on_route_change = route_change
-    route_change(page)
+    await route_change(page)
 
     logger.info("Router is set up, starting task manager...")
+
+    async def close_window(e=None):
+        for view in page.views:
+            if isinstance(view, SettingsPage):
+                view.settings_group.closing = True
+                await view.settings_group.flush_pending_saves()
+        await page.window.destroy()
 
     async def check_active_downloads_on_close():
         if await manager.get_active_tasks_count() > 0:
@@ -92,9 +110,7 @@ async def main(page: ft.Page):
                         ft.TextButton(tr("No"), on_click=lambda e: page.pop_dialog()),
                         ft.TextButton(
                             tr("Yes"),
-                            on_click=lambda e: asyncio.create_task(
-                                page.window.destroy()
-                            ),
+                            on_click=close_window,
                         ),
                     ],
                     open=True,
@@ -102,7 +118,7 @@ async def main(page: ft.Page):
             )
             page.update()
         else:
-            await page.window.destroy()
+            await close_window()
 
     def window_event(e: ft.WindowEvent):
         if e.type == ft.WindowEventType.CLOSE:

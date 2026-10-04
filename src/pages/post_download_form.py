@@ -45,6 +45,7 @@ class PostDownloadForm(ft.View):
             value="",
             hint_text=placeholder,
             text_size=13,
+            height=36,
             dense=True,
             filled=True,
             fill_color=ft.Colors.SURFACE,
@@ -57,11 +58,13 @@ class PostDownloadForm(ft.View):
             on_change=self.clear_feedback,
             expand=True,
         )
+        paste_style = button_style()
+        paste_style.padding = ft.Padding.symmetric(horizontal=16, vertical=6)
         self.paste_button = ft.OutlinedButton(
             self.tr("Paste"),
             icon=ft.Icons.CONTENT_PASTE,
-            height=44,
-            style=button_style(),
+            height=self.text_field.height,
+            style=paste_style,
             on_click=self.paste_link,
         )
         self.destination = ft.Text(self.tr("Loading download folder…"), size=12)

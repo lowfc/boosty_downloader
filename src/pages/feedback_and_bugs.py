@@ -228,14 +228,13 @@ class FeedbackAndBugsPage(ft.View):
         card = soft_card(
             ft.Column(
                 spacing=0,
-                tight=True,
                 controls=[
                     soft_icon(icon, 40),
                     ft.Container(height=16),
                     ft.Text(title, size=17, weight=ft.FontWeight.W_500),
                     ft.Container(height=6),
                     ft.Text(description, size=13, color=ft.Colors.ON_SURFACE_VARIANT),
-                    ft.Container(height=22),
+                    ft.Container(expand=True),
                     ft.TextButton(
                         content=ft.Row(
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -256,6 +255,7 @@ class FeedbackAndBugsPage(ft.View):
             ),
             padding=24,
         )
+        card.height = 240
         card.col = {"xs": 12, "md": 6}
         return card
 

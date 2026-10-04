@@ -211,7 +211,6 @@
   "Follows your system appearance.": "Follows your system appearance.",
   "{theme} appearance selected.": "{theme} appearance selected.",
   "Language": "Language",
-  "Applies after saving changes.": "Applies after saving changes.",
   "Content": "Content",
   "Choose what to download from each post.": "Choose what to download from each post.",
   "Download photos": "Download photos",
@@ -242,16 +241,11 @@
   "Download timeout (seconds)": "Download timeout (seconds)",
   "How long to wait for a response.": "How long to wait for a response.",
   "Loading settings…": "Loading settings…",
-  "Save changes": "Save changes",
-  "You have unsaved changes.": "You have unsaved changes.",
-  "No unsaved changes.": "No unsaved changes.",
   "Couldn't choose a folder. Please try again.": "Couldn't choose a folder. Please try again.",
   "Couldn't load settings. Reopen this page to try again.": "Couldn't load settings. Reopen this page to try again.",
-  "Check the highlighted settings before saving.": "Check the highlighted settings before saving.",
   "Saving changes…": "Saving changes…",
   "Changes saved.": "Changes saved.",
   "Couldn't save settings. Please try again.": "Couldn't save settings. Please try again.",
-  "Some settings couldn't be restored. Please save again.": "Some settings couldn't be restored. Please save again.",
   "Some downloads are incomplete": "Some downloads are incomplete",
   "Are you sure you want to exit the app?": "Are you sure you want to exit the app?",
   "No": "No",
@@ -311,5 +305,8 @@
     "one": "{count} post added to Downloads.",
     "other": "{count} posts added to Downloads."
   },
-  "Action": "Action"
+  "Action": "Action",
+  "Changes are saved automatically.": "Changes are saved automatically.",
+  "Waiting to save…": "Waiting to save…",
+  "Check the highlighted settings.": "Check the highlighted settings."
 }
