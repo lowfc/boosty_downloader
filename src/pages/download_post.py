@@ -1,13 +1,11 @@
 import asyncio
-from urllib.parse import urlparse
 
 import flet as ft
 
 from components.soft_layout import button_style
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from core.utils import parse_post_link
-from pages.post_download_form import PostDownloadForm, author_from_input
+from pages.post_download_form import PostDownloadForm, post_from_input
 
 logger = setup_logger()
 
@@ -19,6 +17,7 @@ class DownloadPostPage(PostDownloadForm):
             "/download-post",
             "https://boosty.to/author/posts/…",
             self.download_post,
+            input_validator=post_from_input,
             localizer=localizer,
         )
         self.download_button = ft.Button(
@@ -65,18 +64,8 @@ class DownloadPostPage(PostDownloadForm):
         if self.busy:
             return
         value = (self.text_field.value or "").strip()
-        link = parse_post_link(value)
-        try:
-            url = urlparse(value if "://" in value else f"https://{value}")
-        except ValueError:
-            url = urlparse("")
-        if (
-            not link
-            or not author_from_input(link.author)
-            or url.netloc.lower() != "boosty.to"
-            or url.scheme not in ("http", "https")
-            or url.path.rstrip("/") != f"/{link.author}/posts/{link.id}"
-        ):
+        link = post_from_input(value)
+        if not link:
             self.show_feedback(
                 (
                     self.tr("Paste a post link to continue.")
@@ -96,7 +85,7 @@ class DownloadPostPage(PostDownloadForm):
         )
         try:
             added = await self.manager.add_task(link.author, link.id)
-            self.text_field.value = ""
+            self.clear_input()
             if added:
                 self.show_feedback(
                     self.tr("Post added to Downloads."),

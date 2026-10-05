@@ -8,7 +8,7 @@ import flet as ft
 import components
 from components.soft_layout import button_style, page_shell, soft_card, soft_icon
 from core.logger import setup_logger
-from core.utils import get_destination_folder
+from core.utils import get_destination_folder, parse_post_link
 from localization import Localizer
 
 logger = setup_logger()
@@ -27,10 +27,30 @@ def author_from_input(value):
     return value if re.fullmatch(r"[\w.-]+", value, flags=re.ASCII) else None
 
 
+def post_from_input(value):
+    value = value.strip()
+    link = parse_post_link(value)
+    try:
+        url = urlparse(value if "://" in value else f"https://{value}")
+    except ValueError:
+        return None
+    if (
+        not link
+        or not author_from_input(link.author)
+        or url.netloc.lower() != "boosty.to"
+        or url.scheme not in ("http", "https")
+        or url.path.rstrip("/") != f"/{link.author}/posts/{link.id}"
+    ):
+        return None
+    return link
+
+
 class PostDownloadForm(ft.View):
     """Shared form chrome and lifecycle for download entry points."""
 
-    def __init__(self, manager, route, placeholder, on_submit, localizer=None):
+    def __init__(
+        self, manager, route, placeholder, on_submit, input_validator, localizer=None
+    ):
         super().__init__()
         self.localizer = localizer or Localizer()
         self.tr = self.localizer.t
@@ -39,6 +59,22 @@ class PostDownloadForm(ft.View):
         self.padding = self.spacing = 0
         self.active = True
         self.busy = False
+        self.input_validator = input_validator
+        self.validation_task = None
+        self.input_valid_icon = ft.Container(
+            content=ft.Icon(
+                ft.Icons.CHECK,
+                color=ft.Colors.WHITE,
+                size=8,
+                semantics_label=self.tr("Valid input"),
+            ),
+            width=12,
+            height=12,
+            border_radius=6,
+            bgcolor=ft.Colors.GREEN_600,
+            alignment=ft.Alignment.CENTER,
+            visible=False,
+        )
         self.date_buttons = []
         self.folder_task = self.operation_task = None
         self.text_field = ft.TextField(
@@ -55,7 +91,7 @@ class PostDownloadForm(ft.View):
             autocorrect=False,
             enable_suggestions=False,
             on_submit=on_submit,
-            on_change=self.clear_feedback,
+            on_change=self.on_input_change,
             expand=True,
         )
         paste_style = button_style()
@@ -173,7 +209,13 @@ class PostDownloadForm(ft.View):
         return ft.Column(
             spacing=10,
             controls=[
-                ft.Text(label, size=13, weight=ft.FontWeight.W_500),
+                ft.Row(
+                    spacing=8,
+                    controls=[
+                        ft.Text(label, size=13, weight=ft.FontWeight.W_500),
+                        self.input_valid_icon,
+                    ],
+                ),
                 ft.Row(spacing=10, controls=[self.text_field, self.paste_button]),
                 ft.Text(helper, size=12, color=ft.Colors.ON_SURFACE_VARIANT),
             ],
@@ -232,6 +274,33 @@ class PostDownloadForm(ft.View):
         self.feedback.visible = False
         self.refresh()
 
+    def reset_input_validation(self):
+        if self.validation_task and not self.validation_task.done():
+            self.validation_task.cancel()
+        self.validation_task = None
+        self.input_valid_icon.visible = False
+
+    def clear_input(self):
+        self.text_field.value = ""
+        self.reset_input_validation()
+
+    async def on_input_change(self, e=None):
+        self.reset_input_validation()
+        if not self.active:
+            return
+        self.clear_feedback()
+        value = (self.text_field.value or "").strip()
+        if value:
+            self.validation_task = asyncio.create_task(
+                self.validate_input_after_delay(value)
+            )
+
+    async def validate_input_after_delay(self, value):
+        await asyncio.sleep(0.5)
+        if self.active and value == (self.text_field.value or "").strip():
+            self.input_valid_icon.visible = bool(self.input_validator(value))
+            self.refresh()
+
     def show_feedback(self, title, detail, error=False, busy=False):
         self.feedback.visible = True
         self.status_text.value = title
@@ -249,7 +318,7 @@ class PostDownloadForm(ft.View):
             value = await ft.Clipboard().get()
             if value:
                 self.text_field.value = value.strip()
-                self.clear_feedback()
+                await self.on_input_change()
         except Exception as error:
             logger.exception("Could not read clipboard", exc_info=error)
             self.show_feedback(
@@ -263,6 +332,7 @@ class PostDownloadForm(ft.View):
 
     def will_unmount(self):
         self.active = False
+        self.reset_input_validation()
         for task in (self.folder_task, self.operation_task):
             if task and not task.done():
                 task.cancel()
