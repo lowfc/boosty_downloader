@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from aiohttp import ClientSession, ClientTimeout
 
 import core.boosty.defs as cdefs
@@ -15,13 +13,13 @@ class BoostyClient:
         self,
         chunk_size: int,
         download_timeout: int,
-        auth_token: Optional[AuthToken] = None,
+        auth_token: AuthToken | None = None,
     ) -> None:
         self.chunk_size = chunk_size
         self.download_timeout = download_timeout
         self.base_url = "https://api.boosty.to"
         self._base_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",  # noqa: E501
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
             "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
             "Sec-Ch-Ua-Mobile": "?0",
             "Sec-Ch-Ua-Platform": '"Windows"',
@@ -43,16 +41,18 @@ class BoostyClient:
             timeout=ClientTimeout(total=self.download_timeout),
         )
 
-    def _wrap_media_item(self, media: dict) -> Union[
-        cdefs.BoostyImageDto,
-        cdefs.BoostyVideoDto,
-        cdefs.BoostyAudioDto,
-        cdefs.BoostyFileDto,
-        cdefs.BoostyTextDto,
-        cdefs.BoostyLinkDto,
-        cdefs.BoostyListDto,
-        None,
-    ]:
+    def _wrap_media_item(
+        self, media: dict
+    ) -> (
+        cdefs.BoostyImageDto
+        | cdefs.BoostyVideoDto
+        | cdefs.BoostyAudioDto
+        | cdefs.BoostyFileDto
+        | cdefs.BoostyTextDto
+        | cdefs.BoostyLinkDto
+        | cdefs.BoostyListDto
+        | None
+    ):
         match media["type"]:
             case cdefs.BoostyMediaType.IMAGE.value:
                 if "width" not in media:  # issues/30 "узкая" картинка
@@ -140,7 +140,7 @@ class BoostyClient:
         self,
         author: str,
         limit: int = 20,
-        offset: Optional[str] = None,
+        offset: str | None = None,
     ) -> cdefs.BoostyPostsListDto:
         params = {
             "limit": limit,
@@ -186,13 +186,13 @@ class BoostyClient:
             result.data.append(new_post)
         return result
 
-    async def get_max_int_id(self, author: str) -> Optional[int]:
+    async def get_max_int_id(self, author: str) -> int | None:
         try:
             post_list = await self.get_posts_list(author, limit=1)
             if not post_list.have_posts():
                 return None
             post = post_list.data[0]
             return post.int_id
-        except Exception as e:
-            logger.error(e)
+        except Exception:
+            logger.exception("Failed to fetch the latest post for %s", author)
             return None

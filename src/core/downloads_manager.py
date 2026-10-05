@@ -1,5 +1,4 @@
 import asyncio
-from typing import List, Optional, Dict
 
 from core.boosty.defs import BoostyPostDto
 from core.defs.tasks import TaskInfo
@@ -12,7 +11,7 @@ class DownloadManager:
         self,
         maximum_concurrency: int = 5,
     ):
-        self._tasks: Dict[str, "Task"] = {}
+        self._tasks: dict[str, Task] = {}
         self.maximum_concurrency = maximum_concurrency
         self._semaphore = DownloadLimiter(self.maximum_concurrency)
         self._lock = asyncio.Lock()
@@ -24,10 +23,10 @@ class DownloadManager:
             self.maximum_concurrency = limit
 
     async def add_task(
-        self, author: str, post_id: str, post_info: Optional[BoostyPostDto] = None
+        self, author: str, post_id: str, post_info: BoostyPostDto | None = None
     ) -> bool:
         async with self._lock:
-            if post_id in self._tasks.keys():
+            if post_id in self._tasks:
                 if self._tasks[post_id].finished:
                     del self._tasks[post_id]
                 else:
@@ -43,7 +42,7 @@ class DownloadManager:
     async def mainloop(self):
         while not self._closed:
             async with self._lock:
-                for post_id in self._tasks.keys():
+                for post_id in self._tasks:
                     if self._tasks[post_id].ready():
                         self._tasks[post_id].launch()
             await asyncio.sleep(5)
@@ -51,7 +50,7 @@ class DownloadManager:
     async def get_pending_tasks_count(self) -> int:
         async with self._lock:
             result = 0
-            for post_id in self._tasks.keys():
+            for post_id in self._tasks:
                 if self._tasks[post_id].running:
                     result += 1
             return result
@@ -59,7 +58,7 @@ class DownloadManager:
     async def get_active_tasks_count(self) -> int:
         async with self._lock:
             result = 0
-            for post_id in self._tasks.keys():
+            for post_id in self._tasks:
                 if not self._tasks[post_id].finished:
                     result += 1
             return result
@@ -70,7 +69,7 @@ class DownloadManager:
 
     async def get_tasks(
         self, limit: int = 10, offset: int = 0, reverse: bool = False
-    ) -> List[TaskInfo]:
+    ) -> list[TaskInfo]:
         result = []
         current_offset = 0
         async with self._lock:
@@ -101,7 +100,7 @@ class DownloadManager:
         return result
 
     async def stop_task(self, post_id: str):
-        if post_id in self._tasks.keys():
+        if post_id in self._tasks:
             await self._tasks[post_id].stop()
 
     async def stop_running_tasks(self):
@@ -111,5 +110,5 @@ class DownloadManager:
                     await task.stop()
 
     async def retry_task(self, post_id: str):
-        if post_id in self._tasks.keys():
+        if post_id in self._tasks:
             await self._tasks[post_id].retry()

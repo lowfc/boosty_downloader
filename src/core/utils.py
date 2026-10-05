@@ -1,11 +1,10 @@
 import re
 from pathlib import Path
-from typing import Optional
-from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import flet as ft
 
-from core.defs.common import PostInfo, DownloadingSettingsDto
+from core.defs.common import DownloadingSettingsDto, PostInfo
 from core.logger import setup_logger
 
 logger = setup_logger()
@@ -14,27 +13,28 @@ uuid4_re_pattern = (
     "[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}"
 )
 post_link_re = re.compile(
-    rf"(https://)?boosty\.to/(.*)/posts/({uuid4_re_pattern})", re.I
+    rf"(https://)?boosty\.to/(.*)/posts/({uuid4_re_pattern})", re.IGNORECASE
 )
-author_link_re = re.compile(r"(https://)?boosty\.to/(.*)$", re.I)
+author_link_re = re.compile(r"(https://)?boosty\.to/(.*)$", re.IGNORECASE)
 image_link_feed_re = re.compile(
     rf"(https://)?boosty\.to/app/feed/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})",
-    re.I,
+    re.IGNORECASE,
 )
 image_link_author_feed_re = re.compile(
     rf"(https://)?boosty\.to/(.*)/blog/media/{uuid4_re_pattern}/({uuid4_re_pattern})",
-    re.I,
+    re.IGNORECASE,
 )
 image_link_author_post_re = re.compile(
     rf"(https://)?boosty\.to/(.*)/posts/{uuid4_re_pattern}/media/({uuid4_re_pattern})",
-    re.I,
+    re.IGNORECASE,
 )
 image_link_direct_message_re = re.compile(
-    rf"(https://)?boosty\.to/app/messages/media/(\d)+/({uuid4_re_pattern})", re.I
+    rf"(https://)?boosty\.to/app/messages/media/(\d)+/({uuid4_re_pattern})",
+    re.IGNORECASE,
 )
 
 
-def parse_post_link(post_link: str) -> Optional[PostInfo]:
+def parse_post_link(post_link: str) -> PostInfo | None:
     try:
         parsed_url = urlparse(post_link)
         clean_url = urlunparse(
@@ -49,7 +49,7 @@ def parse_post_link(post_link: str) -> Optional[PostInfo]:
     return None
 
 
-def parse_image_link(image_link: str) -> Optional[str]:
+def parse_image_link(image_link: str) -> str | None:
     try:
         parsed_url = urlparse(image_link)
         clean_url = urlunparse(
@@ -69,7 +69,7 @@ def parse_image_link(image_link: str) -> Optional[str]:
         return None
 
 
-def parse_author_link(author_link: str) -> Optional[str]:
+def parse_author_link(author_link: str) -> str | None:
     try:
         result = author_link_re.match(author_link)
         if result:
@@ -80,7 +80,7 @@ def parse_author_link(author_link: str) -> Optional[str]:
         return None
 
 
-async def get_destination_folder() -> Optional[str]:
+async def get_destination_folder() -> str | None:
     download_folder = await ft.SharedPreferences().get("download-folder")
     if not download_folder:
         try:
@@ -141,8 +141,7 @@ def sign_url(url: str, qs: str) -> str:
     if parsed_url.query:
         existing_params = dict(parse_qsl(parsed_url.query))
 
-    if qs.startswith("?"):
-        qs = qs[1:]
+    qs = qs.removeprefix("?")
     new_params = dict(parse_qsl(qs))
 
     for key, value in new_params.items():
@@ -155,7 +154,7 @@ def sign_url(url: str, qs: str) -> str:
     return updated_url.geturl()
 
 
-async def get_download_settings() -> Optional[DownloadingSettingsDto]:
+async def get_download_settings() -> DownloadingSettingsDto | None:
     downloads_folder = await get_destination_folder()
     if not downloads_folder:
         return None

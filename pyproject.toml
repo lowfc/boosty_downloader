@@ -28,3 +28,8 @@ copyright = "MiT License"
 
 [tool.flet.app]
 path = "src"
+
+[tool.flet.macos.cleanup]
+# PyObjC tests and debug symbols are not needed at runtime. Xcode's resource
+# copy phase tries to strip the DWARF files in .dSYM bundles and fails.
+package_files = ["PyObjCTest", "**/*.dSYM"]

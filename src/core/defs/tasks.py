@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import flet as ft
 
@@ -23,7 +22,7 @@ class TaskInfo:
     finished: bool
     count_files: int
     total_weight: int
-    error: Optional[TaskError] = None
+    error: TaskError | None = None
     running: bool = False
 
 

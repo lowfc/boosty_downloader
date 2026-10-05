@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Union, Dict, Optional
 
 
 class BoostyMediaType(str, Enum):
@@ -50,7 +49,7 @@ class BoostyPlayerUrlDto:
 class BoostyVideoDto:
     id: str
     title: str
-    player_urls: Dict[BoostyVideoSizesType, BoostyPlayerUrlDto] = field(
+    player_urls: dict[BoostyVideoSizesType, BoostyPlayerUrlDto] = field(
         default_factory=dict
     )
 
@@ -92,12 +91,12 @@ class BoostyLinkDto:
 @dataclass
 class BoostyListDto:
     style: str
-    items: List[Dict] = field(default_factory=list)
+    items: list[dict] = field(default_factory=list)
 
 
 @dataclass
 class BoostyPostTextDto:
-    content: List[Union[BoostyTextDto, BoostyLinkDto, BoostyListDto]] = field(
+    content: list[BoostyTextDto | BoostyLinkDto | BoostyListDto] = field(
         default_factory=list
     )
 
@@ -108,12 +107,12 @@ class BoostyPostDto:
     id: str
     int_id: int
     publish_time: int
-    title: Optional[str] = None
+    title: str | None = None
     signed_query: str = ""
     text_content: BoostyPostTextDto = field(default_factory=BoostyPostTextDto)
-    media: List[
-        Union[BoostyImageDto, BoostyVideoDto, BoostyAudioDto, BoostyFileDto]
-    ] = field(default_factory=list)
+    media: list[BoostyImageDto | BoostyVideoDto | BoostyAudioDto | BoostyFileDto] = (
+        field(default_factory=list)
+    )
 
 
 @dataclass
@@ -125,7 +124,7 @@ class BoostyExtraDto:
 @dataclass
 class BoostyPostsListDto:
     extra: BoostyExtraDto
-    data: List[BoostyPostDto] = field(default_factory=list)
+    data: list[BoostyPostDto] = field(default_factory=list)
 
     def have_posts(self) -> bool:
         return len(self.data) > 0
