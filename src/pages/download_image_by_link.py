@@ -21,6 +21,7 @@ class DownloadImageByLinkPage(PostDownloadForm):
             "/download-media-by-link",
             "https://boosty.to/author/blog/media/…",
             self.download_image,
+            input_validator=parse_image_link,
             localizer=localizer,
         )
         self.destination_path = None
@@ -147,7 +148,7 @@ class DownloadImageByLinkPage(PostDownloadForm):
             )
             return
         self.operation_task = asyncio.current_task()
-        self.text_field.value = ""
+        self.clear_input()
         self.set_busy(True)
         self.progress.visible = True
         self.progress.value = None

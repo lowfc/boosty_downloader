@@ -8,7 +8,7 @@ from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from pages.post_download_form import PostDownloadForm, author_from_input
+from pages.post_download_form import PostDownloadForm, author_from_input, post_from_input
 
 logger = setup_logger()
 
@@ -20,6 +20,7 @@ class DownloadSeveralPostsPage(PostDownloadForm):
             "/download-several-posts",
             "https://boosty.to/author",
             self.download_posts,
+            input_validator=author_from_input,
             localizer=localizer,
         )
         today = datetime.datetime.now().astimezone().date()
@@ -105,6 +106,13 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                 ),
             ],
         )
+
+    async def on_input_change(self, e=None):
+        if self.active:
+            post = post_from_input(self.text_field.value or "")
+            if post:
+                self.text_field.value = f"https://boosty.to/{post.author}"
+        await super().on_input_change(e)
 
     def date_field(self, label, text):
         button = ft.OutlinedButton(
@@ -234,7 +242,7 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                     ),
                 )
                 return
-            self.text_field.value = ""
+            self.clear_input()
             self.show_feedback(
                 self.localizer.plural("posts.found", len(posts)),
                 self.tr("Adding posts to Downloads…"),
