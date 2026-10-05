@@ -8,7 +8,7 @@ from components.soft_layout import button_style
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from core.utils import get_destination_folder, get_download_settings, parse_image_link
+from core.utils import get_download_settings, parse_image_link
 from pages.post_download_form import PostDownloadForm
 
 logger = setup_logger()
@@ -85,7 +85,7 @@ class DownloadImageByLinkPage(PostDownloadForm):
 
     async def load_destination(self):
         try:
-            folder = await get_destination_folder()
+            folder = await ft.StoragePaths().get_downloads_directory()
             if not self.active:
                 return
             self.set_destination(folder)
@@ -147,6 +147,7 @@ class DownloadImageByLinkPage(PostDownloadForm):
             )
             return
         self.operation_task = asyncio.current_task()
+        self.text_field.value = ""
         self.set_busy(True)
         self.progress.visible = True
         self.progress.value = None

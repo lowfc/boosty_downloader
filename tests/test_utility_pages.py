@@ -67,15 +67,18 @@ class ImagePageTests(unittest.IsolatedAsyncioTestCase):
                 self.page.text_field.value = link
                 await self.page.download_image()
                 self.assertIn("Check the image link", self.page.status_text.value)
+                self.assertEqual(self.page.text_field.value, link)
             self.page.text_field.value = IMAGE_LINK
             self.page.set_destination(self.folder / "missing")
             await self.page.download_image()
             self.assertIn("existing download folder", self.page.status_text.value)
+            self.assertEqual(self.page.text_field.value, IMAGE_LINK)
         client.assert_not_called()
         self.assertFalse(self.page.busy)
 
     async def test_success_preserves_existing_images_and_restores_controls(self):
         async def chunks():
+            self.assertEqual(self.page.text_field.value, "")
             yield b"abc"
             yield b"def"
 
@@ -84,6 +87,8 @@ class ImagePageTests(unittest.IsolatedAsyncioTestCase):
             await self.page.download_image()
             self.assertEqual((self.folder / f"{IMAGE_ID}.jpg").read_bytes(), b"abcdef")
             self.assertEqual(self.page.status_text.value, "Image saved.")
+            self.assertEqual(self.page.text_field.value, "")
+            self.page.text_field.value = IMAGE_LINK
             await self.page.download_image()
             self.assertIn("already saved", self.page.status_text.value)
         session.get.assert_called_once_with(
@@ -108,6 +113,7 @@ class ImagePageTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Couldn't download", self.page.status_text.value)
         self.assertFalse(self.page.busy)
 
+        self.page.text_field.value = IMAGE_LINK
         entered = asyncio.Event()
 
         async def waiting_chunks():
@@ -127,12 +133,18 @@ class ImagePageTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse((self.folder / f"{IMAGE_ID}.jpg").exists())
         self.assertEqual(self.page.update.call_count, updates)
 
-    async def test_saved_folder_clipboard_and_picker_use_real_values(self):
-        with patch(
-            "pages.download_image_by_link.get_destination_folder",
-            new=AsyncMock(return_value=str(self.folder)),
+    async def test_system_downloads_folder_clipboard_and_picker_use_real_values(self):
+        self.page.set_destination(None)
+        with (
+            patch("pages.download_image_by_link.ft.StoragePaths") as storage_paths,
+            patch("pages.download_image_by_link.ft.SharedPreferences") as preferences,
         ):
+            storage_paths.return_value.get_downloads_directory = AsyncMock(
+                return_value=str(self.folder)
+            )
             await self.page.load_destination()
+            storage_paths.return_value.get_downloads_directory.assert_awaited_once()
+            preferences.assert_not_called()
         self.assertEqual(self.page.destination_path, self.folder)
         self.assertEqual(self.page.destination.tooltip, str(self.folder))
         with patch("pages.post_download_form.ft.Clipboard") as clipboard:
