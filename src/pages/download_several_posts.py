@@ -234,6 +234,7 @@ class DownloadSeveralPostsPage(PostDownloadForm):
                     ),
                 )
                 return
+            self.text_field.value = ""
             self.show_feedback(
                 self.localizer.plural("posts.found", len(posts)),
                 self.tr("Adding posts to Downloads…"),

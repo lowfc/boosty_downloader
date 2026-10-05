@@ -42,6 +42,7 @@ class PostFormTests(unittest.IsolatedAsyncioTestCase):
             await self.page.download_post()
             self.assertTrue(self.page.feedback.visible)
             self.assertTrue(self.page.status_icon.color)
+            self.assertEqual(self.page.text_field.value, value)
         self.manager.add_task.assert_not_awaited()
         with patch("pages.post_download_form.ft.Clipboard") as clipboard:
             clipboard.return_value.get = AsyncMock(return_value=" " + POST_LINK + " ")
@@ -52,10 +53,13 @@ class PostFormTests(unittest.IsolatedAsyncioTestCase):
         await self.page.download_post()
         self.manager.add_task.assert_awaited_once_with("test-author", POST_ID)
         self.assertEqual(self.page.status_text.value, "Post added to Downloads.")
+        self.assertEqual(self.page.text_field.value, "")
         self.assertFalse(self.page.busy)
         self.manager.add_task.return_value = False
+        self.page.text_field.value = POST_LINK
         await self.page.download_post()
         self.assertIn("already in Downloads", self.page.status_text.value)
+        self.assertEqual(self.page.text_field.value, "")
 
     async def test_queue_failure_restores_form_and_folder_is_real_setting(self):
         self.page.text_field.value = POST_LINK
@@ -63,6 +67,7 @@ class PostFormTests(unittest.IsolatedAsyncioTestCase):
         with patch("pages.download_post.logger"):
             await self.page.download_post()
         self.assertIn("Couldn't add", self.page.status_text.value)
+        self.assertEqual(self.page.text_field.value, POST_LINK)
         self.assertFalse(self.page.busy)
         self.assertFalse(self.page.progress_ring.visible)
         with patch(
@@ -136,8 +141,21 @@ class SeveralPostsTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(self.page.status_text.value, "1 post added to Downloads.")
         self.assertIn("1 already in Downloads", self.page.description_text.value)
+        self.assertEqual(self.page.text_field.value, "")
         self.assertFalse(self.page.busy)
         self.assertFalse(self.page.disabled)
+
+    async def test_author_clears_when_found_posts_are_already_in_downloads(self):
+        self.client.get_posts_list.return_value = post_list(
+            [post("existing", int(self.page.parse_from.timestamp()))]
+        )
+        self.manager.add_task.return_value = False
+        await self.page.download_posts()
+        self.manager.add_task.assert_awaited_once()
+        self.assertEqual(
+            self.page.status_text.value, "These posts are already in Downloads."
+        )
+        self.assertEqual(self.page.text_field.value, "")
 
     async def test_empty_period_missing_author_and_network_failure_restore_form(self):
         for value in [
@@ -153,18 +171,21 @@ class SeveralPostsTests(unittest.IsolatedAsyncioTestCase):
         self.client.get_max_int_id.return_value = None
         await self.page.download_posts()
         self.assertEqual(self.page.status_text.value, "No posts could be found.")
+        self.assertEqual(self.page.text_field.value, "test-author")
         self.client.get_max_int_id.return_value = 0
         self.client.get_posts_list.return_value = post_list([])
         await self.page.download_posts()
         self.assertEqual(
             self.page.status_text.value, "No available posts in this period."
         )
+        self.assertEqual(self.page.text_field.value, "test-author")
         self.client.get_posts_list.side_effect = OSError("test network error")
         with patch("pages.download_several_posts.logger"):
             await self.page.download_posts()
         self.assertEqual(
             self.page.status_text.value, "Couldn't finish preparing posts."
         )
+        self.assertEqual(self.page.text_field.value, "test-author")
         self.assertFalse(self.page.busy)
         self.assertFalse(self.page.progress_ring.visible)
         self.manager.add_task.assert_not_awaited()

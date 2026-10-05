@@ -55,18 +55,24 @@ class TaskItem(ft.Container):
             style=style,
             on_click=self.on_cancel,
         )
+        action_style = ft.ButtonStyle(
+            color=ft.Colors.ON_SURFACE_VARIANT,
+            text_style=ft.TextStyle(size=12),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
+            visual_density=ft.VisualDensity.STANDARD,
+        )
         self.retry_button = ft.TextButton(
             self.tr("Retry"),
             icon=ft.Icons.REFRESH,
-            height=24,
-            style=style,
+            height=26,
+            style=action_style,
             on_click=self.on_retry,
         )
         self.folder_open_button = ft.TextButton(
             self.tr("Open folder"),
-            height=24,
+            height=26,
             icon=ft.Icons.FOLDER_OPEN_OUTLINED,
-            style=style,
+            style=action_style,
             on_click=self.open_task_folder,
         )
         self.trailing_button = ft.Container(self.stop_button)
