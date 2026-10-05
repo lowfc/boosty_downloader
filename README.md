@@ -11,7 +11,7 @@ Application for downloading content from boosty.to
 
 ## 👀 Demo
 
-<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/bd-demo.gif" alt="">
+<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/bd demo.webp" alt="">
 
 You can download content available to you according to your subscription level. 
 To download restricted content, please log in.
@@ -44,7 +44,7 @@ By using the application, you agree to the <a href="https://github.com/lowfc/boo
 
 Authorize app to get available for you private content:
 
-<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/bd-auth.gif" alt="">
+<img src="https://raw.githubusercontent.com/lowfc/static-repo/refs/heads/main/boosty_downloader/bd auth.webp" alt="">
 
 ## 💻 Installation
 
