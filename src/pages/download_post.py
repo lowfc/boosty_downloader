@@ -95,7 +95,9 @@ class DownloadPostPage(PostDownloadForm):
             busy=True,
         )
         try:
-            if await self.manager.add_task(link.author, link.id):
+            added = await self.manager.add_task(link.author, link.id)
+            self.text_field.value = ""
+            if added:
                 self.show_feedback(
                     self.tr("Post added to Downloads."),
                     self.tr("You can follow the download progress there."),
