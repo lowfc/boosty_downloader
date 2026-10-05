@@ -8,7 +8,11 @@ from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
 from core.downloads_manager import DownloadManager
 from core.logger import setup_logger
-from pages.post_download_form import PostDownloadForm, author_from_input, post_from_input
+from pages.post_download_form import (
+    PostDownloadForm,
+    author_from_input,
+    post_from_input,
+)
 
 logger = setup_logger()
 
