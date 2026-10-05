@@ -1,9 +1,8 @@
 import asyncio
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional, List
 
 import aiofiles
 from aiohttp import ClientSession
@@ -11,12 +10,12 @@ from aiohttp import ClientSession
 from core.authorization_provider import AuthorizationProvider
 from core.boosty.client import BoostyClient
 from core.boosty.defs import (
-    BoostyImageDto,
+    VIDEO_QUALITY_GRADE,
     BoostyAudioDto,
     BoostyFileDto,
-    BoostyVideoDto,
-    VIDEO_QUALITY_GRADE,
+    BoostyImageDto,
     BoostyPostDto,
+    BoostyVideoDto,
 )
 from core.defs.common import DownloadingSettingsDto
 from core.defs.tasks import TaskError
@@ -24,7 +23,7 @@ from core.download_limiter import DownloadLimiter
 from core.draftjs_converter import DraftJsConverter
 from core.logger import setup_logger
 from core.progress_counter import ProgressCounter
-from core.utils import validate_windows_dir_name, sign_url, get_download_settings
+from core.utils import get_download_settings, sign_url, validate_windows_dir_name
 
 logger = setup_logger()
 
@@ -43,7 +42,7 @@ class Task:
         semaphore: asyncio.Semaphore | DownloadLimiter,
         author: str,
         post_id: str,
-        post_info: Optional[BoostyPostDto] = None,
+        post_info: BoostyPostDto | None = None,
     ):
         self._semaphore = semaphore
         self.author = author
@@ -61,8 +60,8 @@ class Task:
         self._count_files = 0
         self._total_weight = 0
         self._post_info = post_info
-        self.error_description: Optional[TaskError] = None
-        self._built_client: Optional[BoostyClient] = None
+        self.error_description: TaskError | None = None
+        self._built_client: BoostyClient | None = None
 
     def ready(self) -> bool:
         return not self._done and not self._pending and not self._error
@@ -95,7 +94,7 @@ class Task:
         if self._task is None:
             self._task = asyncio.create_task(self._run())
 
-    async def _build_client(self, force: bool = False) -> Optional[BoostyClient]:
+    async def _build_client(self, force: bool = False) -> BoostyClient | None:
         if not self._built_client or force:
             settings = await get_download_settings()
             if not settings:
@@ -111,7 +110,7 @@ class Task:
             )
         return self._built_client
 
-    async def fetch_file_size(self, url: str) -> Optional[int]:
+    async def fetch_file_size(self, url: str) -> int | None:
         client = await self._build_client()
         if not client:
             return None
@@ -196,7 +195,7 @@ class Task:
         post_path: Path,
         post_info: BoostyPostDto,
         settings: DownloadingSettingsDto,
-    ) -> List[FinalDownloadTaskDto]:
+    ) -> list[FinalDownloadTaskDto]:
         download_items = []
         for media in post_info.media:
             if (
@@ -314,13 +313,14 @@ class Task:
                 return self._fallback(TaskError.NO_HOME_FOLDER)
 
             post_path = Path(settings.downloads_folder) / self.author / self.post_id
-            if post_info.title:
-                if title := validate_windows_dir_name(post_info.title):
-                    post_path = (
-                        Path(settings.downloads_folder)
-                        / self.author
-                        / (title + "_" + self.post_id)
-                    )
+            if post_info.title and (
+                title := validate_windows_dir_name(post_info.title)
+            ):
+                post_path = (
+                    Path(settings.downloads_folder)
+                    / self.author
+                    / (title + "_" + self.post_id)
+                )
 
             self.path = post_path
             if not os.path.isdir(post_path):
@@ -329,7 +329,9 @@ class Task:
 
             try:
                 parser = DraftJsConverter(post_info.text_content.content)
-                post_time = datetime.fromtimestamp(post_info.publish_time)
+                post_time = datetime.fromtimestamp(
+                    post_info.publish_time, tz=UTC
+                ).astimezone()
                 fmt_date = post_time.strftime("%d.%m.%Y %H:%M")
                 if settings.post_text_format == "md":
                     if post_info.title:

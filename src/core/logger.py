@@ -31,7 +31,7 @@ def setup_logger(log_file="runtime.log"):
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-    except Exception as e:
+    except OSError as e:
         print(f"Can't create log file: {e}")
 
     logger.addHandler(console_handler)

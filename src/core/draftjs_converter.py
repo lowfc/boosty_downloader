@@ -1,17 +1,17 @@
 import json
-from typing import List, Union, Tuple
+from typing import ClassVar
 
-from core.boosty.defs import BoostyTextDto, BoostyLinkDto, BoostyListDto
+from core.boosty.defs import BoostyLinkDto, BoostyListDto, BoostyTextDto
 
 
 class DraftJsConverter:
-    STYLE_MAP = {
+    STYLE_MAP: ClassVar[dict[int, str]] = {
         0: "**",  # BOLD
         2: "*",  # ITALIC
         4: "__",  # UNDERLINE
     }
 
-    BLOCK_TYPES = {
+    BLOCK_TYPES: ClassVar[dict[str, str]] = {
         "header": "## ",
         "header-one": "# ",
         "header-two": "## ",
@@ -21,10 +21,10 @@ class DraftJsConverter:
         "ordered-list-item": "1. ",
     }
 
-    def __init__(self, data: List[Union[BoostyTextDto, BoostyLinkDto, BoostyListDto]]):
+    def __init__(self, data: list[BoostyTextDto | BoostyLinkDto | BoostyListDto]):
         self.data = data
 
-    def _parse_boosty_text(self, content_json: str) -> Tuple[str, str, list]:
+    def _parse_boosty_text(self, content_json: str) -> tuple[str, str, list]:
         if content_json == "":
             return "", "unstyled", []
         try:
@@ -57,7 +57,7 @@ class DraftJsConverter:
 
         return "".join(result_text)
 
-    def _process_list(self, list_dto: BoostyListDto, level: int = 0) -> List[str]:
+    def _process_list(self, list_dto: BoostyListDto, level: int = 0) -> list[str]:
         """Рекурсивно обрабатывает BoostyListDto."""
         lines = []
         prefix = "* "
