@@ -51,6 +51,24 @@ def soft_icon(icon, size=38):
     )
 
 
+def scrollable_body(body, width, vertical_padding=12, center=False):
+    """Keep content centered while the scroll viewport fills the available area."""
+    return ft.Column(
+        expand=True,
+        spacing=0,
+        scroll=ft.ScrollMode.AUTO,
+        alignment=ft.MainAxisAlignment.CENTER if center else ft.MainAxisAlignment.START,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        controls=[
+            ft.Container(
+                alignment=ft.Alignment.TOP_CENTER,
+                padding=ft.Padding.symmetric(horizontal=32, vertical=vertical_padding),
+                content=ft.Container(width=width, content=body),
+            )
+        ],
+    )
+
+
 def page_shell(
     toolbar,
     body,
@@ -71,17 +89,7 @@ def page_shell(
             spacing=0,
             controls=[
                 toolbar,
-                ft.Container(
-                    expand=True,
-                    alignment=ft.Alignment.TOP_CENTER,
-                    padding=ft.Padding.symmetric(horizontal=32, vertical=12),
-                    content=ft.Column(
-                        width=width,
-                        spacing=10,
-                        scroll=ft.ScrollMode.AUTO,
-                        controls=[body],
-                    ),
-                ),
+                scrollable_body(body, width),
                 ft.Container(
                     padding=ft.Padding.symmetric(horizontal=24, vertical=10),
                     border=ft.Border.only(
