@@ -1,6 +1,7 @@
 import flet as ft
 
 import components
+from components.soft_layout import scrollable_body
 from core.downloads_manager import DownloadManager
 from localization import Localizer
 from themes import HOME_DARK_THEME, HOME_LIGHT_THEME
@@ -33,16 +34,14 @@ class WelcomePage(ft.View):
                     spacing=0,
                     controls=[
                         self.toolbar,
-                        ft.Container(
-                            expand=True,
-                            alignment=ft.Alignment.CENTER,
-                            padding=ft.Padding.symmetric(horizontal=32, vertical=24),
-                            content=ft.Column(
-                                width=696,
+                        scrollable_body(
+                            width=696,
+                            vertical_padding=24,
+                            center=True,
+                            body=ft.Column(
                                 spacing=0,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                scroll=ft.ScrollMode.AUTO,
                                 controls=[
                                     ft.Image(
                                         src="main-page-logo.svg", width=178, height=55
